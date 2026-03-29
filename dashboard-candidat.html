@@ -46,7 +46,10 @@
 
 <script src="script.js"></script>
 <script>
-const API = 'http://localhost:5000/api';
+// Détection automatique : localhost en dev, Render en prod
+const API = window.location.hostname === "localhost"
+  ? "http://localhost:5000/api"
+  : "https://gestion-candidatures-niom.onrender.com/api";
 
 // Auto-fill from URL param
 const urlToken = new URLSearchParams(window.location.search).get('token');
