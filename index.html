@@ -3,241 +3,118 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Banque – Gestion des Candidatures</title>
+  <title>Banque – Recrutement</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
-<!-- NAVBAR -->
 <nav class="navbar">
-  <div class="brand">
-    🏦 <span>RecrutBank</span>
-    <span class="tag">Portail RH</span>
-  </div>
+  <div class="brand">🏦 <span>RecrutBank</span></div>
   <div class="nav-links">
     <a href="#postes">Postes</a>
     <a href="#postuler">Postuler</a>
     <a href="#suivi">Suivi</a>
-    <a href="login.html" class="btn-nav">🔐 Espace Recruteur</a>
+    <a href="login.html" class="btn-nav">🔐 Recruteur</a>
   </div>
 </nav>
 
-<!-- HERO -->
-<section class="hero">
-  <h1>Rejoignez Notre <span>Équipe</span></h1>
-  <p>Bienvenue sur le portail de recrutement. Consultez nos offres, déposez votre candidature et suivez son évolution en temps réel.</p>
-  <div class="hero-btns">
-    <a href="#postuler" class="btn btn-primary">📄 Déposer ma candidature</a>
-    <a href="#suivi" class="btn btn-outline">🔍 Suivre mon dossier</a>
-  </div>
-</section>
-
-<!-- POSTES DISPONIBLES -->
 <section class="section" id="postes">
   <div class="container">
-    <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:.5rem">Postes Ouverts</h2>
-    <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">6 opportunités dans nos pôles Finance, Crédit et IT</p>
+    <h2 style="text-align:center">Postes Ouverts</h2>
     <div class="postes-grid" id="postes-list">
-      <!-- rempli par JS -->
-    </div>
+      </div>
   </div>
 </section>
 
-<!-- FORMULAIRE DE CANDIDATURE -->
-<section class="section" id="postuler" style="background:#fff">
+<section class="section" id="postuler">
   <div class="container">
-    <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:.5rem">Déposer une Candidature</h2>
-    <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">Remplissez le formulaire ci-dessous. Formats acceptés : PDF, DOC, DOCX (max 10 Mo)</p>
-
-    <div class="card" style="max-width:700px;margin:0 auto">
+    <div class="card" style="max-width:600px;margin:0 auto">
+      <h3>Déposer une candidature</h3>
       <div id="form-alert"></div>
       <form id="candidature-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Prénom *</label>
-            <input class="form-control" name="prenom" placeholder="ex. Jean" required>
-          </div>
-          <div class="form-group">
-            <label>Nom *</label>
-            <input class="form-control" name="nom" placeholder="ex. Dupont" required>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Email *</label>
-            <input class="form-control" type="email" name="email" placeholder="jean.dupont@email.com" required>
-          </div>
-          <div class="form-group">
-            <label>Téléphone</label>
-            <input class="form-control" name="telephone" placeholder="+228 XX XX XX XX">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Poste souhaité *</label>
-          <select class="form-control" name="poste" required>
-            <option value="">— Choisir un poste —</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>CV (PDF/DOC)</label>
-            <div class="file-input-wrapper">
-              <label class="file-label" id="cv-label" for="cv-input">📎 Choisir mon CV</label>
-              <input type="file" id="cv-input" name="cv" accept=".pdf,.doc,.docx">
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Lettre de motivation</label>
-            <div class="file-input-wrapper">
-              <label class="file-label" id="lettre-label" for="lettre-input">📎 Choisir ma lettre</label>
-              <input type="file" id="lettre-input" name="lettre" accept=".pdf,.doc,.docx">
-            </div>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
-          🚀 Soumettre ma candidature
-        </button>
+        <input class="form-control" name="prenom" placeholder="Prénom" required>
+        <input class="form-control" name="nom" placeholder="Nom" required>
+        <input class="form-control" type="email" name="email" placeholder="Email" required>
+        <select class="form-control" name="poste" id="poste-select" required>
+          <option value="">— Choisir un poste —</option>
+        </select>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Envoyer</button>
       </form>
-    </div>
-
-    <!-- Confirmation avec token -->
-    <div id="candidature-success" class="card" style="max-width:700px;margin:1.5rem auto;display:none">
-      <div style="text-align:center;padding:1rem 0">
-        <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
-        <h3 style="color:var(--success);font-size:1.3rem;margin-bottom:.5rem">Candidature soumise avec succès !</h3>
-        <p style="color:var(--text-muted);margin-bottom:1.5rem">Conservez précieusement votre numéro de suivi :</p>
-        <div style="background:#f4f6fa;border:2px dashed var(--border);border-radius:8px;padding:1rem;font-family:monospace;font-size:1.1rem;font-weight:700;color:var(--primary);letter-spacing:2px" id="token-display"></div>
-        <p style="margin-top:1rem;font-size:.85rem;color:var(--text-muted)">Utilisez ce code dans la section <strong>Suivi de dossier</strong> pour consulter l'état de votre candidature.</p>
-        <button class="btn btn-blue" style="margin-top:1.2rem" onclick="document.getElementById('candidature-success').style.display='none';document.getElementById('candidature-form').parentElement.style.display='block';document.getElementById('candidature-form').reset()">
-          Déposer une autre candidature
-        </button>
+      <div id="candidature-success" style="display:none; text-align:center; margin-top:20px;">
+        <h4 style="color:green">Succès ! Voici votre code de suivi :</h4>
+        <div id="token-display" style="font-weight:bold; font-size:1.2rem; background:#eee; padding:10px;"></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- SUIVI DE DOSSIER -->
 <section class="section" id="suivi">
   <div class="container">
-    <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:.5rem">Suivi de Dossier</h2>
-    <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">Entrez votre numéro de suivi pour connaître l'état de votre candidature</p>
-
-    <div class="card" style="max-width:540px;margin:0 auto">
-      <div class="form-group" style="display:flex;gap:.8rem;margin-bottom:0">
-        <input class="form-control" id="suivi-token" placeholder="Entrez votre numéro de suivi...">
-        <button class="btn btn-primary" onclick="checkSuivi()">Rechercher</button>
-      </div>
-      <div id="suivi-result" style="margin-top:1.2rem"></div>
+    <div class="card" style="max-width:500px;margin:0 auto">
+      <h3>Suivi de dossier</h3>
+      <input class="form-control" id="suivi-token" placeholder="Numéro de suivi...">
+      <button class="btn btn-primary" onclick="checkSuivi()">Rechercher</button>
+      <div id="suivi-result" style="margin-top:20px"></div>
     </div>
   </div>
 </section>
 
-<!-- FOOTER -->
-<footer>
-  <p>© 2024 RecrutBank · Système de Gestion des Candidatures · Confidentiel</p>
-</footer>
-
-<!-- TOAST -->
-<div class="toast-container" id="toast-container"></div>
-
-<script src="script.js"></script>
 <script>
-const API = 'http://localhost:5000/api';
+// CONFIGURATION DE L'URL BACKEND
+const API = 'https://backend1-fiq5.onrender.com/api';
 
-const POSTES_INFO = {
-  "Responsable Administration de Crédit": {icon:"🏛️", desc:"Gestion du portefeuille, conformité COBAC/IFRS"},
-  "Analyste Crédit CCB": {icon:"📊", desc:"Analyse financière, montage et suivi de crédits"},
-  "Archiviste (Administration Crédit)": {icon:"🗂️", desc:"Gestion documentaire et archivage des dossiers"},
-  "Senior Finance Officer": {icon:"💰", desc:"Pilotage financier et reporting senior"},
-  "Market Risk Officer": {icon:"📈", desc:"Gestion et modélisation des risques de marché"},
-  "IT Réseau & Infrastructure": {icon:"🖥️", desc:"Administration réseau, sécurité et infrastructure IT"}
-};
+// Charger les postes depuis le backend
+fetch(`${API}/postes`)
+  .then(res => res.json())
+  .then(postes => {
+    const grid = document.getElementById('postes-list');
+    const select = document.getElementById('poste-select');
+    postes.forEach(p => {
+      grid.innerHTML += `<div class="poste-card"><h3>${p}</h3><a href="#postuler">Postuler</a></div>`;
+      select.innerHTML += `<option value="${p}">${p}</option>`;
+    });
+  })
+  .catch(err => console.error("Erreur backend:", err));
 
-// Charger les postes
-fetch(`${API}/postes`).then(r=>r.json()).then(postes => {
-  const grid = document.getElementById('postes-list');
-  const sel = document.querySelector('select[name=poste]');
-  postes.forEach(p => {
-    const info = POSTES_INFO[p] || {icon:'💼', desc:'Voir les détails'};
-    grid.innerHTML += `<div class="poste-card">
-      <div style="font-size:1.8rem;margin-bottom:.6rem">${info.icon}</div>
-      <h3>${p}</h3>
-      <p>${info.desc}</p>
-      <a href="#postuler" style="display:inline-block;margin-top:.8rem;font-size:.82rem;font-weight:600;color:var(--accent)">Postuler →</a>
-    </div>`;
-    sel.innerHTML += `<option value="${p}">${p}</option>`;
-  });
-});
-
-// File inputs
-['cv','lettre'].forEach(name => {
-  document.getElementById(`${name}-input`).addEventListener('change', function() {
-    const lbl = document.getElementById(`${name}-label`);
-    if(this.files[0]) {
-      lbl.textContent = '✅ ' + this.files[0].name;
-      lbl.classList.add('has-file');
-    }
-  });
-});
-
-// Formulaire de candidature
+// Envoyer la candidature
 document.getElementById('candidature-form').addEventListener('submit', async function(e) {
   e.preventDefault();
+  const fd = new FormData(this);
   const btn = document.getElementById('submit-btn');
-  btn.innerHTML = '<span class="spinner"></span> Envoi en cours...';
   btn.disabled = true;
 
-  const fd = new FormData(this);
   try {
-    const res = await fetch(`${API}/candidats/postuler`, { method:'POST', body: fd });
+    const res = await fetch(`${API}/candidats/postuler`, { method: 'POST', body: fd });
     const data = await res.json();
-    if(res.ok) {
-      document.getElementById('form-alert').innerHTML = '';
-      this.parentElement.style.display = 'none';
-      const succ = document.getElementById('candidature-success');
-      succ.style.display = 'block';
+    if (res.ok) {
+      this.style.display = 'none';
+      document.getElementById('candidature-success').style.display = 'block';
       document.getElementById('token-display').textContent = data.token;
-      showToast('Candidature soumise !', 'success');
     } else {
-      document.getElementById('form-alert').innerHTML = `<div class="alert alert-error">⚠️ ${data.error}</div>`;
+      alert("Erreur: " + data.error);
     }
-  } catch(err) {
-    document.getElementById('form-alert').innerHTML = `<div class="alert alert-error">⚠️ Erreur de connexion au serveur.</div>`;
+  } catch (err) {
+    alert("Impossible de contacter le serveur.");
   }
-  btn.innerHTML = '🚀 Soumettre ma candidature';
   btn.disabled = false;
 });
 
-// Suivi dossier
+// Suivre un dossier
 async function checkSuivi() {
-  const token = document.getElementById('suivi-token').value.trim();
-  if(!token) return;
-  const res = document.getElementById('suivi-result');
-  res.innerHTML = '<p style="color:var(--text-muted)">Recherche...</p>';
+  const token = document.getElementById('suivi-token').value;
+  const resDiv = document.getElementById('suivi-result');
   try {
     const r = await fetch(`${API}/candidats/statut/${token}`);
     const d = await r.json();
-    if(!r.ok) { res.innerHTML = `<div class="alert alert-error">⚠️ ${d.error}</div>`; return; }
-    const badges = {en_attente:'badge-pending',retenu:'badge-retained',rejete:'badge-rejected',entretien:'badge-interview'};
-    const labels = {en_attente:'⏳ En attente',retenu:'✅ Retenu(e)',rejete:'❌ Non retenu(e)',entretien:'📅 Convoqué(e) en entretien'};
-    res.innerHTML = `
-      <div style="padding:.5rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-          <div>
-            <div style="font-weight:700;font-size:1.05rem">${d.prenom} ${d.nom}</div>
-            <div style="color:var(--text-muted);font-size:.85rem">${d.poste}</div>
-          </div>
-          <span class="badge ${badges[d.statut]||'badge-pending'}">${labels[d.statut]||d.statut}</span>
-        </div>
-        <div style="font-size:.82rem;color:var(--text-muted)">📅 Soumise le ${new Date(d.date_candidature).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}</div>
-        ${d.note ? `<div style="margin-top:.8rem;padding:.8rem;background:#f8fafd;border-radius:6px;font-size:.85rem"><strong>Message RH :</strong> ${d.note}</div>` : ''}
-      </div>`;
-  } catch {
-    res.innerHTML = `<div class="alert alert-error">⚠️ Erreur de connexion.</div>`;
+    if (r.ok) {
+      resDiv.innerHTML = `<div class="card"><strong>Statut :</strong> ${d.statut}</div>`;
+    } else {
+      resDiv.innerHTML = "Code introuvable.";
+    }
+  } catch (err) {
+    resDiv.innerHTML = "Erreur de connexion.";
   }
 }
-document.getElementById('suivi-token').addEventListener('keypress', e => { if(e.key==='Enter') checkSuivi(); });
 </script>
 </body>
 </html>
