@@ -490,3 +490,61 @@ footer {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .hero { padding: 3rem 1.5rem; }
 }
+
+/* ── AJOUTS GRILLE DE PRÉSÉLECTION ──────────────────────────────────── */
+.alert-info { background:#cce5ff; color:#004085; border:1px solid #b8daff; }
+
+.ep-label {
+  font-weight:700;
+  color:var(--text-muted);
+  font-size:.75rem;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  margin-right:.4rem;
+}
+.ep-body {
+  margin-top:.8rem;
+  border-top:1px solid var(--border);
+  padding-top:.8rem;
+}
+.email-preview {
+  background:#f8fafd;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:1.2rem;
+  font-size:.88rem;
+}
+
+/* Hero */
+.hero {
+  background:linear-gradient(135deg,var(--primary) 0%,#0f2540 100%);
+  color:#fff;
+  text-align:center;
+  padding:5rem 2rem 4rem;
+}
+.hero h1 { font-size:clamp(2rem,4vw,3.2rem);font-weight:800;margin-bottom:1rem; }
+.hero h1 span { color:var(--accent); }
+.hero p { font-size:1.1rem;opacity:.85;max-width:620px;margin:0 auto 2.5rem; }
+.hero-btns { display:flex;gap:1rem;justify-content:center;flex-wrap:wrap; }
+.btn-outline { background:transparent;color:#fff;border:2px solid rgba(255,255,255,.5); }
+.btn-outline:hover { border-color:#fff;background:rgba(255,255,255,.1); }
+
+/* File label */
+.file-label.has-file { border-color:var(--success);color:var(--success);background:#f0fff4; }
+
+/* Stat purple */
+.stat-card.purple { border-color:#8e44ad; }
+
+/* Badge interview */
+.badge-interview { background:#cce5ff;color:#004085; }
+
+/* Spinner */
+.spinner {
+  width:18px;height:18px;
+  border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  display:inline-block;vertical-align:middle;margin-right:.4rem;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
