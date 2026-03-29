@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi Candidature – RecrutBank</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand">🏦 <span>RecrutBank</span> <span class="tag">Candidat</span></div>
+  <div class="nav-links">
+    <a href="index.html">← Accueil</a>
+    <a href="index.html#postuler" class="btn-nav">📄 Postuler</a>
+  </div>
+</nav>
+
+<section style="padding:3rem 1.5rem">
+  <div style="max-width:640px;margin:0 auto">
+    <h1 style="font-size:1.8rem;font-weight:800;color:var(--primary);text-align:center;margin-bottom:.5rem">Suivi de Candidature</h1>
+    <p style="text-align:center;color:var(--text-muted);margin-bottom:2rem">Entrez votre numéro de suivi pour consulter l'état de votre dossier</p>
+
+    <div class="card">
+      <div style="display:flex;gap:.8rem;margin-bottom:1.2rem">
+        <input class="form-control" id="token-input" placeholder="Votre numéro de suivi...">
+        <button class="btn btn-primary" onclick="checkStatut()">🔍 Rechercher</button>
+      </div>
+
+      <div id="result-area"></div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <div class="card-header" style="margin-bottom:1rem">
+        <span class="card-title">📄 Déposer une nouvelle candidature</span>
+      </div>
+      <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:1rem">Vous souhaitez postuler à un autre poste ?</p>
+      <a href="index.html#postuler" class="btn btn-primary btn-sm">Accéder au formulaire →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2024 RecrutBank · Portail Candidat · Confidentiel</p>
+</footer>
+
+<script src="script.js"></script>
+<script>
+const API = 'http://localhost:5000/api';
+
+// Auto-fill from URL param
+const urlToken = new URLSearchParams(window.location.search).get('token');
+if(urlToken) {
+  document.getElementById('token-input').value = urlToken;
+  checkStatut();
+}
+
+document.getElementById('token-input').addEventListener('keypress', e => {
+  if(e.key === 'Enter') checkStatut();
+});
+
+async function checkStatut() {
+  const token = document.getElementById('token-input').value.trim();
+  if(!token) return;
+  const area = document.getElementById('result-area');
+  area.innerHTML = `<div style="text-align:center;padding:1rem;color:var(--text-muted)">🔍 Recherche en cours...</div>`;
+
+  try {
+    const res = await fetch(`${API}/candidats/statut/${token}`);
+    const d = await res.json();
+
+    if(!res.ok) {
+      area.innerHTML = `<div class="alert alert-error">⚠️ ${d.error}</div>`;
+      return;
+    }
+
+    const badges = {
+      en_attente:'badge-pending',
+      retenu:'badge-retained',
+      rejete:'badge-rejected',
+      entretien:'badge-interview'
+    };
+    const labels = {
+      en_attente:'⏳ En attente d\'examen',
+      retenu:'✅ Candidature retenue',
+      rejete:'❌ Candidature non retenue',
+      entretien:'📅 Convoqué(e) en entretien'
+    };
+    const messages = {
+      en_attente: 'Votre dossier est en cours d\'examen par notre équipe RH. Nous vous contacterons dès que possible.',
+      retenu: 'Félicitations ! Votre candidature a été retenue. Notre équipe vous contactera très prochainement.',
+      rejete: 'Après examen attentif de votre dossier, votre candidature n\'a pas été retenue pour cette sélection. Nous vous remercions de votre intérêt.',
+      entretien: 'Votre profil nous a intéressé. Vous allez être contacté(e) pour un entretien. Préparez-vous !'
+    };
+    const icons = { en_attente:'⏳', retenu:'🎉', rejete:'😔', entretien:'🤝' };
+
+    area.innerHTML = `
+      <div style="text-align:center;padding:1.5rem 0">
+        <div style="font-size:3rem;margin-bottom:.8rem">${icons[d.statut]||'📋'}</div>
+        <h3 style="font-size:1.2rem;font-weight:800;color:var(--primary);margin-bottom:.4rem">${d.prenom} ${d.nom}</h3>
+        <p style="color:var(--text-muted);font-size:.88rem;margin-bottom:1rem">Candidature pour : <strong>${d.poste}</strong></p>
+        <span class="badge ${badges[d.statut]||'badge-pending'}" style="font-size:.9rem;padding:.4rem 1rem">${labels[d.statut]||d.statut}</span>
+        <p style="margin-top:1.2rem;font-size:.9rem;color:var(--text);max-width:400px;margin-left:auto;margin-right:auto">${messages[d.statut]||''}</p>
+        ${d.note ? `<div style="margin-top:1rem;padding:1rem;background:#f8fafd;border-radius:8px;font-size:.87rem;border-left:4px solid var(--accent)"><strong>Message de l'équipe RH :</strong><br>${d.note}</div>` : ''}
+        <div style="margin-top:1.2rem;font-size:.78rem;color:var(--text-muted)">
+          Dossier déposé le ${new Date(d.date_candidature).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}
+        </div>
+      </div>`;
+  } catch {
+    area.innerHTML = `<div class="alert alert-error">⚠️ Erreur de connexion. Vérifiez que le serveur est démarré.</div>`;
+  }
+}
+</script>
+</body>
+</html>
