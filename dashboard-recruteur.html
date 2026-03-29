@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tableau de Bord – Recruteur</title>
+  <title>Tableau de Bord – RecrutBank</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
@@ -12,10 +12,10 @@
   <div class="brand">🏦 <span>RecrutBank</span> <span class="tag">Recruteur</span></div>
   <div class="nav-links">
     <span id="nav-nom" style="color:rgba(255,255,255,.7);font-size:.88rem"></span>
-    <a href="index.html" style="color:rgba(255,255,255,.7)">Accueil public</a>
     <button class="btn btn-outline btn-sm" onclick="logout()">🚪 Déconnexion</button>
   </div>
 </nav>
+
 <div class="dash-layout">
   <aside class="sidebar">
     <div class="sidebar-user">
@@ -26,133 +26,133 @@
     <nav>
       <a href="#" class="active" onclick="showSection('overview',this)"><span class="icon">📊</span> Vue d'ensemble</a>
       <a href="#" onclick="showSection('candidats',this)"><span class="icon">👥</span> Candidats</a>
-      <a href="#" onclick="showSection('stats',this)"><span class="icon">📈</span> Statistiques</a>
     </nav>
   </aside>
+
   <main class="dash-main">
     <div id="section-overview">
       <h2 class="dash-title">Vue d'ensemble</h2>
-      <div class="stats-grid" id="stats-grid">
-        <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value" id="s-total">–</div><div class="stat-label">Total candidatures</div></div>
-        <div class="stat-card amber"><div class="stat-icon">⏳</div><div class="stat-value" id="s-attente">–</div><div class="stat-label">En attente</div></div>
-        <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value" id="s-retenu">–</div><div class="stat-label">Retenus</div></div>
-        <div class="stat-card red"><div class="stat-icon">❌</div><div class="stat-value" id="s-rejete">–</div><div class="stat-label">Non retenus</div></div>
-        <div class="stat-card purple"><div class="stat-icon">📅</div><div class="stat-value" id="s-entretien">–</div><div class="stat-label">En entretien</div></div>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-value" id="s-total">0</div><div class="stat-label">Candidatures</div></div>
+        <div class="stat-card amber"><div class="stat-value" id="s-attente">0</div><div class="stat-label">En attente</div></div>
+        <div class="stat-card green"><div class="stat-value" id="s-retenu">0</div><div class="stat-label">Retenus</div></div>
       </div>
-      <div class="chart-grid" style="margin-top:1.5rem">
-        <div class="chart-box"><h4>Répartition par statut</h4><canvas id="chart-statut"></canvas></div>
-        <div class="chart-box"><h4>Candidatures par poste</h4><canvas id="chart-poste"></canvas></div>
-      </div>
-      <div class="card" style="margin-top:1.5rem">
-        <div class="card-header"><span class="card-title">🕐 Dernières candidatures</span><button class="btn btn-blue btn-sm" onclick="showSection('candidats',null)">Voir tout →</button></div>
-        <div class="table-wrap" id="recent-table"><div class="empty-state"><p>Chargement...</p></div></div>
+      <div class="chart-grid" style="margin-top:2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="chart-box" style="background: white; padding: 15px; border-radius: 8px;">
+          <h4>Répartition des statuts</h4>
+          <canvas id="chart-statut"></canvas>
+        </div>
       </div>
     </div>
+
     <div id="section-candidats" style="display:none">
       <h2 class="dash-title">Gestion des Candidats</h2>
       <div class="card">
-        <div class="filter-bar">
-          <input class="form-control" id="f-search" placeholder="🔍 Rechercher..." oninput="loadCandidats()">
-          <select class="form-control" id="f-poste" onchange="loadCandidats()"><option value="">Tous les postes</option></select>
-          <select class="form-control" id="f-statut" onchange="loadCandidats()">
-            <option value="">Tous statuts</option>
-            <option value="en_attente">⏳ En attente</option>
-            <option value="retenu">✅ Retenu</option>
-            <option value="entretien">📅 Entretien</option>
-            <option value="rejete">❌ Non retenu</option>
-          </select>
-          <button class="btn btn-blue btn-sm" onclick="loadCandidats()">🔄 Actualiser</button>
-        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th>Score</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th>Score</th><th>Actions</th></tr></thead>
             <tbody id="candidats-tbody"></tbody>
           </table>
         </div>
       </div>
     </div>
-    <div id="section-stats" style="display:none">
-      <h2 class="dash-title">Statistiques Détaillées</h2>
-      <div class="chart-grid">
-        <div class="chart-box"><h4>Répartition par statut</h4><canvas id="chart-statut2"></canvas></div>
-        <div class="chart-box"><h4>Candidatures par poste</h4><canvas id="chart-poste2"></canvas></div>
-      </div>
-      <div class="card" style="margin-top:1.5rem"><h4 style="color:var(--primary);margin-bottom:1rem">📊 Répartition par poste</h4><div id="progress-bars"></div></div>
-    </div>
   </main>
 </div>
+
 <div class="modal-overlay" id="modal-candidat">
   <div class="modal">
-    <div class="modal-header"><h3 id="modal-title">Dossier Candidat</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-header"><h3 id="modal-title">Dossier</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-footer">
-      <button class="btn btn-success btn-sm" onclick="updateStatut('retenu')">✅ Retenir</button>
-      <button class="btn btn-warning btn-sm" onclick="updateStatut('entretien')">📅 Entretien</button>
-      <button class="btn btn-danger btn-sm" onclick="updateStatut('rejete')">❌ Rejeter</button>
+      <button class="btn btn-success" onclick="updateStatut('retenu')">✅ Retenir</button>
+      <button class="btn btn-warning" onclick="updateStatut('entretien')">📅 Entretien</button>
+      <button class="btn btn-danger" onclick="updateStatut('rejete')">❌ Rejeter</button>
     </div>
   </div>
 </div>
+
 <script>
 const API = 'https://backend1-fiq5.onrender.com/api';
 let token = localStorage.getItem('rh_token');
 let currentCandidatId = null;
+let myChart = null;
+
 if(!token) window.location.href = 'login.html';
 document.getElementById('nav-nom').textContent = localStorage.getItem('rh_nom') || '';
-document.getElementById('sidebar-nom').textContent = localStorage.getItem('rh_nom') || 'Recruteur';
 
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 function authHeaders() { return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }; }
 
 function showSection(name, el) {
-  ['overview','candidats','stats'].forEach(s => document.getElementById(`section-${s}`).style.display = s===name ? 'block' : 'none');
-  document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
-  if(el) el.classList.add('active');
-  if(name==='candidats') loadCandidats();
-  if(name==='stats') loadStats(true);
+  document.getElementById('section-overview').style.display = name === 'overview' ? 'block' : 'none';
+  document.getElementById('section-candidats').style.display = name === 'candidats' ? 'block' : 'none';
+  if(el) {
+    document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+  }
+  if(name === 'candidats') loadCandidats();
+  if(name === 'overview') loadStats();
 }
 
-async function loadStats(forStats=false) {
+async function loadStats() {
   try {
     const res = await fetch(`${API}/recruteur/stats`, { headers: authHeaders() });
-    if(res.status===401) logout();
+    if(res.status === 401) logout();
     const data = await res.json();
+
     document.getElementById('s-total').textContent = data.total;
     document.getElementById('s-attente').textContent = data.en_attente;
     document.getElementById('s-retenu').textContent = data.retenu;
-    document.getElementById('s-rejete').textContent = data.rejete;
-    document.getElementById('s-entretien').textContent = data.entretien;
-    const labels = ['En attente','Retenu','Entretien','Non retenu'];
-    const sData = [data.en_attente, data.retenu, data.entretien, data.rejete];
-    const colors = ['#e8a020','#1e7e34','#2980b9','#c0392b'];
-    new Chart(document.getElementById('chart-statut'), { type:'doughnut', data:{labels, datasets:[{data:sData, backgroundColor:colors}]} });
-    new Chart(document.getElementById('chart-poste'), { type:'bar', data:{labels:data.by_poste.map(p=>p.poste), datasets:[{label:'Candidats', data:data.by_poste.map(p=>p.n), backgroundColor:'#1a3a5c'}]} });
-    if(forStats) {
-      const pb = document.getElementById('progress-bars');
-      pb.innerHTML = data.by_poste.map(p => {
-        const pct = data.total > 0 ? Math.round(p.n/data.total*100) : 0;
-        return `<div style="margin-bottom:1rem"><div style="display:flex;justify-content:space-between;font-size:.85rem"><span>${p.poste}</span><span>${pct}%</span></div><div class="progress" style="background:#eee;height:8px;border-radius:4px"><div style="width:${pct}%;background:var(--primary);height:100%;border-radius:4px"></div></div></div>`;
-      }).join('');
-    }
-  } catch(e) { console.error(e); }
+
+    const ctx = document.getElementById('chart-statut').getContext('2d');
+    if(myChart) myChart.destroy();
+    myChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Attente', 'Retenu', 'Rejeté', 'Entretien'],
+        datasets: [{
+          data: [data.en_attente, data.retenu, data.rejete, data.entretien],
+          backgroundColor: ['#e8a020', '#1e7e34', '#c0392b', '#2980b9']
+        }]
+      }
+    });
+  } catch(e) { console.error("Erreur stats:", e); }
 }
 
-async function loadCandidats(recent=false) {
+async function loadCandidats() {
   try {
     const res = await fetch(`${API}/recruteur/candidats`, { headers: authHeaders() });
     const data = await res.json();
-    const tbody = document.getElementById(recent ? 'recent-table' : 'candidats-tbody');
-    const badges = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
-    const html = data.map(c => `<tr><td>#${c.id.substring(0,4)}</td><td>${c.prenom} ${c.nom}</td><td>${c.poste}</td><td>${new Date(c.date_candidature).toLocaleDateString()}</td><td><span class="badge ${badges[c.statut]}">${c.statut}</span></td><td>${'⭐'.repeat(c.score||0)}</td><td><button class="btn btn-blue btn-sm" onclick="openCandidatModal('${c.id}')">Voir</button></td></tr>`).join('');
-    tbody.innerHTML = recent ? `<table>${html}</table>` : html;
-  } catch(e) { console.error(e); }
+    const tbody = document.getElementById('candidats-tbody');
+    
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td><b>${c.prenom} ${c.nom}</b><br><small>${c.email}</small></td>
+        <td>${c.poste}</td>
+        <td>${new Date(c.date_candidature).toLocaleDateString()}</td>
+        <td><span class="badge">${c.statut}</span></td>
+        <td>${'⭐'.repeat(parseInt(c.score) || 0)}</td>
+        <td><button class="btn btn-blue btn-sm" onclick="openCandidatModal('${c.id}')">Gérer</button></td>
+      </tr>
+    `).join('');
+  } catch(e) { console.error("Erreur candidats:", e); }
 }
 
 async function openCandidatModal(id) {
   currentCandidatId = id;
   const res = await fetch(`${API}/candidats/statut/${id}`, { headers: authHeaders() });
   const c = await res.json();
+  
   document.getElementById('modal-title').textContent = `${c.prenom} ${c.nom}`;
-  document.getElementById('modal-body').innerHTML = `<p><strong>Poste:</strong> ${c.poste}</p><p><strong>Email:</strong> ${c.email}</p><p><strong>Score:</strong> <input type="number" id="m-score" value="${c.score||0}" min="0" max="5"></p><textarea id="m-note" class="form-control" placeholder="Notes">${c.note||''}</textarea>`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="line-height:1.6">
+      <p><strong>Poste :</strong> ${c.poste}</p>
+      <p><strong>Email :</strong> ${c.email}</p>
+      <p><strong>Score (0-5) :</strong> <input type="number" id="m-score" value="${c.score || 0}" min="0" max="5" class="form-control" style="width:60px"></p>
+      <p><strong>Notes internes :</strong><br>
+      <textarea id="m-note" class="form-control" style="width:100%; height:80px">${c.note || ''}</textarea></p>
+    </div>
+  `;
   document.getElementById('modal-candidat').classList.add('open');
 }
 
@@ -161,19 +161,24 @@ function closeModal() { document.getElementById('modal-candidat').classList.remo
 async function updateStatut(statut) {
   const note = document.getElementById('m-note').value;
   const score = document.getElementById('m-score').value;
-  await fetch(`${API}/recruteur/candidats/${currentCandidatId}/statut`, {
-    method:'PUT', headers:authHeaders(), body:JSON.stringify({statut, note, score})
+  
+  const res = await fetch(`${API}/recruteur/candidats/${currentCandidatId}/statut`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({ statut, note, score })
   });
-  closeModal(); loadCandidats(); loadStats();
+  
+  if(res.ok) {
+    closeModal();
+    loadCandidats();
+    loadStats();
+  } else {
+    alert("Erreur lors de la mise à jour");
+  }
 }
 
-async function init() {
-  const postes = await fetch(`${API}/postes`).then(r=>r.json());
-  const sel = document.getElementById('f-poste');
-  postes.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
-  loadStats(); loadCandidats(true);
-}
-init();
+// Lancement
+loadStats();
 </script>
 </body>
 </html>
