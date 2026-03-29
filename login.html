@@ -19,11 +19,11 @@
 
     <form id="login-form">
       <div class="form-group">
-        <label>Adresse email</label>
-        <input class="form-control" type="email" id="email" placeholder="recruteur@banque.com" required>
+        <label for="email">Adresse email</label>
+        <input class="form-control" type="email" id="email" placeholder="recruteur@banque.com" required autocomplete="username">
       </div>
       <div class="form-group">
-        <label>Mot de passe</label>
+        <label for="password">Mot de passe</label>
         <div style="position:relative">
           <input class="form-control" type="password" id="password" placeholder="••••••••" required style="padding-right:2.8rem" autocomplete="current-password">
           <button type="button" onclick="togglePwd()" style="position:absolute;right:.8rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem" id="eye-btn">👁️</button>
@@ -46,11 +46,11 @@
   </div>
 </div>
 
-<script src="script.js"></script>
 <script>
-const API = window.location.hostname === "localhost"
+// CONFIGURATION DE L'URL BACKEND (Mise à jour avec votre lien actuel)
+const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   ? "http://localhost:5000/api"
-  : "https://gestion-candidatures-niom.onrender.com/api";
+  : "https://backend1-fiq5.onrender.com/api";
 
 function togglePwd() {
   const p = document.getElementById('password');
@@ -61,8 +61,11 @@ function togglePwd() {
 document.getElementById('login-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn = document.getElementById('login-btn');
-  btn.innerHTML = '<span class="spinner"></span> Connexion...';
+  const alertDiv = document.getElementById('login-alert');
+  
+  btn.innerHTML = 'Connexion...';
   btn.disabled = true;
+  alertDiv.innerHTML = '';
 
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
@@ -70,27 +73,41 @@ document.getElementById('login-form').addEventListener('submit', async function(
   try {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
       body: JSON.stringify({ email, password })
     });
+    
     const data = await res.json();
+    
     if(res.ok) {
+      // Stockage des infos de session
       localStorage.setItem('rh_token', data.token);
-      localStorage.setItem('rh_nom', data.nom);
-      localStorage.setItem('rh_email', data.email);
+      localStorage.setItem('rh_nom', data.nom || 'Recruteur');
+      localStorage.setItem('rh_email', email);
+      
+      // Redirection vers le dashboard
       window.location.href = 'dashboard-recruteur.html';
     } else {
-      document.getElementById('login-alert').innerHTML = `<div class="alert alert-error">⚠️ ${data.error}</div>`;
+      alertDiv.innerHTML = `<div class="alert alert-error" style="color:red; margin-bottom:10px;">⚠️ ${data.error || 'Identifiants incorrects'}</div>`;
     }
-  } catch {
-    document.getElementById('login-alert').innerHTML = `<div class="alert alert-error">⚠️ Erreur de connexion au serveur.</div>`;
+  } catch (error) {
+    console.error("Erreur login:", error);
+    alertDiv.innerHTML = `<div class="alert alert-error" style="color:red; margin-bottom:10px;">⚠️ Impossible de joindre le serveur. Vérifiez votre connexion.</div>`;
+  } finally {
+    btn.innerHTML = '🔐 Se connecter';
+    btn.disabled = false;
   }
-  btn.innerHTML = '🔐 Se connecter';
-  btn.disabled = false;
 });
 
-// Si déjà connecté
-if(localStorage.getItem('rh_token')) window.location.href = 'dashboard-recruteur.html';
+// Vérification si déjà connecté au chargement
+window.addEventListener('load', () => {
+  if(localStorage.getItem('rh_token')) {
+    window.location.href = 'dashboard-recruteur.html';
+  }
+});
 </script>
 </body>
 </html>
