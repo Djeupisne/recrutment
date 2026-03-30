@@ -5,21 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tableau de Bord – Recruteur</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* ── Donut chart SVG natif (pas de CDN) ────────────── */
+    .donut-wrap { position:relative;width:180px;height:180px;margin:0 auto 1rem; }
+    .donut-wrap svg { transform:rotate(-90deg); }
+    .donut-center {
+      position:absolute;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;pointer-events:none;
+    }
+    .donut-center .dn { font-size:1.8rem;font-weight:800;color:var(--text,#1a2433); }
+    .donut-center .dl { font-size:.7rem;color:var(--text-muted,#6b7a99);font-weight:600;text-transform:uppercase;letter-spacing:.5px; }
+    .chart-legend { display:flex;flex-wrap:wrap;gap:.5rem .9rem;justify-content:center;font-size:.78rem; }
+    .legend-dot { display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.3rem; }
+
+    /* ── Bar chart CSS ──────────────────────────────────── */
+    .bar-chart { display:flex;flex-direction:column;gap:.6rem; }
+    .bar-row   { display:flex;align-items:center;gap:.7rem;font-size:.78rem; }
+    .bar-label { width:140px;min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500; }
+    .bar-track { flex:1;height:14px;background:#e8edf5;border-radius:7px;overflow:hidden; }
+    .bar-fill  { height:100%;background:var(--primary,#1a3a5c);border-radius:7px;transition:width .5s; }
+    .bar-val   { width:24px;text-align:right;font-weight:700;color:var(--text-muted,#6b7a99); }
+
+    /* ── Grille présélection ────────────────────────────── */
+    .grille-section { margin-bottom:1.1rem; }
+    .grille-header  { display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.82rem;
+                      padding:.35rem .7rem;border-radius:6px;margin-bottom:.4rem;border-left:3px solid; }
+    .grille-item    { display:flex;align-items:flex-start;gap:.55rem;padding:.3rem .5rem;font-size:.83rem;
+                      border-radius:4px;cursor:pointer;transition:background .12s; }
+    .grille-item:hover { background:#f4f6fa; }
+    .grille-item input { margin-top:2px;cursor:pointer; }
+
+    /* ── Stars ──────────────────────────────────────────── */
+    .star-btn { background:none;border:none;font-size:1.4rem;cursor:pointer;padding:0 2px;
+                line-height:1;transition:transform .1s; }
+    .star-btn:hover { transform:scale(1.2); }
+
+    /* ── Email preview ──────────────────────────────────── */
+    .email-preview { background:#f8fafd;border:1px solid #dce3ef;border-radius:8px;padding:1.1rem; }
+    .ep-field  { margin-bottom:.4rem;font-size:.84rem; }
+    .ep-label  { font-weight:700;color:#6b7a99;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;margin-right:.4rem; }
+    .ep-body-area { width:100%;margin-top:.8rem;padding:.7rem;border:1px solid #dce3ef;border-radius:6px;
+                    font-family:inherit;font-size:.85rem;min-height:200px;resize:vertical;
+                    background:#fff;line-height:1.7;box-sizing:border-box; }
+
+    /* ── Extras ─────────────────────────────────────────── */
+    .stat-card.purple { border-color:#8e44ad; }
+    .badge-interview  { background:#cce5ff;color:#004085; }
+    .btn-info         { background:#2980b9;color:#fff; }
+    .btn-info:hover   { background:#1f6fa3; }
+    .td-small         { color:#6b7a99;font-size:.77rem; }
+    .alert-info       { background:#cce5ff;color:#004085;border:1px solid #b8daff;
+                        padding:.8rem 1rem;border-radius:8px;font-size:.85rem; }
+  </style>
 </head>
 <body>
 
-<!-- ── NAVBAR ──────────────────────────────────────────────────────────── -->
+<!-- NAVBAR -->
 <nav class="navbar">
   <div class="brand">🏦 <span>RecrutBank</span> <span class="tag">Recruteur</span></div>
   <div class="nav-links">
     <span id="nav-nom" style="color:rgba(255,255,255,.7);font-size:.88rem"></span>
-    <a href="index.html" style="color:rgba(255,255,255,.65);font-size:.85rem">Accueil</a>
+    <a href="index.html" style="color:rgba(255,255,255,.65);font-size:.85rem;margin-right:.5rem">Accueil</a>
     <button class="btn btn-outline btn-sm" onclick="logout()">🚪 Déconnexion</button>
   </div>
 </nav>
 
-<!-- ── LAYOUT ──────────────────────────────────────────────────────────── -->
 <div class="dash-layout">
 
   <!-- SIDEBAR -->
@@ -30,10 +80,12 @@
       <div class="u-role">Responsable RH</div>
     </div>
     <nav>
-      <a href="#" class="active" onclick="showSection('overview',this)">
+      <a href="#" id="nav-overview" class="active"
+         onclick="showSection('overview',this);return false;">
         <span class="icon">📊</span> Vue d'ensemble
       </a>
-      <a href="#" onclick="showSection('candidats',this)">
+      <a href="#" id="nav-candidats"
+         onclick="showSection('candidats',this);return false;">
         <span class="icon">👥</span> Candidats
       </a>
     </nav>
@@ -42,51 +94,52 @@
   <!-- MAIN -->
   <main class="dash-main">
 
-    <!-- ═══ SECTION : VUE D'ENSEMBLE ══════════════════════════════════ -->
+    <!-- ══ VUE D'ENSEMBLE ══ -->
     <div id="section-overview">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
-        <h2 class="dash-title" style="margin-bottom:0">Vue d'ensemble</h2>
-        <button class="btn btn-blue btn-sm" onclick="loadStats();loadRecent()">🔄 Actualiser</button>
+        <h2 class="dash-title" style="margin:0">Vue d'ensemble</h2>
+        <button class="btn btn-blue btn-sm" onclick="refreshAll()">🔄 Actualiser</button>
       </div>
 
-      <!-- Stats cards -->
       <div class="stats-grid">
-        <div class="stat-card blue">
-          <div class="stat-icon">👥</div>
-          <div class="stat-value" id="s-total">–</div>
-          <div class="stat-label">Total candidatures</div>
-        </div>
-        <div class="stat-card amber">
-          <div class="stat-icon">⏳</div>
-          <div class="stat-value" id="s-attente">–</div>
-          <div class="stat-label">En attente</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-icon">✅</div>
-          <div class="stat-value" id="s-retenu">–</div>
-          <div class="stat-label">Retenus</div>
-        </div>
-        <div class="stat-card red">
-          <div class="stat-icon">❌</div>
-          <div class="stat-value" id="s-rejete">–</div>
-          <div class="stat-label">Non retenus</div>
-        </div>
-        <div class="stat-card purple">
-          <div class="stat-icon">📅</div>
-          <div class="stat-value" id="s-entretien">–</div>
-          <div class="stat-label">En entretien</div>
-        </div>
+        <div class="stat-card blue">  <div class="stat-icon">👥</div><div class="stat-value" id="s-total">–</div>    <div class="stat-label">Candidatures</div></div>
+        <div class="stat-card amber"> <div class="stat-icon">⏳</div><div class="stat-value" id="s-attente">–</div>  <div class="stat-label">En attente</div></div>
+        <div class="stat-card green"> <div class="stat-icon">✅</div><div class="stat-value" id="s-retenu">–</div>   <div class="stat-label">Retenus</div></div>
+        <div class="stat-card red">   <div class="stat-icon">❌</div><div class="stat-value" id="s-rejete">–</div>   <div class="stat-label">Non retenus</div></div>
+        <div class="stat-card purple"><div class="stat-icon">📅</div><div class="stat-value" id="s-entretien">–</div><div class="stat-label">Entretiens</div></div>
       </div>
 
-      <!-- Graphiques -->
       <div class="chart-grid" style="margin-top:1.5rem">
+        <!-- Donut -->
         <div class="chart-box">
           <h4>Répartition par statut</h4>
-          <canvas id="chart-statut"></canvas>
+          <div class="donut-wrap">
+            <svg id="donut-svg" viewBox="0 0 36 36" width="180" height="180">
+              <circle cx="18" cy="18" r="15.915" fill="none" stroke="#e8edf5" stroke-width="3.5"/>
+              <circle id="arc-attente"   cx="18" cy="18" r="15.915" fill="none" stroke="#e8a020" stroke-width="3.5" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+              <circle id="arc-retenu"    cx="18" cy="18" r="15.915" fill="none" stroke="#1e7e34" stroke-width="3.5" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+              <circle id="arc-entretien" cx="18" cy="18" r="15.915" fill="none" stroke="#2980b9" stroke-width="3.5" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+              <circle id="arc-rejete"    cx="18" cy="18" r="15.915" fill="none" stroke="#c0392b" stroke-width="3.5" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+            </svg>
+            <div class="donut-center">
+              <span class="dn" id="donut-total">0</span>
+              <span class="dl">total</span>
+            </div>
+          </div>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background:#e8a020"></span>En attente</span>
+            <span><span class="legend-dot" style="background:#1e7e34"></span>Retenu</span>
+            <span><span class="legend-dot" style="background:#2980b9"></span>Entretien</span>
+            <span><span class="legend-dot" style="background:#c0392b"></span>Non retenu</span>
+          </div>
         </div>
+
+        <!-- Bar chart -->
         <div class="chart-box">
           <h4>Candidatures par poste</h4>
-          <canvas id="chart-poste"></canvas>
+          <div class="bar-chart" id="bar-chart">
+            <div class="empty-state" style="padding:1rem"><p>Chargement...</p></div>
+          </div>
         </div>
       </div>
 
@@ -94,7 +147,10 @@
       <div class="card" style="margin-top:1.5rem">
         <div class="card-header">
           <span class="card-title">🕐 Dernières candidatures</span>
-          <button class="btn btn-blue btn-sm" onclick="showSection('candidats',null)">Voir tout →</button>
+          <button class="btn btn-blue btn-sm"
+                  onclick="showSection('candidats', document.getElementById('nav-candidats'))">
+            Voir tout →
+          </button>
         </div>
         <div id="recent-table">
           <div class="empty-state"><div class="empty-icon">⏳</div><p>Chargement...</p></div>
@@ -102,38 +158,32 @@
       </div>
     </div>
 
-    <!-- ═══ SECTION : CANDIDATS ════════════════════════════════════════ -->
+    <!-- ══ CANDIDATS ══ -->
     <div id="section-candidats" style="display:none">
       <h2 class="dash-title">Gestion des Candidats</h2>
-
       <div class="card">
-        <!-- Filtres -->
         <div class="filter-bar">
-          <input class="form-control" id="f-search" placeholder="🔍 Rechercher nom, email..." oninput="loadCandidats()">
-          <select class="form-control" id="f-poste" onchange="loadCandidats()">
+          <input class="form-control" id="f-search"
+                 placeholder="🔍 Nom, prénom, email..."
+                 oninput="applyFilters()">
+          <select class="form-control" id="f-poste" onchange="applyFilters()">
             <option value="">Tous les postes</option>
           </select>
-          <select class="form-control" id="f-statut" onchange="loadCandidats()">
+          <select class="form-control" id="f-statut" onchange="applyFilters()">
             <option value="">Tous statuts</option>
             <option value="en_attente">⏳ En attente</option>
             <option value="retenu">✅ Retenu</option>
             <option value="entretien">📅 Entretien</option>
             <option value="rejete">❌ Non retenu</option>
           </select>
-          <button class="btn btn-blue btn-sm" onclick="loadCandidats()">🔄 Actualiser</button>
+          <button class="btn btn-blue btn-sm" onclick="fetchCandidats()">🔄 Actualiser</button>
         </div>
-
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>Candidat</th>
-                <th>Poste</th>
-                <th>Date</th>
-                <th>Statut</th>
-                <th>Score</th>
-                <th>Fichiers</th>
-                <th>Actions</th>
+                <th>Candidat</th><th>Poste</th><th>Date</th>
+                <th>Statut</th><th>Score</th><th>Fichiers</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="candidats-tbody">
@@ -145,196 +195,140 @@
     </div>
 
   </main>
-</div><!-- /.dash-layout -->
+</div>
 
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     MODAL : DOSSIER COMPLET DU CANDIDAT
-════════════════════════════════════════════════════════════════════════ -->
+<!-- ══ MODAL DOSSIER ══ -->
 <div class="modal-overlay" id="modal-candidat">
   <div class="modal" style="max-width:720px">
     <div class="modal-header">
-      <h3 id="modal-title">Dossier Candidat</h3>
+      <h3 id="modal-title">Dossier</h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-
     <div class="modal-body">
-
-      <!-- Infos candidat -->
-      <div id="modal-infos" style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem 1.5rem;margin-bottom:1.2rem;font-size:.88rem"></div>
-
-      <!-- Fichiers -->
-      <div id="modal-fichiers" style="display:flex;gap:.8rem;margin-bottom:1.4rem;flex-wrap:wrap"></div>
-
-      <!-- Onglets : Évaluation / Grille -->
+      <div id="modal-infos"
+           style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem 1.4rem;margin-bottom:1.1rem;font-size:.87rem">
+      </div>
+      <div id="modal-fichiers" style="display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.3rem"></div>
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('eval',this)">📝 Évaluation</button>
-        <button class="tab-btn" onclick="switchTab('grille',this)">📋 Grille de présélection</button>
+        <button class="tab-btn"        onclick="switchTab('grille',this)">📋 Grille de présélection</button>
       </div>
-
-      <!-- TAB : Évaluation -->
       <div id="tab-eval" class="tab-content active">
-        <div class="form-group">
-          <label>Score global (0 – 5 étoiles)</label>
-          <div id="stars-display" style="display:flex;gap:.3rem;font-size:1.6rem;cursor:pointer;margin-bottom:.3rem"></div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label>Score (0 – 5 étoiles)</label>
+          <div id="stars-row" style="display:flex;gap:0;margin-top:.3rem"></div>
         </div>
         <div class="form-group">
-          <label>Notes internes (visibles uniquement du recruteur)</label>
-          <textarea class="form-control" id="modal-note" style="min-height:90px" placeholder="Observations, points forts, réserves..."></textarea>
+          <label>Notes internes</label>
+          <textarea class="form-control" id="modal-note"
+                    style="min-height:90px" placeholder="Observations, points forts, réserves..."></textarea>
         </div>
       </div>
-
-      <!-- TAB : Grille de présélection -->
       <div id="tab-grille" class="tab-content">
-        <div id="grille-content">
-          <!-- rempli dynamiquement -->
-        </div>
+        <div id="grille-content" style="padding-top:.4rem"></div>
       </div>
-
-    </div><!-- /.modal-body -->
-
+    </div>
     <div class="modal-footer">
-      <button class="btn btn-success btn-sm"  onclick="updateStatut('retenu')">✅ Retenir</button>
-      <button class="btn btn-warning btn-sm"  onclick="updateStatut('entretien')">📅 Entretien</button>
-      <button class="btn btn-danger btn-sm"   onclick="updateStatut('rejete')">❌ Rejeter</button>
-      <button class="btn btn-info btn-sm"     onclick="openEmailModal()">📧 Préparer email</button>
+      <button class="btn btn-success btn-sm" onclick="updateStatut('retenu')">✅ Retenir</button>
+      <button class="btn btn-warning btn-sm" onclick="updateStatut('entretien')">📅 Entretien</button>
+      <button class="btn btn-danger btn-sm"  onclick="updateStatut('rejete')">❌ Rejeter</button>
+      <button class="btn btn-info btn-sm"    onclick="openEmailModal()">📧 Email</button>
       <button class="btn btn-sm" style="background:var(--border)" onclick="closeModal()">Fermer</button>
     </div>
   </div>
 </div>
 
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     MODAL : EMAIL
-════════════════════════════════════════════════════════════════════════ -->
+<!-- ══ MODAL EMAIL ══ -->
 <div class="modal-overlay" id="modal-email">
   <div class="modal" style="max-width:600px">
     <div class="modal-header">
       <h3>📧 Préparer l'Email</h3>
-      <button class="modal-close" onclick="closeEmailModal()">✕</button>
+      <button class="modal-close"
+              onclick="document.getElementById('modal-email').classList.remove('open')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="alert alert-info" style="margin-bottom:1rem">
-        💡 Copiez cet email ou ouvrez-le directement dans votre client de messagerie.
+      <div class="alert-info" style="margin-bottom:1rem">
+        💡 Copiez cet email ou ouvrez-le dans votre client de messagerie.
       </div>
-
       <div class="form-group">
         <label>Type de message</label>
-        <select class="form-control" id="email-type" onchange="loadEmailPreview()">
-          <option value="retenu">✅ Email de sélection (candidat retenu)</option>
-          <option value="entretien">📅 Convocation à un entretien</option>
+        <select class="form-control" id="email-type" onchange="buildEmail()">
+          <option value="retenu">✅ Candidature retenue</option>
+          <option value="entretien">📅 Convocation entretien</option>
           <option value="rejete">❌ Email de refus</option>
         </select>
       </div>
-
       <div class="email-preview">
-        <div class="ep-field">
-          <span class="ep-label">À :</span>
-          <span id="ep-to">–</span>
-        </div>
-        <div class="ep-field" style="margin-top:.4rem">
-          <span class="ep-label">Objet :</span>
-          <span id="ep-subject">–</span>
-        </div>
-        <div class="ep-body">
-          <textarea id="ep-body" style="width:100%;min-height:220px;border:none;background:transparent;font-size:.87rem;font-family:inherit;resize:vertical;outline:none;line-height:1.7"></textarea>
-        </div>
+        <div class="ep-field"><span class="ep-label">À :</span><span id="ep-to">–</span></div>
+        <div class="ep-field"><span class="ep-label">Objet :</span><span id="ep-subject">–</span></div>
+        <textarea class="ep-body-area" id="ep-body"></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary btn-sm" onclick="copyEmail()">📋 Copier l'email</button>
+      <button class="btn btn-primary btn-sm" onclick="copyEmail()">📋 Copier</button>
       <button class="btn btn-blue btn-sm"    onclick="openMailClient()">📤 Ouvrir dans Mail</button>
-      <button class="btn btn-sm" style="background:var(--border)" onclick="closeEmailModal()">Fermer</button>
+      <button class="btn btn-sm" style="background:var(--border)"
+              onclick="document.getElementById('modal-email').classList.remove('open')">Fermer</button>
     </div>
   </div>
 </div>
 
 <div class="toast-container" id="toast-container"></div>
-
 <script src="script.js"></script>
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────────────────
-const API = 'https://backend1-fiq5.onrender.com/api';
-let jwtToken = localStorage.getItem('rh_token');
-let currentId = null;   // token Redis du candidat en cours
-let currentScore = 0;
-let emailData = null;
-let chartStatut = null, chartPoste = null;
+/* ══════════════════════════════════════════════════════════
+   CONFIG & ÉTAT GLOBAL
+══════════════════════════════════════════════════════════ */
+const API       = 'https://backend1-fiq5.onrender.com/api';
+let jwtToken    = localStorage.getItem('rh_token');
+let allCandidats= [];   // cache local — évite les appels de détail (= pas de 404)
+let currentC    = null; // candidat courant dans le modal
+let currentScore= 0;
 
-// ── GRILLE DE PRÉSÉLECTION (miroir de server.py) ─────────────────────────
-const GRILLE = {
-  "Responsable Administration de Crédit": {
-    eliminatoire: ["Pas d'expérience bancaire","Moins de 3 ans en crédit / risque","Aucune exposition aux garanties ou conformité"],
-    a_verifier:   ["A-t-il déjà validé des dossiers de crédit ?","A-t-il géré des garanties ?","A-t-il participé à des audits ?"],
-    signaux_forts:["Mention IFRS 9","Mention COBAC / conformité","Suivi portefeuille / impayés"],
-    points_attention:["Parcours trop « comptable pur »","Rôle uniquement administratif sans responsabilité","CV flou (missions génériques)"]
-  },
-  "Analyste Crédit CCB": {
-    eliminatoire: ["Pas d'expérience en analyse crédit","Profil purement commercial sans analyse","Incapacité à lire des états financiers"],
-    a_verifier:   ["Type de clients : PME ? Particuliers ?","A-t-il structuré un crédit ?","A-t-il donné un avis de crédit ?"],
-    signaux_forts:["Mention cash-flow analysis","Mention montage de crédit","Mention comités de crédit"],
-    points_attention:["CV trop « relation client »","Aucune notion de risque","Expériences très courtes sans progression"]
-  },
-  "Archiviste (Administration Crédit)": {
-    eliminatoire: ["Aucune expérience en gestion documentaire structurée","Absence de rigueur démontrée"],
-    a_verifier:   ["Expérience avec archivage physique + électronique ?","Gestion de dossiers sensibles ?"],
-    signaux_forts:["Expérience en banque / juridique","Manipulation de garanties ou contrats"],
-    points_attention:["Profil trop généraliste (assistant admin sans spécialisation)","CV désorganisé (ironie révélatrice)"]
-  },
-  "Senior Finance Officer": {
-    eliminatoire: ["Pas d'expérience en finance senior","Aucune maîtrise des outils de reporting financier"],
-    a_verifier:   ["Maîtrise des normes IFRS ?","Expérience en pilotage budgétaire ?"],
-    signaux_forts:["Expérience en consolidation financière","Maîtrise Excel avancé / Power BI"],
-    points_attention:["Profil trop opérationnel sans vision stratégique","Manque d'expérience en environnement bancaire"]
-  },
-  "Market Risk Officer": {
-    eliminatoire: ["Pas d'expérience en gestion des risques de marché","Aucune connaissance des produits financiers"],
-    a_verifier:   ["Maîtrise des modèles VaR / stress testing ?","Expérience en back-testing ?"],
-    signaux_forts:["Mention Basel III / IV","Expérience en salle des marchés","Maîtrise Python / R pour modélisation"],
-    points_attention:["Profil purement académique sans expérience terrain","Expérience uniquement en risque crédit"]
-  },
-  "IT Réseau & Infrastructure": {
-    eliminatoire: ["Pas de certification réseau (Cisco, CompTIA…)","Aucune expérience en administration système"],
-    a_verifier:   ["Expérience avec environnements bancaires sécurisés ?","Gestion d'incidents en production ?"],
-    signaux_forts:["Certification CCNA / CCNP","Expérience en cybersécurité","Maîtrise virtualisation (VMware, Hyper-V)"],
-    points_attention:["Profil trop orienté développement","Manque d'expérience en environnement haute disponibilité"]
-  }
-};
-
-// ── AUTH ─────────────────────────────────────────────────────────────────────
-if (!jwtToken) window.location.href = 'login.html';
+/* ══════════════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════════════ */
+if (!jwtToken) { window.location.href = 'login.html'; }
 
 const nomRH = localStorage.getItem('rh_nom') || 'Recruteur';
-document.getElementById('nav-nom').textContent = nomRH;
-document.getElementById('sidebar-nom').textContent = nomRH;
-document.getElementById('sidebar-avatar').textContent = nomRH.charAt(0).toUpperCase();
+document.getElementById('nav-nom').textContent       = nomRH;
+document.getElementById('sidebar-nom').textContent   = nomRH;
+document.getElementById('sidebar-avatar').textContent= nomRH.charAt(0).toUpperCase();
 
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
-function authH()  { return { 'Authorization': `Bearer ${jwtToken}`, 'Content-Type': 'application/json' }; }
+function authH()  {
+  return { 'Authorization': 'Bearer ' + jwtToken, 'Content-Type': 'application/json' };
+}
 
-// ── NAVIGATION ───────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════════ */
 function showSection(name, el) {
-  ['overview','candidats'].forEach(s => {
-    document.getElementById(`section-${s}`).style.display = s===name ? 'block' : 'none';
-  });
+  document.getElementById('section-overview').style.display  = name === 'overview'  ? 'block' : 'none';
+  document.getElementById('section-candidats').style.display = name === 'candidats' ? 'block' : 'none';
   document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
   if (el) el.classList.add('active');
-  if (name === 'candidats') loadCandidats();
-  if (name === 'overview')  { loadStats(); loadRecent(); }
+  // Quand on arrive sur candidats → afficher le tableau avec les données déjà en cache
+  if (name === 'candidats') renderTable(allCandidats);
 }
 
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById(`tab-${name}`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
 }
 
-// ── STATS ────────────────────────────────────────────────────────────────────
-async function loadStats() {
+function refreshAll() { fetchStats(); fetchCandidats(); }
+
+/* ══════════════════════════════════════════════════════════
+   STATS + GRAPHIQUES NATIFS (zéro CDN externe)
+══════════════════════════════════════════════════════════ */
+async function fetchStats() {
   try {
-    const res = await fetch(`${API}/recruteur/stats`, { headers: authH() });
+    const res = await fetch(API + '/recruteur/stats', { headers: authH() });
     if (res.status === 401) { logout(); return; }
+    if (!res.ok) { console.error('Stats HTTP', res.status); return; }
     const d = await res.json();
 
     document.getElementById('s-total').textContent    = d.total;
@@ -342,302 +336,400 @@ async function loadStats() {
     document.getElementById('s-retenu').textContent   = d.retenu;
     document.getElementById('s-rejete').textContent   = d.rejete;
     document.getElementById('s-entretien').textContent= d.entretien;
+    document.getElementById('donut-total').textContent= d.total;
 
-    // Chart statut
-    if (chartStatut) chartStatut.destroy();
-    chartStatut = new Chart(document.getElementById('chart-statut'), {
-      type: 'doughnut',
-      data: {
-        labels: ['En attente','Retenu','Entretien','Non retenu'],
-        datasets: [{ data: [d.en_attente, d.retenu, d.entretien, d.rejete],
-                     backgroundColor: ['#e8a020','#1e7e34','#2980b9','#c0392b'], borderWidth:2 }]
-      },
-      options: { plugins:{ legend:{ position:'bottom', labels:{ font:{size:11} } } }, cutout:'60%' }
-    });
-
-    // Chart par poste
-    if (chartPoste) chartPoste.destroy();
-    const posteLabels = d.by_poste.map(p => p.poste.split(' ').slice(0,3).join(' '));
-    const posteData   = d.by_poste.map(p => p.n);
-    chartPoste = new Chart(document.getElementById('chart-poste'), {
-      type: 'bar',
-      data: {
-        labels: posteLabels,
-        datasets: [{ label:'Candidats', data: posteData, backgroundColor:'#1a3a5c', borderRadius:5 }]
-      },
-      options: { plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 } } } }
-    });
-  } catch(e) { console.error('Stats error:', e); }
+    renderDonut(d);
+    renderBarChart(d.by_poste || []);
+  } catch (e) { console.error('fetchStats:', e); }
 }
 
-// ── DERNIÈRES CANDIDATURES ───────────────────────────────────────────────────
-async function loadRecent() {
-  try {
-    const res  = await fetch(`${API}/recruteur/candidats`, { headers: authH() });
-    const data = await res.json();
-    const container = document.getElementById('recent-table');
-
-    if (!data.length) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Aucune candidature pour le moment.</p></div>';
-      return;
-    }
-
-    const rows = data.slice(0,8).map(c => `
-      <tr>
-        <td><strong>${c.prenom} ${c.nom}</strong><br><small style="color:var(--text-muted)">${c.email}</small></td>
-        <td style="font-size:.82rem">${c.poste}</td>
-        <td style="font-size:.8rem;color:var(--text-muted)">${new Date(c.date_candidature).toLocaleDateString('fr-FR')}</td>
-        <td>${badgePill(c.statut)}</td>
-        <td><button class="btn btn-blue btn-sm" onclick="openModal('${c.id}')">Voir →</button></td>
-      </tr>`).join('');
-
-    container.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th>Action</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>`;
-  } catch(e) { console.error('Recent error:', e); }
+/* Donut SVG — pas de lib externe, pas de CDN */
+function renderDonut(d) {
+  const total = d.total || 1;
+  const segs  = [
+    { id: 'arc-attente',   val: d.en_attente },
+    { id: 'arc-retenu',    val: d.retenu     },
+    { id: 'arc-entretien', val: d.entretien  },
+    { id: 'arc-rejete',    val: d.rejete     }
+  ];
+  const circ = 100;
+  let offset = 25; // début en haut
+  segs.forEach(s => {
+    const pct = (s.val / total) * circ;
+    const el  = document.getElementById(s.id);
+    el.setAttribute('stroke-dasharray',  pct + ' ' + (circ - pct));
+    el.setAttribute('stroke-dashoffset', String(-(offset - 25)));
+    offset += pct;
+  });
 }
 
-// ── LISTE CANDIDATS ──────────────────────────────────────────────────────────
-async function loadCandidats() {
-  const params = new URLSearchParams();
-  const s  = document.getElementById('f-search')?.value;  if(s)  params.append('search', s);
-  const p  = document.getElementById('f-poste')?.value;   if(p)  params.append('poste', p);
-  const st = document.getElementById('f-statut')?.value;  if(st) params.append('statut', st);
-
-  try {
-    const res  = await fetch(`${API}/recruteur/candidats?${params}`, { headers: authH() });
-    const data = await res.json();
-    const tbody = document.getElementById('candidats-tbody');
-
-    if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Aucun candidat trouvé</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = data.map(c => `
-      <tr>
-        <td>
-          <strong>${c.prenom} ${c.nom}</strong><br>
-          <small style="color:var(--text-muted)">${c.email}</small><br>
-          <small style="color:var(--text-muted)">${c.telephone || ''}</small>
-        </td>
-        <td style="font-size:.82rem">${c.poste}</td>
-        <td style="font-size:.8rem;color:var(--text-muted)">${new Date(c.date_candidature).toLocaleDateString('fr-FR')}</td>
-        <td>${badgePill(c.statut)}</td>
-        <td style="font-size:.9rem">${'⭐'.repeat(parseInt(c.score)||0)}${'☆'.repeat(5-(parseInt(c.score)||0))}</td>
-        <td style="font-size:.78rem">
-          ${c.cv_filename      ? `<a href="${API}/recruteur/uploads/${c.cv_filename}"      target="_blank" style="color:var(--primary)">📄 CV</a>` : '–'}
-          ${c.lettre_filename  ? `<a href="${API}/recruteur/uploads/${c.lettre_filename}"  target="_blank" style="color:var(--primary)"> 📃 LM</a>` : ''}
-        </td>
-        <td class="td-actions">
-          <button class="btn btn-blue btn-sm" onclick="openModal('${c.id}')">📋 Dossier</button>
-          <button class="btn btn-info btn-sm" onclick="quickEmail('${c.id}')">📧</button>
-        </td>
-      </tr>`).join('');
-  } catch(e) { console.error('Candidats error:', e); }
-}
-
-// ── HELPERS BADGE ─────────────────────────────────────────────────────────────
-function badgePill(statut) {
-  const cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
-  const lbl = { en_attente:'⏳ En attente', retenu:'✅ Retenu', rejete:'❌ Non retenu', entretien:'📅 Entretien' };
-  return `<span class="badge ${cls[statut]||'badge-pending'}">${lbl[statut]||statut}</span>`;
-}
-
-// ── MODAL DOSSIER ────────────────────────────────────────────────────────────
-async function openModal(id) {
-  currentId = id;
-  currentScore = 0;
-  try {
-    const res = await fetch(`${API}/recruteur/candidats/${id}`, { headers: authH() });
-    if (!res.ok) { showToast('Candidat introuvable','error'); return; }
-    const c = await res.json();
-
-    document.getElementById('modal-title').textContent = `${c.prenom} ${c.nom}`;
-
-    // Infos
-    document.getElementById('modal-infos').innerHTML = `
-      <div><span style="font-size:.75rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">Email</span><br>${c.email}</div>
-      <div><span style="font-size:.75rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">Téléphone</span><br>${c.telephone||'–'}</div>
-      <div><span style="font-size:.75rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">Poste</span><br><strong style="color:var(--primary)">${c.poste}</strong></div>
-      <div><span style="font-size:.75rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">Statut</span><br>${badgePill(c.statut)}</div>
-      <div><span style="font-size:.75rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">Date candidature</span><br>${new Date(c.date_candidature).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}</div>`;
-
-    // Fichiers
-    const cvLnk = c.cv_filename
-      ? `<a href="${API}/recruteur/uploads/${c.cv_filename}" target="_blank" class="btn btn-blue btn-sm">📄 Voir CV</a>`
-      : `<span style="color:var(--text-muted);font-size:.82rem">CV non fourni</span>`;
-    const lmLnk = c.lettre_filename
-      ? `<a href="${API}/recruteur/uploads/${c.lettre_filename}" target="_blank" class="btn btn-blue btn-sm">📃 Lettre de motivation</a>`
-      : `<span style="color:var(--text-muted);font-size:.82rem">Lettre non fournie</span>`;
-    document.getElementById('modal-fichiers').innerHTML = cvLnk + '&nbsp;' + lmLnk;
-
-    // Score
-    currentScore = parseInt(c.score) || 0;
-    renderStars(currentScore);
-
-    // Note
-    document.getElementById('modal-note').value = c.note || '';
-
-    // Grille de présélection
-    renderGrille(c.poste, c.checklist || '');
-
-    // Reset tab to eval
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(ct => ct.classList.remove('active'));
-    document.querySelector('.tab-btn').classList.add('active');
-    document.getElementById('tab-eval').classList.add('active');
-
-    document.getElementById('modal-candidat').classList.add('open');
-  } catch(e) { console.error(e); showToast('Erreur lors du chargement','error'); }
-}
-
-function renderStars(n) {
-  const div = document.getElementById('stars-display');
-  div.innerHTML = '';
-  for (let i = 1; i <= 5; i++) {
-    const span = document.createElement('span');
-    span.textContent = i <= n ? '⭐' : '☆';
-    span.title = `${i} étoile${i>1?'s':''}`;
-    span.onclick = () => { currentScore = i; renderStars(i); };
-    div.appendChild(span);
-  }
-}
-
-function renderGrille(poste, checklistJson) {
-  const g = GRILLE[poste];
-  if (!g) {
-    document.getElementById('grille-content').innerHTML =
-      '<p style="color:var(--text-muted);font-size:.88rem">Grille non disponible pour ce poste.</p>';
+/* Bar chart CSS — pas de lib */
+function renderBarChart(byPoste) {
+  const el = document.getElementById('bar-chart');
+  if (!byPoste.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:1rem"><p>Aucune donnée</p></div>';
     return;
   }
+  const max = Math.max(...byPoste.map(p => p.n), 1);
+  el.innerHTML = byPoste.map(p => {
+    const lbl = p.poste.split(' ').slice(0, 3).join(' ');
+    const pct = Math.round((p.n / max) * 100);
+    return '<div class="bar-row">'
+         + '<div class="bar-label" title="' + p.poste + '">' + lbl + '</div>'
+         + '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>'
+         + '<div class="bar-val">' + p.n + '</div>'
+         + '</div>';
+  }).join('');
+}
 
+/* ══════════════════════════════════════════════════════════
+   CANDIDATS — fetch + cache local + render
+══════════════════════════════════════════════════════════ */
+async function fetchCandidats() {
+  try {
+    const res = await fetch(API + '/recruteur/candidats', { headers: authH() });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) { showToast('Erreur chargement candidats', 'error'); return; }
+    allCandidats = await res.json();
+    populatePosteFilter(allCandidats);
+    renderTable(allCandidats);
+    renderRecent(allCandidats);
+  } catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
+}
+
+function populatePosteFilter(data) {
+  const sel   = document.getElementById('f-poste');
+  const postes= [...new Set(data.map(c => c.poste))].sort();
+  while (sel.options.length > 1) sel.remove(1);
+  postes.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = p; sel.appendChild(opt);
+  });
+}
+
+/* Filtrage 100% côté client — zéro requête serveur, réactif */
+function applyFilters() {
+  const search = document.getElementById('f-search').value.toLowerCase().trim();
+  const poste  = document.getElementById('f-poste').value;
+  const statut = document.getElementById('f-statut').value;
+  const result = allCandidats.filter(c => {
+    const hay = (c.nom + ' ' + c.prenom + ' ' + c.email).toLowerCase();
+    return (!search || hay.includes(search))
+        && (!poste  || c.poste  === poste)
+        && (!statut || c.statut === statut);
+  });
+  renderTable(result);
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('candidats-tbody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Aucun candidat trouvé</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(c => {
+    const cvLink = c.cv_filename
+      ? '<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" style="color:var(--primary);font-size:.78rem">📄 CV</a>'
+      : '<span style="color:#ccc;font-size:.78rem">–</span>';
+    const lmLink = c.lettre_filename
+      ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" style="color:var(--primary);font-size:.78rem;margin-left:.4rem">📃 LM</a>'
+      : '';
+    const score  = parseInt(c.score) || 0;
+    const stars  = '⭐'.repeat(score) + '☆'.repeat(5 - score);
+    return '<tr>'
+      + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong>'
+      + '<br><span class="td-small">' + c.email + '</span>'
+      + (c.telephone ? '<br><span class="td-small">' + c.telephone + '</span>' : '')
+      + '</td>'
+      + '<td style="font-size:.82rem">' + c.poste + '</td>'
+      + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
+      + '<td>' + badgePill(c.statut) + '</td>'
+      + '<td style="font-size:.85rem;letter-spacing:-1px">' + stars + '</td>'
+      + '<td>' + cvLink + lmLink + '</td>'
+      + '<td class="td-actions">'
+      + '<button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">📋 Dossier</button> '
+      + '<button class="btn btn-info btn-sm"  onclick="quickEmail(\'' + c.id + '\')">📧</button>'
+      + '</td></tr>';
+  }).join('');
+}
+
+function renderRecent(data) {
+  const container = document.getElementById('recent-table');
+  const slice = data.slice(0, 8);
+  if (!slice.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Aucune candidature.</p></div>';
+    return;
+  }
+  const rows = slice.map(c =>
+    '<tr>'
+    + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br>'
+    + '<small style="color:var(--text-muted)">' + c.email + '</small></td>'
+    + '<td style="font-size:.82rem">' + c.poste + '</td>'
+    + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
+    + '<td>' + badgePill(c.statut) + '</td>'
+    + '<td><button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">Voir →</button></td>'
+    + '</tr>'
+  ).join('');
+  container.innerHTML =
+    '<div class="table-wrap"><table>'
+    + '<thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th></th></tr></thead>'
+    + '<tbody>' + rows + '</tbody></table></div>';
+}
+
+/* ══════════════════════════════════════════════════════════
+   MODAL DOSSIER — données depuis le cache (zéro appel /detail)
+══════════════════════════════════════════════════════════ */
+function openModal(id) {
+  const c = allCandidats.find(x => x.id === id);
+  if (!c) { showToast('Actualisez la liste d\'abord (🔄)', 'error'); return; }
+  currentC     = c;
+  currentScore = parseInt(c.score) || 0;
+
+  document.getElementById('modal-title').textContent = c.prenom + ' ' + c.nom;
+
+  // Infos
+  document.getElementById('modal-infos').innerHTML =
+    info('Email',           c.email) +
+    info('Téléphone',       c.telephone || '–') +
+    info('Poste',           '<strong style="color:var(--primary)">' + c.poste + '</strong>', true) +
+    info('Statut actuel',   badgePill(c.statut), true) +
+    info('Date candidature',fmtDateLong(c.date_candidature));
+
+  // Fichiers
+  const cvLnk = c.cv_filename
+    ? '<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-blue btn-sm">📄 Voir CV</a>'
+    : '<span style="color:var(--text-muted);font-size:.83rem">CV non fourni</span>';
+  const lmLnk = c.lettre_filename
+    ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-blue btn-sm">📃 Lettre de motivation</a>'
+    : '<span style="color:var(--text-muted);font-size:.83rem">Lettre non fournie</span>';
+  document.getElementById('modal-fichiers').innerHTML = cvLnk + ' ' + lmLnk;
+
+  // Score & note
+  renderStars(currentScore);
+  document.getElementById('modal-note').value = c.note || '';
+
+  // Grille présélection
+  renderGrille(c.poste, c.checklist || '');
+
+  // Reset tab
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector('.tab-btn').classList.add('active');
+  document.getElementById('tab-eval').classList.add('active');
+
+  document.getElementById('modal-candidat').classList.add('open');
+}
+
+function info(label, val, raw) {
+  return '<div>'
+    + '<div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">' + label + '</div>'
+    + '<div>' + (raw ? val : escHtml(String(val))) + '</div>'
+    + '</div>';
+}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function closeModal() {
+  document.getElementById('modal-candidat').classList.remove('open');
+  currentC = null;
+}
+
+/* ── Stars ──────────────────────────────────────────────────────────── */
+function renderStars(n) {
+  const row = document.getElementById('stars-row');
+  row.innerHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.createElement('button');
+    btn.className   = 'star-btn';
+    btn.textContent = i <= n ? '⭐' : '☆';
+    btn.title       = i + ' étoile' + (i > 1 ? 's' : '');
+    btn.onclick     = () => { currentScore = i; renderStars(i); };
+    row.appendChild(btn);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   GRILLE DE PRÉSÉLECTION (logique Word)
+══════════════════════════════════════════════════════════ */
+const GRILLE = {
+  "Responsable Administration de Crédit": {
+    eliminatoire:     ["Pas d'expérience bancaire","Moins de 3 ans en crédit / risque","Aucune exposition aux garanties ou conformité"],
+    a_verifier:       ["A-t-il déjà validé des dossiers de crédit ?","A-t-il géré des garanties ?","A-t-il participé à des audits ?"],
+    signaux_forts:    ["Mention IFRS 9","Mention COBAC / conformité","Suivi portefeuille / impayés"],
+    points_attention: ["Parcours trop « comptable pur »","Rôle uniquement administratif sans responsabilité","CV flou (missions génériques)"]
+  },
+  "Analyste Crédit CCB": {
+    eliminatoire:     ["Pas d'expérience en analyse crédit","Profil purement commercial sans analyse","Incapacité à lire des états financiers"],
+    a_verifier:       ["Type de clients : PME ? Particuliers ?","A-t-il structuré un crédit ?","A-t-il donné un avis de crédit ?"],
+    signaux_forts:    ["Mention cash-flow analysis","Mention montage de crédit","Mention comités de crédit"],
+    points_attention: ["CV trop « relation client »","Aucune notion de risque","Expériences très courtes sans progression"]
+  },
+  "Archiviste (Administration Crédit)": {
+    eliminatoire:     ["Aucune expérience en gestion documentaire structurée","Absence de rigueur démontrée"],
+    a_verifier:       ["Expérience archivage physique + électronique ?","Gestion de dossiers sensibles ?"],
+    signaux_forts:    ["Expérience en banque / juridique","Manipulation de garanties ou contrats"],
+    points_attention: ["Profil trop généraliste","CV désorganisé"]
+  },
+  "Senior Finance Officer": {
+    eliminatoire:     ["Pas d'expérience en finance senior","Aucune maîtrise des outils de reporting"],
+    a_verifier:       ["Maîtrise des normes IFRS ?","Expérience en pilotage budgétaire ?"],
+    signaux_forts:    ["Expérience en consolidation financière","Maîtrise Excel avancé / Power BI"],
+    points_attention: ["Profil trop opérationnel sans vision stratégique","Manque d'expérience bancaire"]
+  },
+  "Market Risk Officer": {
+    eliminatoire:     ["Pas d'expérience en risques de marché","Aucune connaissance des produits financiers"],
+    a_verifier:       ["Maîtrise VaR / stress testing ?","Expérience en back-testing ?"],
+    signaux_forts:    ["Mention Basel III / IV","Expérience salle des marchés","Maîtrise Python / R"],
+    points_attention: ["Profil purement académique sans terrain","Expérience uniquement en risque crédit"]
+  },
+  "IT Réseau & Infrastructure": {
+    eliminatoire:     ["Pas de certification réseau (Cisco, CompTIA…)","Aucune expérience en administration système"],
+    a_verifier:       ["Expérience environnements bancaires sécurisés ?","Gestion d'incidents en production ?"],
+    signaux_forts:    ["Certification CCNA / CCNP","Expérience en cybersécurité","Maîtrise VMware / Hyper-V"],
+    points_attention: ["Profil trop orienté développement","Manque d'expérience haute disponibilité"]
+  }
+};
+
+function renderGrille(poste, checklistJson) {
+  const g  = GRILLE[poste];
+  const el = document.getElementById('grille-content');
+  if (!g) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem">Grille non définie pour ce poste.</p>'; return; }
   let checked = {};
   try { checked = JSON.parse(checklistJson || '{}'); } catch {}
 
-  const section = (title, color, icon, items, prefix) => {
-    const rows = items.map((item, i) => {
-      const key = `${prefix}_${i}`;
-      const isChecked = !!checked[key];
-      return `<label style="display:flex;align-items:flex-start;gap:.6rem;padding:.4rem .2rem;cursor:pointer;font-size:.85rem;border-radius:4px;transition:background .15s" onmouseover="this.style.background='#f8fafd'" onmouseout="this.style.background=''"  >
-        <input type="checkbox" data-key="${key}" ${isChecked?'checked':''} style="margin-top:2px;cursor:pointer" onchange="syncChecklist()">
-        <span>${item}</span>
-      </label>`;
-    }).join('');
+  const mkSection = (title, color, icon, items, pfx) =>
+    '<div class="grille-section">'
+    + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">'
+    + icon + ' ' + title + '</div>'
+    + items.map((item, i) => {
+        const key = pfx + '_' + i;
+        return '<label class="grille-item">'
+          + '<input type="checkbox" data-key="' + key + '" ' + (checked[key] ? 'checked' : '') + ' onchange="syncChecklist()">'
+          + '<span>' + item + '</span></label>';
+      }).join('')
+    + '</div>';
 
-    return `<div style="margin-bottom:1.2rem">
-      <div style="display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.88rem;color:${color};margin-bottom:.5rem;padding:.4rem .6rem;background:${color}18;border-radius:6px;border-left:3px solid ${color}">
-        ${icon} ${title}
-      </div>
-      ${rows}
-    </div>`;
-  };
-
-  document.getElementById('grille-content').innerHTML =
-    section('Éliminatoire immédiat — critères rédhibitoires', '#c0392b', '🔴', g.eliminatoire, 'elim') +
-    section('À vérifier dans le CV', '#e67e22', '🟠', g.a_verifier, 'verif') +
-    section('Signaux forts — profil prioritaire', '#1e7e34', '🟡', g.signaux_forts, 'signal') +
-    section('Points d\'attention', '#7f8c8d', '⚠️', g.points_attention, 'attn');
+  el.innerHTML =
+    mkSection('Éliminatoire immédiat',      '#c0392b','🔴', g.eliminatoire,     'elim')  +
+    mkSection('À vérifier dans le CV',       '#e67e22','🟠', g.a_verifier,       'verif') +
+    mkSection('Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
+    mkSection("Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
 }
 
 function syncChecklist() {
-  const boxes = document.querySelectorAll('#grille-content input[type=checkbox]');
+  const boxes  = document.querySelectorAll('#grille-content input[type=checkbox]');
   const result = {};
   boxes.forEach(b => { result[b.dataset.key] = b.checked; });
   return JSON.stringify(result);
 }
 
-function closeModal() {
-  document.getElementById('modal-candidat').classList.remove('open');
-  currentId = null;
-}
-
-// ── MISE À JOUR STATUT ───────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════
+   MISE À JOUR STATUT
+══════════════════════════════════════════════════════════ */
 async function updateStatut(statut) {
-  if (!currentId) return;
+  if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
   const note      = document.getElementById('modal-note').value;
   const checklist = syncChecklist();
-
   try {
-    const res = await fetch(`${API}/recruteur/candidats/${currentId}/statut`, {
-      method: 'PUT',
-      headers: authH(),
-      body: JSON.stringify({ statut, note, score: currentScore, checklist })
-    });
+    const res = await fetch(
+      API + '/recruteur/candidats/' + currentC.id + '/statut',
+      { method:'PUT', headers: authH(), body: JSON.stringify({ statut, note, score: currentScore, checklist }) }
+    );
     if (res.ok) {
-      showToast('Statut mis à jour avec succès', 'success');
+      // Mettre à jour le cache local immédiatement
+      const idx = allCandidats.findIndex(x => x.id === currentC.id);
+      if (idx !== -1) Object.assign(allCandidats[idx], { statut, note, score: String(currentScore), checklist });
+      showToast('Statut mis à jour : ' + statut, 'success');
       closeModal();
-      loadCandidats();
-      loadStats();
-      loadRecent();
+      applyFilters();
+      renderRecent(allCandidats);
+      fetchStats();
     } else {
-      const d = await res.json();
-      showToast(d.error || 'Erreur', 'error');
+      const d = await res.json().catch(() => ({}));
+      showToast(d.error || 'Erreur lors de la mise à jour', 'error');
     }
-  } catch(e) { showToast('Erreur de connexion', 'error'); }
+  } catch (e) { showToast('Erreur de connexion', 'error'); console.error(e); }
 }
 
-// ── EMAIL ────────────────────────────────────────────────────────────────────
-async function openEmailModal() {
-  if (!currentId) return;
-  await loadEmailPreview();
+/* ══════════════════════════════════════════════════════════
+   EMAIL (100% JavaScript côté client — zéro dépendance backend)
+══════════════════════════════════════════════════════════ */
+function openEmailModal() {
+  if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
+  // Présélectionner le type selon le statut actuel
+  const sel = document.getElementById('email-type');
+  sel.value = ['retenu','entretien','rejete'].includes(currentC.statut) ? currentC.statut : 'retenu';
+  buildEmail();
   document.getElementById('modal-email').classList.add('open');
 }
 
-async function quickEmail(id) {
-  currentId = id;
-  await loadEmailPreview();
+function quickEmail(id) {
+  const c = allCandidats.find(x => x.id === id);
+  if (!c) return;
+  currentC = c;
+  const sel = document.getElementById('email-type');
+  sel.value = ['retenu','entretien','rejete'].includes(c.statut) ? c.statut : 'retenu';
+  buildEmail();
   document.getElementById('modal-email').classList.add('open');
 }
 
-async function loadEmailPreview() {
-  if (!currentId) return;
+function buildEmail() {
+  if (!currentC) return;
   const type = document.getElementById('email-type').value;
-  try {
-    const res = await fetch(`${API}/recruteur/candidats/${currentId}/email-preview`, {
-      method: 'POST',
-      headers: authH(),
-      body: JSON.stringify({ type })
-    });
-    emailData = await res.json();
-    document.getElementById('ep-to').textContent      = `${emailData.nom} <${emailData.to}>`;
-    document.getElementById('ep-subject').textContent = emailData.sujet;
-    document.getElementById('ep-body').value          = emailData.corps;
-  } catch(e) { console.error(e); }
+  const nom  = currentC.prenom + ' ' + currentC.nom;
+  const pos  = currentC.poste;
+  document.getElementById('ep-to').textContent      = nom + ' <' + currentC.email + '>';
+  document.getElementById('ep-subject').textContent = emailSubject(type, pos);
+  document.getElementById('ep-body').value          = emailBody(type, nom, pos);
+}
+
+function emailSubject(type, poste) {
+  return { retenu:'Félicitations – Candidature retenue – ' + poste,
+           entretien:'Invitation à un entretien – ' + poste,
+           rejete:'Réponse à votre candidature – ' + poste }[type] || '';
+}
+
+function emailBody(type, nom, poste) {
+  const sign = '\n\nCordialement,\nL\'équipe Ressources Humaines\nRecrutBank';
+  if (type === 'retenu')
+    return 'Madame, Monsieur ' + nom + ',\n\nNous avons le plaisir de vous informer que votre candidature pour le poste de ' + poste + ' a été retenue à l\'issue de notre processus de présélection.\n\nNous vous contacterons très prochainement pour vous communiquer les modalités de la prochaine étape du processus de recrutement.\n\nDans l\'attente, nous restons disponibles pour toute question.' + sign;
+  if (type === 'entretien')
+    return 'Madame, Monsieur ' + nom + ',\n\nSuite à l\'examen de votre candidature pour le poste de ' + poste + ', nous avons le plaisir de vous inviter à un entretien avec notre équipe.\n\nNous prendrons contact avec vous dans les meilleurs délais pour convenir d\'une date et d\'un horaire.' + sign;
+  return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions sincèrement de l\'intérêt que vous portez à notre institution et du temps consacré à votre candidature pour le poste de ' + poste + '.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour la suite du processus de sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil, et vous souhaitons plein succès dans votre recherche.' + sign;
 }
 
 function copyEmail() {
-  if (!emailData) return;
-  const txt = `À: ${emailData.to}\nObjet: ${document.getElementById('ep-subject').textContent}\n\n${document.getElementById('ep-body').value}`;
-  navigator.clipboard.writeText(txt).then(() => showToast('Email copié dans le presse-papiers !','success'));
+  const to  = currentC ? currentC.email : '';
+  const sub = document.getElementById('ep-subject').textContent;
+  const bdy = document.getElementById('ep-body').value;
+  navigator.clipboard.writeText('À: ' + to + '\nObjet: ' + sub + '\n\n' + bdy)
+    .then(() => showToast('Email copié dans le presse-papiers !', 'success'))
+    .catch(() => { document.getElementById('ep-body').select(); showToast('Sélectionnez le texte et Ctrl+C', 'info'); });
 }
 
 function openMailClient() {
-  const to      = emailData?.to || '';
-  const subject = encodeURIComponent(document.getElementById('ep-subject').textContent);
-  const body    = encodeURIComponent(document.getElementById('ep-body').value);
-  window.open(`mailto:${to}?subject=${subject}&body=${body}`);
+  if (!currentC) return;
+  const to  = encodeURIComponent(currentC.email);
+  const sub = encodeURIComponent(document.getElementById('ep-subject').textContent);
+  const bdy = encodeURIComponent(document.getElementById('ep-body').value);
+  window.open('mailto:' + to + '?subject=' + sub + '&body=' + bdy);
 }
 
-function closeEmailModal() {
-  document.getElementById('modal-email').classList.remove('open');
+/* ══════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════ */
+function badgePill(s) {
+  const cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
+  const lbl = { en_attente:'⏳ En attente', retenu:'✅ Retenu', rejete:'❌ Non retenu', entretien:'📅 Entretien' };
+  return '<span class="badge ' + (cls[s]||'badge-pending') + '">' + (lbl[s]||s) + '</span>';
 }
+function fmtDate(iso)     { return iso ? new Date(iso).toLocaleDateString('fr-FR') : '–'; }
+function fmtDateLong(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) : '–'; }
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
-async function init() {
-  // Charger les postes dans le filtre
-  try {
-    const postes = await fetch(`${API}/postes`).then(r => r.json());
-    const sel = document.getElementById('f-poste');
-    postes.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
-  } catch {}
-
-  await loadStats();
-  await loadRecent();
-}
-
-init();
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
+fetchStats();
+fetchCandidats();
 </script>
 </body>
 </html>
