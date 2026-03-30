@@ -6,7 +6,7 @@
   <title>Tableau de Bord – Recruteur</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* ── Donut chart SVG natif (pas de CDN) ────────────── */
+    /* ── Donut chart SVG natif ────────────── */
     .donut-wrap { position:relative;width:180px;height:180px;margin:0 auto 1rem; }
     .donut-wrap svg { transform:rotate(-90deg); }
     .donut-center {
@@ -18,7 +18,7 @@
     .chart-legend { display:flex;flex-wrap:wrap;gap:.5rem .9rem;justify-content:center;font-size:.78rem; }
     .legend-dot { display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.3rem; }
 
-    /* ── Bar chart CSS ──────────────────────────────────── */
+    /* ── Bar chart CSS ───────────────────── */
     .bar-chart { display:flex;flex-direction:column;gap:.6rem; }
     .bar-row   { display:flex;align-items:center;gap:.7rem;font-size:.78rem; }
     .bar-label { width:140px;min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500; }
@@ -26,22 +26,24 @@
     .bar-fill  { height:100%;background:var(--primary,#1a3a5c);border-radius:7px;transition:width .5s; }
     .bar-val   { width:24px;text-align:right;font-weight:700;color:var(--text-muted,#6b7a99); }
 
-    /* ── Grille présélection ────────────────────────────── */
+    /* ── Grille présélection ─────────────── */
     .grille-section { margin-bottom:1.1rem; }
     .grille-header  { display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.82rem;
                       padding:.35rem .7rem;border-radius:6px;margin-bottom:.4rem;border-left:3px solid; }
-    .grille-item    { display:flex;align-items:flex-start;gap:.55rem;padding:.3rem .5rem;font-size:.83rem;
-                      border-radius:4px;cursor:pointer;transition:background .12s; }
-    .grille-item:hover { background:#f4f6fa; }
-    .grille-item input { margin-top:2px;cursor:pointer; }
-    .grille-item.checked span { text-decoration:line-through;opacity:.6; }
+    .grille-item    { display:flex;align-items:flex-start;gap:.55rem;padding:.35rem .6rem;font-size:.83rem;
+                      border-radius:4px;cursor:default;background:#fff;border:1px solid transparent;transition:all .12s; }
+    .grille-item.checked { background:#f0fdf4;border-color:#bbf7d0; }
+    .grille-item input { margin-top:2px;cursor:not-allowed;opacity:.6; }
+    .grille-item .check-icon { margin-left:auto;font-weight:700; }
+    .grille-item.checked .check-icon { color:#1e7e34; }
 
-    /* ── Stars ──────────────────────────────────────────── */
+    /* ── Stars ───────────────────────────── */
     .star-btn { background:none;border:none;font-size:1.4rem;cursor:pointer;padding:0 2px;
                 line-height:1;transition:transform .1s; }
     .star-btn:hover { transform:scale(1.2); }
+    .star-btn:disabled { cursor:not-allowed;opacity:.5;transform:none; }
 
-    /* ── Email preview ──────────────────────────────────── */
+    /* ── Email preview ───────────────────── */
     .email-preview { background:#f8fafd;border:1px solid #dce3ef;border-radius:8px;padding:1.1rem; }
     .ep-field  { margin-bottom:.4rem;font-size:.84rem; }
     .ep-label  { font-weight:700;color:#6b7a99;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;margin-right:.4rem; }
@@ -49,7 +51,23 @@
                     font-family:inherit;font-size:.85rem;min-height:200px;resize:vertical;
                     background:#fff;line-height:1.7;box-sizing:border-box; }
 
-    /* ── Extras ─────────────────────────────────────────── */
+    /* ── Score breakdown ─────────────────── */
+    .score-breakdown { background:#f8fafd;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin:.8rem 0;font-size:.82rem; }
+    .sb-row { display:flex;justify-content:space-between;padding:.25rem 0;border-bottom:1px dashed #e2e8f0; }
+    .sb-row:last-child { border-bottom:none;font-weight:700;color:var(--primary);font-size:.9rem; }
+    .sb-label { color:#64748b; }
+    .sb-val { font-weight:600; }
+    .sb-val.elim { color:#c0392b; }
+    .sb-val.ok { color:#1e7e34; }
+    
+    /* ── Alertes blocs ───────────────────── */
+    .bloc-alert { padding:.6rem .8rem;border-radius:6px;margin:.4rem 0;font-size:.8rem;display:flex;align-items:flex-start;gap:.5rem; }
+    .bloc-alert.elim { background:#fef2f2;border-left:4px solid #c0392b;color:#991b1b; }
+    .bloc-alert.attn { background:#fffbeb;border-left:4px solid #f59e0b;color:#92400e; }
+    .bloc-alert.signal { background:#ecfdf5;border-left:4px solid #1e7e34;color:#065f46; }
+    .bloc-alert strong { display:block;margin-bottom:.2rem; }
+
+    /* ── Badge & Extras ──────────────────── */
     .stat-card.purple { border-color:#8e44ad; }
     .badge-interview  { background:#cce5ff;color:#004085; }
     .btn-info         { background:#2980b9;color:#fff; }
@@ -58,20 +76,14 @@
     .alert-info       { background:#cce5ff;color:#004085;border:1px solid #b8daff;
                         padding:.8rem 1rem;border-radius:8px;font-size:.85rem; }
     
-    /* ── Score breakdown ───────────────────────────────── */
-    .score-breakdown { background:#f8fafd;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin:.8rem 0;font-size:.82rem; }
-    .sb-row { display:flex;justify-content:space-between;padding:.2rem 0;border-bottom:1px dashed #e2e8f0; }
-    .sb-row:last-child { border-bottom:none;font-weight:700;color:var(--primary); }
-    .sb-label { color:#64748b; }
-    .sb-val { font-weight:600; }
-    .sb-val.elim { color:#c0392b; }
-    .sb-val.ok { color:#1e7e34; }
-    
-    /* ── Alertes blocs ─────────────────────────────────── */
-    .bloc-alert { padding:.5rem .7rem;border-radius:6px;margin:.3rem 0;font-size:.8rem;display:flex;align-items:flex-start;gap:.4rem; }
-    .bloc-alert.elim { background:#fef2f2;border-left:3px solid #c0392b;color:#991b1b; }
-    .bloc-alert.attn { background:#fffbeb;border-left:3px solid #f59e0b;color:#92400e; }
-    .bloc-alert.signal { background:#ecfdf5;border-left:3px solid #1e7e34;color:#065f46; }
+    /* ── Lecture seule indicator ─────────── */
+    .readonly-badge { 
+      display:inline-flex;align-items:center;gap:.3rem;
+      background:#f1f5f9;color:#64748b;font-size:.7rem;font-weight:600;
+      padding:.2rem .5rem;border-radius:4px;margin-left:.5rem;
+      border:1px solid #e2e8f0;
+    }
+    .readonly-badge::before { content:"🔒"; }
   </style>
 </head>
 <body>
@@ -215,9 +227,9 @@
 
 <!-- ══ MODAL DOSSIER ══ -->
 <div class="modal-overlay" id="modal-candidat">
-  <div class="modal" style="max-width:780px">
+  <div class="modal" style="max-width:800px">
     <div class="modal-header">
-      <h3 id="modal-title">Dossier</h3>
+      <h3 id="modal-title">Dossier <span class="readonly-badge">Analyse automatique</span></h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -226,9 +238,11 @@
       </div>
       <div id="modal-fichiers" style="display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.3rem"></div>
       
-      <!-- 🔍 Résumé analyse automatique (nouveau) -->
+      <!-- 🔍 Résumé analyse automatique (3 blocs Word) -->
       <div id="analyse-resume" style="margin:1rem 0;padding:1rem;background:#f8fafd;border-radius:8px;border:1px solid #e2e8f0;display:none">
-        <h4 style="margin:0 0 .5rem 0;font-size:.95rem">🧠 Analyse automatique</h4>
+        <h4 style="margin:0 0 .5rem 0;font-size:.95rem;display:flex;align-items:center;gap:.4rem">
+          🧠 Analyse automatique <span class="readonly-badge" style="font-size:.65rem;padding:.1rem .4rem">non modifiable</span>
+        </h4>
         <div id="analyse-content"></div>
       </div>
       
@@ -238,17 +252,20 @@
       </div>
       <div id="tab-eval" class="tab-content active">
         <div class="form-group" style="margin-bottom:1rem">
-          <label>Score (0 – 5 étoiles)</label>
+          <label>Score (0 – 5 étoiles) <span class="readonly-badge" style="font-size:.65rem">calculé</span></label>
           <div id="stars-row" style="display:flex;gap:0;margin-top:.3rem"></div>
         </div>
         <div class="form-group">
-          <label>Notes internes</label>
+          <label>Notes internes <span style="color:var(--text-muted);font-weight:400;font-size:.8rem">(vos commentaires)</span></label>
           <textarea class="form-control" id="modal-note"
                     style="min-height:90px" placeholder="Observations, points forts, réserves..."></textarea>
         </div>
       </div>
       <div id="tab-grille" class="tab-content">
         <div id="grille-content" style="padding-top:.4rem"></div>
+        <p style="text-align:center;color:var(--text-muted);font-size:.75rem;margin-top:1rem;font-style:italic">
+          🔒 Résultats de l'analyse automatique — non modifiables pour garantir l'intégrité du scoring
+        </p>
       </div>
     </div>
     <div class="modal-footer">
@@ -304,8 +321,8 @@
 ══════════════════════════════════════════════════════════ */
 const API       = 'https://backend1-fiq5.onrender.com/api';
 let jwtToken    = localStorage.getItem('rh_token');
-let allCandidats= [];   // cache local — évite les appels de détail (= pas de 404)
-let currentC    = null; // candidat courant dans le modal
+let allCandidats= [];
+let currentC    = null;
 let currentScore= 0;
 
 /* ══════════════════════════════════════════════════════════
@@ -344,7 +361,7 @@ function switchTab(name, btn) {
 function refreshAll() { fetchStats(); fetchCandidats(); }
 
 /* ══════════════════════════════════════════════════════════
-   STATS + GRAPHIQUES NATIFS
+   STATS + GRAPHIQUES
 ══════════════════════════════════════════════════════════ */
 async function fetchStats() {
   try {
@@ -441,7 +458,7 @@ function applyFilters() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   🔧 renderTable : score clampé + tooltip breakdown
+   renderTable : score clampé + tooltip breakdown
 ══════════════════════════════════════════════════════════ */
 function renderTable(data) {
   const tbody = document.getElementById('candidats-tbody');
@@ -456,21 +473,22 @@ function renderTable(data) {
     const lmLink = c.lettre_filename
       ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" style="color:var(--primary);font-size:.78rem;margin-left:.4rem">📃 LM</a>'
       : '';
+    const attLink = c.attestation_filename
+      ? '<a href="' + API + '/recruteur/uploads/' + c.attestation_filename + '" target="_blank" style="color:var(--primary);font-size:.78rem;margin-left:.4rem">🎓 Certif</a>'
+      : '';
     
-    // 🔧 Clamp score 0-5
     const scoreRaw = parseInt(c.score) || 0;
     const score = Math.max(0, Math.min(5, scoreRaw));
     const stars  = '⭐'.repeat(score) + '☆'.repeat(5 - score);
     
-    // 🎯 Tooltip avec breakdown si disponible
-    let scoreTitle = `Score: ${score}/5`;
+    let scoreTitle = `Score: ${score}/5 (analyse automatique)`;
     if (c.score_breakdown_parsed) {
       const sb = c.score_breakdown_parsed;
-      scoreTitle += `\n🔴 Éliminatoire: ${sb.bloc1_eliminatoire ? 'OUI' : 'NON'}`;
-      scoreTitle += `\n🟠 Cohérence: ${sb.bloc2_points} pts (${sb.bloc2_criteres_valides} critères)`;
-      scoreTitle += `\n🟡 Signaux: ${sb.bloc3_points} pts (${sb.bloc3_signaux_detectes} signaux)`;
-      scoreTitle += `\n📊 Total: ${sb.total_raw_points} pts → ${sb.score_final}/5`;
-      if (sb.note) scoreTitle += `\nℹ️ ${sb.note}`;
+      scoreTitle += `\n\n🔴 Éliminatoire: ${sb.bloc1_eliminatoire ? 'OUI ⚠️' : 'NON'}`;
+      scoreTitle += `\n🟠 Cohérence: ${sb.bloc2_points} pt${sb.bloc2_points>1?'s':''} (${sb.bloc2_criteres_valides} critères)`;
+      scoreTitle += `\n🟡 Signaux: ${sb.bloc3_points} pts (${sb.bloc3_signaux_detectes} signaux ×2)`;
+      scoreTitle += `\n📊 Total brut: ${sb.total_raw_points} pts → Score: ${sb.score_final}/5`;
+      if (sb.note) scoreTitle += `\n\nℹ️ ${sb.note}`;
     }
     
     return '<tr>'
@@ -482,7 +500,7 @@ function renderTable(data) {
       + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
       + '<td>' + badgePill(c.statut) + '</td>'
       + '<td style="font-size:.85rem;letter-spacing:-1px" title="' + escAttr(scoreTitle) + '">' + stars + '</td>'
-      + '<td>' + cvLink + lmLink + '</td>'
+      + '<td>' + cvLink + lmLink + attLink + '</td>'
       + '<td class="td-actions">'
       + '<button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">📋 Dossier</button> '
       + '<button class="btn btn-info btn-sm"  onclick="quickEmail(\'' + c.id + '\')">📧</button>'
@@ -518,7 +536,7 @@ function renderRecent(data) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   MODAL DOSSIER — avec résumé analyse 3 blocs
+   MODAL DOSSIER — avec résumé analyse 3 blocs Word
 ══════════════════════════════════════════════════════════ */
 function openModal(id) {
   const c = allCandidats.find(x => x.id === id);
@@ -537,22 +555,24 @@ function openModal(id) {
     info('Date candidature',fmtDateLong(c.date_candidature));
 
   // Fichiers
-  const cvLnk = c.cv_filename
-    ? '<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-blue btn-sm">📄 Voir CV</a>'
-    : '<span style="color:var(--text-muted);font-size:.83rem">CV non fourni</span>';
-  const lmLnk = c.lettre_filename
-    ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-blue btn-sm">📃 Lettre de motivation</a>'
-    : '<span style="color:var(--text-muted);font-size:.83rem">Lettre non fournie</span>';
-  document.getElementById('modal-fichiers').innerHTML = cvLnk + ' ' + lmLnk;
+  const files = [];
+  if (c.cv_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-blue btn-sm">📄 CV</a>');
+  else files.push('<span style="color:var(--text-muted);font-size:.83rem">CV non fourni</span>');
+  
+  if (c.lettre_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-blue btn-sm">📃 Lettre</a>');
+  
+  if (c.attestation_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.attestation_filename + '" target="_blank" class="btn btn-blue btn-sm">🎓 Certificats</a>');
+  
+  document.getElementById('modal-fichiers').innerHTML = files.join(' ');
 
   // 🎯 RÉSUMÉ ANALYSE AUTOMATIQUE (3 blocs Word)
   renderAnalyseResume(c);
 
-  // Score & note
-  renderStars(currentScore);
+  // Score & note (étoiles en lecture seule pour affichage)
+  renderStars(currentScore, true); // true = readonly display
   document.getElementById('modal-note').value = c.note || '';
 
-  // Grille présélection
+  // Grille présélection (lecture seule)
   renderGrille(c.poste, c.checklist || '');
 
   // Reset tabs
@@ -564,12 +584,11 @@ function openModal(id) {
   document.getElementById('modal-candidat').classList.add('open');
 }
 
-/* ── 🎯 NOUVEAU : Affichage résumé analyse 3 blocs ───────── */
+/* ── 🎯 NOUVEAU : Affichage résumé analyse 3 blocs Word ─── */
 function renderAnalyseResume(c) {
   const container = document.getElementById('analyse-resume');
   const content = document.getElementById('analyse-content');
   
-  // Si pas de breakdown, masquer
   if (!c.score_breakdown_parsed) {
     container.style.display = 'none';
     return;
@@ -581,50 +600,55 @@ function renderAnalyseResume(c) {
   
   let html = '';
   
-  // 🔴 Bloc 1: Éliminatoire
+  // 🔴 Bloc 1: Éliminatoire immédiat (filtre dur)
   if (sb.bloc1_eliminatoire) {
-    html += '<div class="bloc-alert elim"><strong>🔴 Éliminatoire</strong><div style="margin-top:.3rem">';
+    html += '<div class="bloc-alert elim"><strong>🔴 Éliminatoire immédiat</strong>';
     const flags = c.flags_eliminatoires_parsed || [];
-    flags.forEach(f => html += '• ' + escHtml(f) + '<br>');
-    html += '</div></div>';
+    if (flags.length) {
+      html += '<div style="margin-top:.4rem">';
+      flags.forEach(f => html += '• ' + escHtml(f) + '<br>');
+      html += '</div>';
+    }
+    html += '</div>';
   }
   
-  // 🟠 Bloc 2: Cohérence
+  // 🟠 Bloc 2: Cohérence du parcours (+1 pt/critère)
   if (sb.bloc2_criteres_valides > 0) {
-    html += '<div class="bloc-alert signal"><strong>🟠 Cohérence du parcours</strong> — ' + sb.bloc2_points + ' point' + (sb.bloc2_points>1?'s':'') + '';
-    if (details.criteres_valides_bloc2) {
-      html += '<div style="margin-top:.3rem">';
+    html += '<div class="bloc-alert signal"><strong>🟠 Cohérence du parcours</strong> — ' + sb.bloc2_points + ' point' + (sb.bloc2_points>1?'s':'');
+    if (details.criteres_valides_bloc2 && details.criteres_valides_bloc2.length) {
+      html += '<div style="margin-top:.4rem">';
       details.criteres_valides_bloc2.forEach(item => html += '• ' + escHtml(item.replace('🟠 ','')) + '<br>');
       html += '</div>';
     }
     html += '</div>';
   }
   
-  // 🟡 Bloc 3: Signaux forts
+  // 🟡 Bloc 3: Signaux de qualité (+2 pts/signal)
   if (sb.bloc3_signaux_detectes > 0) {
     html += '<div class="bloc-alert signal"><strong>🟡 Signaux de qualité</strong> — ' + sb.bloc3_points + ' points';
     const signaux = c.signaux_detectes_parsed || [];
     if (signaux.length) {
-      html += '<div style="margin-top:.3rem">';
+      html += '<div style="margin-top:.4rem">';
       signaux.forEach(s => html += '• ' + escHtml(s) + '<br>');
       html += '</div>';
     }
     html += '</div>';
   }
   
-  // ⚠️ Points d'attention
+  // ⚠️ Points d'attention (alertes uniquement)
   if (details.alertes_attention && details.alertes_attention.length) {
-    html += '<div class="bloc-alert attn"><strong>⚠️ Points d\'attention</strong><div style="margin-top:.3rem">';
+    html += '<div class="bloc-alert attn"><strong>⚠️ Points d\'attention</strong>';
+    html += '<div style="margin-top:.4rem">';
     details.alertes_attention.forEach(a => html += '• ' + escHtml(a.replace('⚠️ ','')) + '<br>');
     html += '</div></div>';
   }
   
-  // Score breakdown détaillé
+  // Score breakdown détaillé (transparence)
   html += '<div class="score-breakdown">'
-    + '<div class="sb-row"><span class="sb-label">Points cohérence (🟠)</span><span class="sb-val">' + sb.bloc2_points + '</span></div>'
+    + '<div class="sb-row"><span class="sb-label">Points cohérence (🟠 ×1)</span><span class="sb-val">' + sb.bloc2_points + '</span></div>'
     + '<div class="sb-row"><span class="sb-label">Points signaux (🟡 ×2)</span><span class="sb-val">' + sb.bloc3_points + '</span></div>'
     + '<div class="sb-row"><span class="sb-label">Total brut</span><span class="sb-val">' + sb.total_raw_points + '</span></div>'
-    + '<div class="sb-row"><span class="sb-label">Score final</span><span class="sb-val ' + (sb.bloc1_eliminatoire?'elim':'ok') + '">' + sb.score_final + '/5</span></div>'
+    + '<div class="sb-row"><span class="sb-label">Score final</span><span class="sb-val ' + (sb.bloc1_eliminatoire?'elim':'ok') + '">' + sb.score_final + '/5 ⭐</span></div>'
     + '</div>';
   
   content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail d\'analyse disponible.</p>';
@@ -644,8 +668,8 @@ function closeModal() {
   currentC = null;
 }
 
-/* ── Stars ───────────────────────────────────────────────── */
-function renderStars(n) {
+/* ── Stars — affichage lecture seule ─────────────────────── */
+function renderStars(n, readonly = false) {
   const row = document.getElementById('stars-row');
   row.innerHTML = '';
   const score = Math.max(0, Math.min(5, parseInt(n) || 0));
@@ -653,14 +677,19 @@ function renderStars(n) {
     const btn = document.createElement('button');
     btn.className   = 'star-btn';
     btn.textContent = i <= score ? '⭐' : '☆';
-    btn.title       = i + ' étoile' + (i > 1 ? 's' : '');
-    btn.onclick     = () => { currentScore = i; renderStars(i); };
+    btn.title       = readonly ? 'Score calculé automatiquement' : (i + ' étoile' + (i > 1 ? 's' : ''));
+    if (readonly) {
+      btn.disabled = true;
+      btn.style.cursor = 'default';
+    } else {
+      btn.onclick = () => { currentScore = i; renderStars(i, false); };
+    }
     row.appendChild(btn);
   }
 }
 
 /* ══════════════════════════════════════════════════════════
-   GRILLE DE PRÉSÉLECTION (3 blocs Word)
+   GRILLE DE PRÉSÉLECTION — LECTURE SEULE (3 blocs Word)
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
   "Responsable Administration de Crédit": {
@@ -701,10 +730,12 @@ const GRILLE = {
   }
 };
 
+/* 🔒 GRILLE EN LECTURE SEULE — résultats calculés, non modifiables */
 function renderGrille(poste, checklistJson) {
   const g  = GRILLE[poste];
   const el = document.getElementById('grille-content');
   if (!g) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem">Grille non définie pour ce poste.</p>'; return; }
+  
   let checked = {};
   try { checked = JSON.parse(checklistJson || '{}'); } catch {}
 
@@ -715,9 +746,12 @@ function renderGrille(poste, checklistJson) {
     + items.map((item, i) => {
         const key = pfx + '_' + i;
         const isChecked = checked[key] === true;
+        // 🔒 CHECKBOX DISABLED + cursor not-allowed + pas de onchange
         return '<label class="grille-item' + (isChecked ? ' checked' : '') + '">'
-          + '<input type="checkbox" data-key="' + key + '" ' + (isChecked ? 'checked' : '') + ' onchange="syncChecklist()">'
-          + '<span>' + escHtml(item) + '</span></label>';
+          + '<input type="checkbox" data-key="' + key + '" ' + (isChecked ? 'checked' : '') + ' disabled>'
+          + '<span>' + escHtml(item) + '</span>'
+          + (isChecked ? '<span class="check-icon">✅</span>' : '')
+          + '</label>';
       }).join('')
     + '</div>';
 
@@ -728,20 +762,15 @@ function renderGrille(poste, checklistJson) {
     mkSection("Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
 }
 
-function syncChecklist() {
-  const boxes  = document.querySelectorAll('#grille-content input[type=checkbox]');
-  const result = {};
-  boxes.forEach(b => { result[b.dataset.key] = b.checked; });
-  return JSON.stringify(result);
-}
-
 /* ══════════════════════════════════════════════════════════
-   MISE À JOUR STATUT
+   MISE À JOUR STATUT — sans modification de la grille
 ══════════════════════════════════════════════════════════ */
 async function updateStatut(statut) {
   if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
-  const note      = document.getElementById('modal-note').value;
-  const checklist = syncChecklist();
+  const note = document.getElementById('modal-note').value;
+  // 🔒 On conserve la checklist d'origine — pas de syncChecklist()
+  const checklist = currentC?.checklist || '';
+  
   try {
     const res = await fetch(
       API + '/recruteur/candidats/' + currentC.id + '/statut',
@@ -749,7 +778,7 @@ async function updateStatut(statut) {
     );
     if (res.ok) {
       const idx = allCandidats.findIndex(x => x.id === currentC.id);
-      if (idx !== -1) Object.assign(allCandidats[idx], { statut, note, score: String(currentScore), checklist });
+      if (idx !== -1) Object.assign(allCandidats[idx], { statut, note, score: String(currentScore) });
       showToast('Statut mis à jour : ' + statut, 'success');
       closeModal();
       applyFilters();
