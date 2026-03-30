@@ -239,7 +239,11 @@
         <h2 class="dash-title" style="margin:0">Vue d'ensemble</h2>
         <button class="btn btn-blue btn-sm" onclick="refreshAll()">🔄 Actualiser</button>
       </div>
-
+<div style="display:flex;gap:.5rem;flex-wrap:wrap">
+  <button class="btn btn-blue btn-sm" onclick="exportReport('excel')">📊 Export Excel</button>
+  <button class="btn btn-success btn-sm" onclick="exportReport('csv')">📄 Export CSV</button>
+  <button class="btn btn-danger btn-sm" onclick="exportReport('pdf')">📕 Export PDF</button>
+</div>
       <div class="stats-grid">
         <div class="stat-card blue">  <div class="stat-icon">👥</div><div class="stat-value" id="s-total">–</div>    <div class="stat-label">Candidatures</div></div>
         <div class="stat-card amber"> <div class="stat-icon">⏳</div><div class="stat-value" id="s-attente">–</div>  <div class="stat-label">En attente</div></div>
@@ -464,6 +468,13 @@ document.getElementById('sidebar-avatar').textContent= nomRH.charAt(0).toUpperCa
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 function authH()  {
   return { 'Authorization': 'Bearer ' + jwtToken, 'Content-Type': 'application/json' };
+}
+
+  function exportReport(format) {
+  const token = jwtToken;
+  const url = `${API}/recruteur/export/${format}?token=${token}`;
+  window.open(url, '_blank');
+  showToast(`Téléchargement du rapport ${format.toUpperCase()}...`, 'info');
 }
 
 /* ══════════════════════════════════════════════════════════
