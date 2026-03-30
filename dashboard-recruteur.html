@@ -30,18 +30,18 @@
     .grille-section { margin-bottom:1.1rem; }
     .grille-header  { display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.82rem;
                       padding:.35rem .7rem;border-radius:6px;margin-bottom:.4rem;border-left:3px solid; }
-    .grille-item    { display:flex;align-items:flex-start;gap:.55rem;padding:.35rem .6rem;font-size:.83rem;
-                      border-radius:4px;cursor:default;background:#fff;border:1px solid transparent;transition:all .12s; }
+    .grille-item    { display:flex;align-items:center;gap:.55rem;padding:.4rem .6rem;font-size:.83rem;
+                      border-radius:4px;cursor:default;background:#fff;border:1px solid transparent; }
     .grille-item.checked { background:#f0fdf4;border-color:#bbf7d0; }
-    .grille-item input { margin-top:2px;cursor:not-allowed;opacity:.6; }
-    .grille-item .check-icon { margin-left:auto;font-weight:700; }
-    .grille-item.checked .check-icon { color:#1e7e34; }
+    .grille-item.not-checked { background:#fef2f2;border-color:#fecaca; }
+    .grille-item input { margin:0;cursor:not-allowed;opacity:.5;width:16px;height:16px; }
+    .grille-item .status-icon { margin-left:auto;font-weight:700;font-size:1.1rem; }
+    .grille-item.checked .status-icon { color:#1e7e34; }
+    .grille-item.not-checked .status-icon { color:#c0392b; }
 
     /* ── Stars ───────────────────────────── */
-    .star-btn { background:none;border:none;font-size:1.4rem;cursor:pointer;padding:0 2px;
-                line-height:1;transition:transform .1s; }
-    .star-btn:hover { transform:scale(1.2); }
-    .star-btn:disabled { cursor:not-allowed;opacity:.5;transform:none; }
+    .star-btn { background:none;border:none;font-size:1.4rem;cursor:default;padding:0 2px;line-height:1; }
+    .star-btn:disabled { opacity:.7; }
 
     /* ── Email preview ───────────────────── */
     .email-preview { background:#f8fafd;border:1px solid #dce3ef;border-radius:8px;padding:1.1rem; }
@@ -227,7 +227,7 @@
 
 <!-- ══ MODAL DOSSIER ══ -->
 <div class="modal-overlay" id="modal-candidat">
-  <div class="modal" style="max-width:800px">
+  <div class="modal" style="max-width:820px">
     <div class="modal-header">
       <h3 id="modal-title">Dossier <span class="readonly-badge">Analyse automatique</span></h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
@@ -263,8 +263,8 @@
       </div>
       <div id="tab-grille" class="tab-content">
         <div id="grille-content" style="padding-top:.4rem"></div>
-        <p style="text-align:center;color:var(--text-muted);font-size:.75rem;margin-top:1rem;font-style:italic">
-          🔒 Résultats de l'analyse automatique — non modifiables pour garantir l'intégrité du scoring
+        <p style="text-align:center;color:var(--text-muted);font-size:.73rem;margin-top:1rem;font-style:italic;border-top:1px dashed #e2e8f0;padding-top:.8rem">
+          🔒 Résultats de l'analyse automatique — critères validés uniquement si mots-clés exacts trouvés dans les documents
         </p>
       </div>
     </div>
@@ -558,21 +558,18 @@ function openModal(id) {
   const files = [];
   if (c.cv_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-blue btn-sm">📄 CV</a>');
   else files.push('<span style="color:var(--text-muted);font-size:.83rem">CV non fourni</span>');
-  
   if (c.lettre_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-blue btn-sm">📃 Lettre</a>');
-  
   if (c.attestation_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.attestation_filename + '" target="_blank" class="btn btn-blue btn-sm">🎓 Certificats</a>');
-  
   document.getElementById('modal-fichiers').innerHTML = files.join(' ');
 
   // 🎯 RÉSUMÉ ANALYSE AUTOMATIQUE (3 blocs Word)
   renderAnalyseResume(c);
 
-  // Score & note (étoiles en lecture seule pour affichage)
-  renderStars(currentScore, true); // true = readonly display
+  // Score & note (étoiles en lecture seule)
+  renderStars(currentScore, true);
   document.getElementById('modal-note').value = c.note || '';
 
-  // Grille présélection (lecture seule)
+  // Grille présélection (lecture seule - résultats exacts)
   renderGrille(c.poste, c.checklist || '');
 
   // Reset tabs
@@ -584,7 +581,7 @@ function openModal(id) {
   document.getElementById('modal-candidat').classList.add('open');
 }
 
-/* ── 🎯 NOUVEAU : Affichage résumé analyse 3 blocs Word ─── */
+/* ── 🎯 Affichage résumé analyse 3 blocs Word ─── */
 function renderAnalyseResume(c) {
   const container = document.getElementById('analyse-resume');
   const content = document.getElementById('analyse-content');
@@ -669,7 +666,7 @@ function closeModal() {
 }
 
 /* ── Stars — affichage lecture seule ─────────────────────── */
-function renderStars(n, readonly = false) {
+function renderStars(n, readonly = true) {
   const row = document.getElementById('stars-row');
   row.innerHTML = '';
   const score = Math.max(0, Math.min(5, parseInt(n) || 0));
@@ -677,64 +674,149 @@ function renderStars(n, readonly = false) {
     const btn = document.createElement('button');
     btn.className   = 'star-btn';
     btn.textContent = i <= score ? '⭐' : '☆';
-    btn.title       = readonly ? 'Score calculé automatiquement' : (i + ' étoile' + (i > 1 ? 's' : ''));
-    if (readonly) {
-      btn.disabled = true;
-      btn.style.cursor = 'default';
-    } else {
-      btn.onclick = () => { currentScore = i; renderStars(i, false); };
-    }
+    btn.disabled = true;
+    btn.title = 'Score calculé automatiquement par analyse des documents';
     row.appendChild(btn);
   }
 }
 
 /* ══════════════════════════════════════════════════════════
-   GRILLE DE PRÉSÉLECTION — LECTURE SEULE (3 blocs Word)
+   GRILLE DE PRÉSÉLECTION — LECTURE SEULE (3 blocs Word EXACTS)
+   Basée sur le document Word : Adéquation structurelle / Cohérence / Signaux
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
   "Responsable Administration de Crédit": {
-    eliminatoire:     ["Pas d'expérience bancaire","Moins de 3 ans en crédit / risque","Aucune exposition aux garanties ou conformité"],
-    a_verifier:       ["A-t-il déjà validé des dossiers de crédit ?","A-t-il géré des garanties ?","A-t-il participé à des audits ?"],
-    signaux_forts:    ["Mention IFRS 9","Mention COBAC / conformité","Suivi portefeuille / impayés"],
-    points_attention: ["Parcours trop « comptable pur »","Rôle uniquement administratif sans responsabilité","CV flou (missions génériques)"]
+    eliminatoire: [
+      "Pas d'expérience bancaire",
+      "Moins de 3 ans en crédit / risque",
+      "Aucune exposition aux garanties ou conformité"
+    ],
+    a_verifier: [
+      "A-t-il déjà validé des dossiers ?",
+      "A-t-il déjà géré des garanties ?",
+      "A-t-il déjà participé à des audits ?"
+    ],
+    signaux_forts: [
+      "Mention de : IFRS 9",
+      "Mention de : COBAC / conformité",
+      "Mention de : suivi portefeuille / impayés"
+    ],
+    points_attention: [
+      "Parcours trop « comptable pur »",
+      "Rôle uniquement administratif sans responsabilité",
+      "CV flou (missions génériques)"
+    ]
   },
   "Analyste Crédit CCB": {
-    eliminatoire:     ["Pas d'expérience en analyse crédit","Profil purement commercial sans analyse","Incapacité à lire des états financiers"],
-    a_verifier:       ["Type de clients : PME ? Particuliers ?","A-t-il structuré un crédit ?","A-t-il donné un avis de crédit ?"],
-    signaux_forts:    ["Mention cash-flow analysis","Mention montage de crédit","Mention comités de crédit"],
-    points_attention: ["CV trop « relation client »","Aucune notion de risque","Expériences très courtes sans progression"]
+    eliminatoire: [
+      "Pas d'expérience en analyse crédit",
+      "Profil purement commercial sans analyse",
+      "Incapacité à lire des états financiers"
+    ],
+    a_verifier: [
+      "Type de clients : PME ?",
+      "Type de clients : particuliers ?",
+      "A-t-il déjà structuré un crédit ?",
+      "A-t-il déjà donné un avis ?"
+    ],
+    signaux_forts: [
+      "Mention de : cash-flow analysis",
+      "Mention de : montage de crédit",
+      "Mention de : comités de crédit"
+    ],
+    points_attention: [
+      "CV trop « relation client »",
+      "Aucune notion de risque",
+      "Expériences très courtes sans progression"
+    ]
   },
   "Archiviste (Administration Crédit)": {
-    eliminatoire:     ["Aucune expérience en gestion documentaire structurée","Absence de rigueur démontrée"],
-    a_verifier:       ["Expérience archivage physique + électronique ?","Gestion de dossiers sensibles ?"],
-    signaux_forts:    ["Expérience en banque / juridique","Manipulation de garanties ou contrats"],
-    points_attention: ["Profil trop généraliste","CV désorganisé"]
+    eliminatoire: [
+      "Aucune expérience en gestion documentaire structurée",
+      "Absence de rigueur démontrée"
+    ],
+    a_verifier: [
+      "Expérience avec : archivage physique + électronique",
+      "Expérience avec : gestion des dossiers sensibles"
+    ],
+    signaux_forts: [
+      "Expérience en banque / juridique",
+      "Manipulation de garanties ou contrats"
+    ],
+    points_attention: [
+      "Profils trop généralistes (assistants administratifs sans spécialisation)",
+      "CV désorganisé"
+    ]
   },
   "Senior Finance Officer": {
-    eliminatoire:     ["Pas d'expérience en finance senior","Aucune maîtrise des outils de reporting"],
-    a_verifier:       ["Maîtrise des normes IFRS ?","Expérience en pilotage budgétaire ?"],
-    signaux_forts:    ["Expérience en consolidation financière","Maîtrise Excel avancé / Power BI"],
-    points_attention: ["Profil trop opérationnel sans vision stratégique","Manque d'expérience bancaire"]
+    eliminatoire: [
+      "Pas d'expérience en finance senior",
+      "Aucune maîtrise des outils de reporting financier"
+    ],
+    a_verifier: [
+      "Maîtrise des normes IFRS ?",
+      "Expérience en pilotage budgétaire ?"
+    ],
+    signaux_forts: [
+      "Expérience en consolidation financière",
+      "Maîtrise Excel avancé / Power BI"
+    ],
+    points_attention: [
+      "Profil trop opérationnel sans vision stratégique",
+      "Manque d'expérience en environnement bancaire"
+    ]
   },
   "Market Risk Officer": {
-    eliminatoire:     ["Pas d'expérience en risques de marché","Aucune connaissance des produits financiers"],
-    a_verifier:       ["Maîtrise VaR / stress testing ?","Expérience en back-testing ?"],
-    signaux_forts:    ["Mention Basel III / IV","Expérience salle des marchés","Maîtrise Python / R"],
-    points_attention: ["Profil purement académique sans terrain","Expérience uniquement en risque crédit"]
+    eliminatoire: [
+      "Pas d'expérience en gestion des risques de marché",
+      "Aucune connaissance des produits financiers"
+    ],
+    a_verifier: [
+      "Maîtrise des modèles VaR / stress testing ?",
+      "Expérience en back-testing ?"
+    ],
+    signaux_forts: [
+      "Mention Basel III / IV",
+      "Expérience en salle des marchés",
+      "Maîtrise Python / R pour modélisation"
+    ],
+    points_attention: [
+      "Profil purement académique sans expérience terrain",
+      "Expérience uniquement en risque crédit"
+    ]
   },
   "IT Réseau & Infrastructure": {
-    eliminatoire:     ["Pas de certification réseau (Cisco, CompTIA…)","Aucune expérience en administration système"],
-    a_verifier:       ["Expérience environnements bancaires sécurisés ?","Gestion d'incidents en production ?"],
-    signaux_forts:    ["Certification CCNA / CCNP","Expérience en cybersécurité","Maîtrise VMware / Hyper-V"],
-    points_attention: ["Profil trop orienté développement","Manque d'expérience haute disponibilité"]
+    eliminatoire: [
+      "Pas de certification réseau (Cisco, CompTIA…)",
+      "Aucune expérience en administration système"
+    ],
+    a_verifier: [
+      "Expérience environnements bancaires sécurisés ?",
+      "Gestion d'incidents en production ?"
+    ],
+    signaux_forts: [
+      "Certification CCNA / CCNP",
+      "Expérience en cybersécurité",
+      "Maîtrise virtualisation (VMware, Hyper-V)"
+    ],
+    points_attention: [
+      "Profil trop orienté développement",
+      "Manque d'expérience en environnement haute disponibilité"
+    ]
   }
 };
 
-/* 🔒 GRILLE EN LECTURE SEULE — résultats calculés, non modifiables */
+/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables
+   ✅ = critère validé (mots-clés exacts trouvés)
+   ❌ = critère non validé (mots-clés non trouvés)
+*/
 function renderGrille(poste, checklistJson) {
   const g  = GRILLE[poste];
   const el = document.getElementById('grille-content');
-  if (!g) { el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem">Grille non définie pour ce poste.</p>'; return; }
+  if (!g) { 
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem;text-align:center;padding:1rem">Grille non définie pour ce poste.</p>'; 
+    return; 
+  }
   
   let checked = {};
   try { checked = JSON.parse(checklistJson || '{}'); } catch {}
@@ -745,21 +827,21 @@ function renderGrille(poste, checklistJson) {
     + icon + ' ' + title + '</div>'
     + items.map((item, i) => {
         const key = pfx + '_' + i;
-        const isChecked = checked[key] === true;
-        // 🔒 CHECKBOX DISABLED + cursor not-allowed + pas de onchange
-        return '<label class="grille-item' + (isChecked ? ' checked' : '') + '">'
-          + '<input type="checkbox" data-key="' + key + '" ' + (isChecked ? 'checked' : '') + ' disabled>'
+        const isValidated = checked[key] === true;
+        // 🔒 Lecture seule : checkbox disabled, pas de onchange, indicateur ✅/❌
+        return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + '">'
+          + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
           + '<span>' + escHtml(item) + '</span>'
-          + (isChecked ? '<span class="check-icon">✅</span>' : '')
+          + '<span class="status-icon">' + (isValidated ? '✅' : '❌') + '</span>'
           + '</label>';
       }).join('')
     + '</div>';
 
   el.innerHTML =
-    mkSection('Éliminatoire immédiat',      '#c0392b','🔴', g.eliminatoire,     'elim')  +
-    mkSection('À vérifier dans le CV',       '#e67e22','🟠', g.a_verifier,       'verif') +
-    mkSection('Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
-    mkSection("Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
+    mkSection('🔴 Éliminatoire immédiat',      '#c0392b','🔴', g.eliminatoire,     'elim')  +
+    mkSection('🟠 À vérifier dans le CV',       '#e67e22','🟠', g.a_verifier,       'verif') +
+    mkSection('🟡 Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
+    mkSection("⚠️ Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -768,7 +850,7 @@ function renderGrille(poste, checklistJson) {
 async function updateStatut(statut) {
   if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
   const note = document.getElementById('modal-note').value;
-  // 🔒 On conserve la checklist d'origine — pas de syncChecklist()
+  // 🔒 On conserve la checklist d'origine — pas de modification possible
   const checklist = currentC?.checklist || '';
   
   try {
@@ -823,9 +905,11 @@ function buildEmail() {
 }
 
 function emailSubject(type, poste) {
-  return { retenu:'Félicitations – Candidature retenue – ' + poste,
-           entretien:'Invitation à un entretien – ' + poste,
-           rejete:'Réponse à votre candidature – ' + poste }[type] || '';
+  return { 
+    retenu: 'Félicitations – Candidature retenue – ' + poste,
+    entretien: 'Invitation à un entretien – ' + poste,
+    rejete: 'Réponse à votre candidature – ' + poste 
+  }[type] || '';
 }
 
 function emailBody(type, nom, poste) {
