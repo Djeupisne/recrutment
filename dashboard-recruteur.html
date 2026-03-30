@@ -421,6 +421,9 @@ function applyFilters() {
   renderTable(result);
 }
 
+/* ══════════════════════════════════════════════════════════
+   🔧 CORRECTION APPLIQUÉE ICI : renderTable avec score clampé
+══════════════════════════════════════════════════════════ */
 function renderTable(data) {
   const tbody = document.getElementById('candidats-tbody');
   if (!data.length) {
@@ -434,7 +437,11 @@ function renderTable(data) {
     const lmLink = c.lettre_filename
       ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" style="color:var(--primary);font-size:.78rem;margin-left:.4rem">📃 LM</a>'
       : '';
-    const score  = parseInt(c.score) || 0;
+    
+    // 🔧 CORRECTION : clamp le score entre 0 et 5 pour éviter RangeError sur .repeat()
+    const scoreRaw = parseInt(c.score) || 0;
+    const score = Math.max(0, Math.min(5, scoreRaw));
+    
     const stars  = '⭐'.repeat(score) + '☆'.repeat(5 - score);
     return '<tr>'
       + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong>'
@@ -534,13 +541,16 @@ function closeModal() {
 }
 
 /* ── Stars ──────────────────────────────────────────────────────────── */
+/* 🔧 CORRECTION : clamp du score dans renderStars aussi */
 function renderStars(n) {
   const row = document.getElementById('stars-row');
   row.innerHTML = '';
+  // 🔧 Clamp entre 0 et 5 pour éviter RangeError
+  const score = Math.max(0, Math.min(5, parseInt(n) || 0));
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement('button');
     btn.className   = 'star-btn';
-    btn.textContent = i <= n ? '⭐' : '☆';
+    btn.textContent = i <= score ? '⭐' : '☆';
     btn.title       = i + ' étoile' + (i > 1 ? 's' : '');
     btn.onclick     = () => { currentScore = i; renderStars(i); };
     row.appendChild(btn);
