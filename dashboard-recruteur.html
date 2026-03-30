@@ -31,16 +31,23 @@
     .grille-header  { display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.82rem;
                       padding:.35rem .7rem;border-radius:6px;margin-bottom:.4rem;border-left:3px solid; }
     .grille-item    { display:flex;align-items:center;gap:.55rem;padding:.4rem .6rem;font-size:.83rem;
-                      border-radius:4px;cursor:default;background:#fff;border:1px solid transparent; }
+                      border-radius:4px;cursor:default;background:#fff;border:1px solid transparent;transition:all .12s; }
     .grille-item.checked { background:#f0fdf4;border-color:#bbf7d0; }
     .grille-item.not-checked { background:#fef2f2;border-color:#fecaca; }
-    /* ── Force rouge éliminatoire ── */
-    .grille-item.elim-force { background:#fef2f2 !important;border-color:#f87171 !important;border-width:1.5px !important; }
+    .grille-item.eliminatoire-triggered { 
+      background:#fee2e2 !important;
+      border-color:#dc2626 !important;
+      animation: pulse-red 2s infinite;
+    }
     .grille-item input { margin:0;cursor:not-allowed;opacity:.5;width:16px;height:16px; }
     .grille-item .status-icon { margin-left:auto;font-weight:700;font-size:1.1rem; }
     .grille-item.checked .status-icon { color:#1e7e34; }
     .grille-item.not-checked .status-icon { color:#c0392b; }
-    .grille-item.elim-force .status-icon { color:#c0392b; }
+
+    @keyframes pulse-red {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+    }
 
     /* ── Stars ───────────────────────────── */
     .star-btn { background:none;border:none;font-size:1.4rem;cursor:default;padding:0 2px;line-height:1; }
@@ -88,99 +95,109 @@
     }
     .readonly-badge::before { content:"🔒"; }
 
-    /* ══════════════════════════════════════
-       FLOATING ELIMINATED ALERT
-    ══════════════════════════════════════ */
-    #eliminated-alert {
-      display: none;
+    /* ── ALERTE FLOTTANTE ÉLIMINATOIRE ───── */
+    .elimination-alert {
       position: fixed;
-      top: 76px;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
-      z-index: 99999;
-      background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
-      color: #fff;
-      padding: .85rem 1.4rem;
-      border-radius: 12px;
-      font-size: .95rem;
-      font-weight: 700;
-      box-shadow: 0 6px 28px rgba(192,57,43,.45), 0 2px 8px rgba(0,0,0,.2);
-      align-items: center;
-      gap: 1rem;
-      min-width: 340px;
-      max-width: 90vw;
-      border: 1.5px solid rgba(255,255,255,.25);
-      animation: slideDownAlert .3s cubic-bezier(.21,1.02,.73,1) both;
-    }
-    #eliminated-alert.visible { display: flex; }
-
-    @keyframes slideDownAlert {
-      from { opacity:0; transform:translateX(-50%) translateY(-18px) scale(.97); }
-      to   { opacity:1; transform:translateX(-50%) translateY(0)      scale(1);  }
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border: 3px solid #dc2626;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(220, 38, 38, 0.4);
+      z-index: 10000;
+      max-width: 500px;
+      width: 90%;
+      animation: slideInAlert 0.4s ease-out;
     }
 
-    .elim-alert-icon {
-      font-size: 1.4rem;
-      flex-shrink: 0;
-      filter: drop-shadow(0 0 4px rgba(255,255,255,.4));
-    }
-    .elim-alert-text {
-      flex: 1;
-      line-height: 1.35;
-    }
-    .elim-alert-text strong {
-      display: block;
-      font-size: 1rem;
-      letter-spacing: .01em;
-    }
-    .elim-alert-text span {
-      font-size: .78rem;
-      font-weight: 500;
-      opacity: .88;
-    }
-    .elim-alert-close {
-      background: rgba(255,255,255,.18);
-      border: 1px solid rgba(255,255,255,.3);
-      color: #fff;
-      font-size: 1rem;
-      cursor: pointer;
-      line-height: 1;
-      padding: .3rem .5rem;
-      border-radius: 6px;
-      flex-shrink: 0;
-      transition: background .15s;
-    }
-    .elim-alert-close:hover {
-      background: rgba(255,255,255,.32);
+    @keyframes slideInAlert {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
     }
 
-    /* ── Bandeau rouge en haut de la section éliminatoire ── */
-    .elim-section-banner {
+    .elimination-alert-header {
       display: flex;
       align-items: center;
-      gap: .5rem;
-      background: #c0392b;
-      color: #fff;
-      font-size: .8rem;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .elimination-alert-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #991b1b;
+    }
+
+    .elimination-alert-title::before {
+      content: "🚫";
+      font-size: 2rem;
+    }
+
+    .elimination-alert-close {
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+
+    .elimination-alert-close:hover {
+      background: #b91c1c;
+      transform: rotate(90deg);
+    }
+
+    .elimination-alert-message {
+      font-size: 1.2rem;
       font-weight: 700;
-      padding: .45rem .8rem;
-      border-radius: 6px;
-      margin-bottom: .6rem;
-      letter-spacing: .02em;
+      color: #991b1b;
+      text-align: center;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 8px;
+      border-left: 4px solid #dc2626;
+    }
+
+    .elimination-alert-details {
+      font-size: 0.9rem;
+      color: #7f1d1d;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 2px dashed #fca5a5;
+    }
+
+    .elimination-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      backdrop-filter: blur(4px);
     }
   </style>
 </head>
 <body>
-
-<!-- ══ FLOATING ELIMINATED ALERT ══ -->
-<div id="eliminated-alert" role="alert" aria-live="assertive">
-  <span class="elim-alert-icon">⛔</span>
-  <div class="elim-alert-text">
-    <strong>Candidat non expérimenté &amp; éliminé</strong>
-    <span>Un ou plusieurs critères éliminatoires ne sont pas satisfaits</span>
-  </div>
-  <button class="elim-alert-close" onclick="hideEliminatedAlert()" title="Fermer">✕</button>
-</div>
 
 <!-- NAVBAR -->
 <nav class="navbar">
@@ -346,7 +363,7 @@
       </div>
       <div id="tab-eval" class="tab-content active">
         <div class="form-group" style="margin-bottom:1rem">
-          <label>Score (0 – 5 étoiles) <span class="readonly-badge" style="font-size:.65rem">calculé</span></label>
+          <label>Score (0 – 10) <span class="readonly-badge" style="font-size:.65rem">calculé</span></label>
           <div id="stars-row" style="display:flex;gap:0;margin-top:.3rem"></div>
         </div>
         <div class="form-group">
@@ -369,6 +386,21 @@
       <button class="btn btn-info btn-sm"    onclick="openEmailModal()">📧 Email</button>
       <button class="btn btn-sm" style="background:var(--border)" onclick="closeModal()">Fermer</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ ALERTE FLOTTANTE ÉLIMINATOIRE ══ -->
+<div id="elimination-alert-overlay" class="elimination-overlay" style="display:none" onclick="closeEliminationAlert()"></div>
+<div id="elimination-alert" class="elimination-alert" style="display:none">
+  <div class="elimination-alert-header">
+    <div class="elimination-alert-title">Candidat Éliminé</div>
+    <button class="elimination-alert-close" onclick="closeEliminationAlert()" title="Fermer">✕</button>
+  </div>
+  <div class="elimination-alert-message">
+    🚫 Candidat non expérimenté & éliminé
+  </div>
+  <div class="elimination-alert-details" id="elimination-alert-details">
+    <!-- Les critères éliminatoires seront affichés ici -->
   </div>
 </div>
 
@@ -572,16 +604,16 @@ function renderTable(data) {
       : '';
     
     const scoreRaw = parseInt(c.score) || 0;
-    const score = Math.max(0, Math.min(5, scoreRaw));
-    const stars  = '⭐'.repeat(score) + '☆'.repeat(5 - score);
+    const score = Math.max(0, Math.min(10, scoreRaw));  // ✅ Sur 10
+    const stars  = '⭐'.repeat(Math.floor(score/2)) + '☆'.repeat(5 - Math.floor(score/2));
     
-    let scoreTitle = `Score: ${score}/5 (analyse automatique)`;
+    let scoreTitle = `Score: ${score}/10 (analyse automatique)`;
     if (c.score_breakdown_parsed) {
       const sb = c.score_breakdown_parsed;
       scoreTitle += `\n\n🔴 Éliminatoire: ${sb.bloc1_eliminatoire ? 'OUI ⚠️' : 'NON'}`;
       scoreTitle += `\n🟠 Cohérence: ${sb.bloc2_points} pt${sb.bloc2_points>1?'s':''} (${sb.bloc2_criteres_valides} critères)`;
       scoreTitle += `\n🟡 Signaux: ${sb.bloc3_points} pts (${sb.bloc3_signaux_detectes} signaux ×2)`;
-      scoreTitle += `\n📊 Total brut: ${sb.total_raw_points} pts → Score: ${sb.score_final}/5`;
+      scoreTitle += `\n📊 Total brut: ${sb.total_raw_points} pts → Score: ${sb.score_final}/10`;
       if (sb.note) scoreTitle += `\n\nℹ️ ${sb.note}`;
     }
     
@@ -593,7 +625,7 @@ function renderTable(data) {
       + '<td style="font-size:.82rem">' + c.poste + '</td>'
       + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
       + '<td>' + badgePill(c.statut) + '</td>'
-      + '<td style="font-size:.85rem;letter-spacing:-1px" title="' + escAttr(scoreTitle) + '">' + stars + '</td>'
+      + '<td style="font-size:.85rem;letter-spacing:-1px" title="' + escAttr(scoreTitle) + '">' + stars + ` (${score}/10)` + '</td>'
       + '<td>' + cvLink + lmLink + attLink + '</td>'
       + '<td class="td-actions">'
       + '<button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">📋 Dossier</button> '
@@ -611,15 +643,15 @@ function renderRecent(data) {
   }
   const rows = slice.map(c => {
     const scoreRaw = parseInt(c.score) || 0;
-    const score = Math.max(0, Math.min(5, scoreRaw));
-    const stars = '⭐'.repeat(score) + '☆'.repeat(5 - score);
+    const score = Math.max(0, Math.min(10, scoreRaw));
+    const stars = '⭐'.repeat(Math.floor(score/2)) + '☆'.repeat(5 - Math.floor(score/2));
     return '<tr>'
     + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br>'
     + '<small style="color:var(--text-muted)">' + c.email + '</small></td>'
     + '<td style="font-size:.82rem">' + c.poste + '</td>'
     + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
     + '<td>' + badgePill(c.statut) + '</td>'
-    + '<td style="font-size:.9rem">' + stars + '</td>'
+    + '<td style="font-size:.9rem">' + stars + ` (${score}/10)` + '</td>'
     + '<td><button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">Voir →</button></td>'
     + '</tr>';
   }).join('');
@@ -664,7 +696,7 @@ function openModal(id) {
   document.getElementById('modal-note').value = c.note || '';
 
   // Grille présélection (lecture seule - résultats exacts)
-  renderGrille(c.poste, c.checklist || '');
+  renderGrille(c.poste, c.checklist || '', c.score_breakdown_parsed);
 
   // Reset tabs
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -739,7 +771,7 @@ function renderAnalyseResume(c) {
     + '<div class="sb-row"><span class="sb-label">Points cohérence (🟠 ×1)</span><span class="sb-val">' + sb.bloc2_points + '</span></div>'
     + '<div class="sb-row"><span class="sb-label">Points signaux (🟡 ×2)</span><span class="sb-val">' + sb.bloc3_points + '</span></div>'
     + '<div class="sb-row"><span class="sb-label">Total brut</span><span class="sb-val">' + sb.total_raw_points + '</span></div>'
-    + '<div class="sb-row"><span class="sb-label">Score final</span><span class="sb-val ' + (sb.bloc1_eliminatoire?'elim':'ok') + '">' + sb.score_final + '/5 ⭐</span></div>'
+    + '<div class="sb-row"><span class="sb-label">Score final</span><span class="sb-val ' + (sb.bloc1_eliminatoire?'elim':'ok') + '">' + sb.score_final + '/10 ⭐</span></div>'
     + '</div>';
   
   content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail d\'analyse disponible.</p>';
@@ -756,7 +788,6 @@ function escAttr(s) { return String(s).replace(/"/g,'&quot;').replace(/\n/g,'\\n
 
 function closeModal() {
   document.getElementById('modal-candidat').classList.remove('open');
-  hideEliminatedAlert();
   currentC = null;
 }
 
@@ -764,43 +795,26 @@ function closeModal() {
 function renderStars(n, readonly = true) {
   const row = document.getElementById('stars-row');
   row.innerHTML = '';
-  const score = Math.max(0, Math.min(5, parseInt(n) || 0));
+  const score = Math.max(0, Math.min(10, parseInt(n) || 0));
+  const starCount = Math.floor(score / 2);
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement('button');
     btn.className   = 'star-btn';
-    btn.textContent = i <= score ? '⭐' : '☆';
+    btn.textContent = i <= starCount ? '⭐' : '☆';
     btn.disabled = true;
-    btn.title = 'Score calculé automatiquement par analyse des documents';
+    btn.title = `Score: ${score}/10 (calculé automatiquement)`;
     row.appendChild(btn);
   }
+  // Ajouter le score texte
+  const scoreText = document.createElement('span');
+  scoreText.style.cssText = 'margin-left:1rem;font-weight:700;color:var(--primary);font-size:1.1rem';
+  scoreText.textContent = `${score}/10`;
+  row.appendChild(scoreText);
 }
 
 /* ══════════════════════════════════════════════════════════
-   🚨 ALERTE ÉLIMINATOIRE FLOTTANTE
-══════════════════════════════════════════════════════════ */
-function showEliminatedAlert() {
-  const alert = document.getElementById('eliminated-alert');
-  if (!alert) return;
-  alert.classList.add('visible');
-  // Re-jouer l'animation si déjà visible
-  alert.style.animation = 'none';
-  requestAnimationFrame(() => {
-    alert.style.animation = '';
-  });
-}
-
-function hideEliminatedAlert() {
-  const alert = document.getElementById('eliminated-alert');
-  if (!alert) return;
-  alert.classList.remove('visible');
-}
-
-/* ══════════════════════════════════════════════════════════
-   GRILLE DE PRÉSÉLECTION — LECTURE SEULE
-   ✅ Règle éliminatoire :
-      Si AU MOINS UN critère éliminatoire N'EST PAS validé,
-      TOUS les critères éliminatoires passent en rouge ❌
-      + alerte flottante "Candidat non expérimenté & éliminé"
+   GRILLE DE PRÉSÉLECTION — LECTURE SEULE (3 blocs Word EXACTS)
+   Avec alerte flottante si critère éliminatoire déclenché
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
   "Responsable Administration de Crédit": {
@@ -811,8 +825,8 @@ const GRILLE = {
     ],
     a_verifier: [
       "A-t-il déjà validé des dossiers ?",
-      "A-t-il déjà géré des garanties ?",
-      "A-t-il déjà participé à des audits ?"
+      "A-t-il géré des garanties ?",
+      "A-t-il participé à des audits ?"
     ],
     signaux_forts: [
       "Mention de : IFRS 9",
@@ -924,67 +938,81 @@ const GRILLE = {
   }
 };
 
-function renderGrille(poste, checklistJson) {
+/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables
+   Avec alerte flottante si critère éliminatoire déclenché
+*/
+function renderGrille(poste, checklistJson, scoreBreakdown) {
   const g  = GRILLE[poste];
   const el = document.getElementById('grille-content');
-
-  if (!g) {
-    el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem;text-align:center;padding:1rem">Grille non définie pour ce poste.</p>';
-    hideEliminatedAlert();
-    return;
+  if (!g) { 
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem;text-align:center;padding:1rem">Grille non définie pour ce poste.</p>'; 
+    return; 
   }
-
+  
   let checked = {};
-  try { checked = JSON.parse(checklistJson || '{}'); } catch(e) {}
+  try { checked = JSON.parse(checklistJson || '{}'); } catch {}
+  
+  // 🔍 Vérifier si un critère éliminatoire est déclenché
+  const hasEliminatoire = scoreBreakdown && scoreBreakdown.bloc1_eliminatoire;
 
-  /* ─── RÈGLE ÉLIMINATOIRE ───────────────────────────────────────
-     Si AU MOINS UN critère éliminatoire n'est pas validé (false ou absent),
-     on force TOUS les critères éliminatoires à rouge.
-  ──────────────────────────────────────────────────────────────── */
-  const anyEliminFails = g.eliminatoire.some((item, i) => checked['elim_' + i] !== true);
-
-  if (anyEliminFails) {
-    showEliminatedAlert();
-  } else {
-    hideEliminatedAlert();
-  }
-
-  /* ─── Génération d'une section ────────────────────────────────── */
-  const mkSection = (title, color, icon, items, pfx, forceAllRed) => {
-    let sectionHtml = '<div class="grille-section">'
-      + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">'
-      + icon + ' ' + title + '</div>';
-
-    /* Bandeau d'avertissement affiché seulement sur la section éliminatoire */
-    if (forceAllRed) {
-      sectionHtml += '<div class="elim-section-banner">'
-        + '⛔ Critères non satisfaits — tous les critères éliminatoires sont marqués en échec'
-        + '</div>';
-    }
-
-    items.forEach((item, i) => {
-      const key = pfx + '_' + i;
-      // Si forceAllRed : tous rouges, sinon lecture de la checklist
-      const isValidated = forceAllRed ? false : checked[key] === true;
-      const extraClass  = forceAllRed ? ' elim-force' : '';
-
-      sectionHtml += '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + extraClass + '">'
-        + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
-        + '<span>' + escHtml(item) + '</span>'
-        + '<span class="status-icon">' + (isValidated ? '✅' : '❌') + '</span>'
-        + '</label>';
-    });
-
-    sectionHtml += '</div>';
-    return sectionHtml;
-  };
+  const mkSection = (title, color, icon, items, pfx) =>
+    '<div class="grille-section">'
+    + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">'
+    + icon + ' ' + title + '</div>'
+    + items.map((item, i) => {
+        const key = pfx + '_' + i;
+        const isValidated = checked[key] === true;
+        // 🔒 Lecture seule : checkbox disabled, pas de onchange
+        const eliminatoireClass = (pfx === 'elim' && hasEliminatoire) ? 'eliminatoire-triggered' : '';
+        return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + ' ' + eliminatoireClass + '">'
+          + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
+          + '<span>' + escHtml(item) + '</span>'
+          + '<span class="status-icon">' + (isValidated ? '✅' : '❌') + '</span>'
+          + '</label>';
+      }).join('')
+    + '</div>';
 
   el.innerHTML =
-    /* 🔴 Section renommée "Éliminatoire" (sans "immédiat") */
-    mkSection('🔴 Éliminatoire',                  '#c0392b', '🔴', g.eliminatoire,     'elim',   anyEliminFails) +
-    mkSection('🟠 À vérifier dans le CV',          '#e67e22', '🟠', g.a_verifier,       'verif',  false) +
-    mkSection('🟡 Signaux forts — prioritaire',    '#1e7e34', '🟡', g.signaux_forts,    'signal', false) +
-    mkSection("⚠️ Points d'attention",             '#6c757d', '⚠️', g.points_attention, 'attn',   false);
+    mkSection('🔴 Éliminatoire immédiat',      '#c0392b','🔴', g.eliminatoire,     'elim')  +
+    mkSection('🟠 À vérifier dans le CV',       '#e67e22','🟠', g.a_verifier,       'verif') +
+    mkSection('🟡 Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
+    mkSection("⚠️ Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
+  
+  // 🔔 Afficher l'alerte flottante si critère éliminatoire déclenché
+  if (hasEliminatoire && scoreBreakdown) {
+    showEliminationAlert(scoreBreakdown);
+  }
+}
+
+/* 🔔 ALERTE FLOTTANTE ÉLIMINATOIRE */
+function showEliminationAlert(scoreBreakdown) {
+  const overlay = document.getElementById('elimination-alert-overlay');
+  const alert = document.getElementById('elimination-alert');
+  const details = document.getElementById('elimination-alert-details');
+  
+  // Construire la liste des critères éliminatoires
+  const g = GRILLE[currentC.poste];
+  let criteriaHtml = '<strong>Critères éliminatoires non validés :</strong><ul style="margin:.5rem 0;padding-left:1.5rem">';
+  
+  if (g && g.eliminatoire) {
+    g.eliminatoire.forEach((crit, i) => {
+      criteriaHtml += `<li style="margin:.3rem 0;color:#991b1b">${escHtml(crit)}</li>`;
+    });
+  }
+  criteriaHtml += '</ul>';
+  
+  details.innerHTML = criteriaHtml;
+  
+  // Afficher l'alerte
+  overlay.style.display = 'block';
+  alert.style.display = 'block';
+}
+
+function closeEliminationAlert() {
+  const overlay = document.getElementById('elimination-alert-overlay');
+  const alert = document.getElementById('elimination-alert');
+  overlay.style.display = 'none';
+  alert.style.display = 'none';
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -993,6 +1021,7 @@ function renderGrille(poste, checklistJson) {
 async function updateStatut(statut) {
   if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
   const note = document.getElementById('modal-note').value;
+  // 🔒 On conserve la checklist d'origine — pas de modification possible
   const checklist = currentC?.checklist || '';
   
   try {
@@ -1005,6 +1034,7 @@ async function updateStatut(statut) {
       if (idx !== -1) Object.assign(allCandidats[idx], { statut, note, score: String(currentScore) });
       showToast('Statut mis à jour : ' + statut, 'success');
       closeModal();
+      closeEliminationAlert();  // Fermer l'alerte si ouverte
       applyFilters();
       renderRecent(allCandidats);
       fetchStats();
