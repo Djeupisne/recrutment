@@ -854,7 +854,7 @@ function renderAnalyseResume(c) {
   
   // 🔴 Bloc 1: Éliminatoire immédiat (filtre dur)
   if (sb.bloc1_eliminatoire) {
-    html += '<div class="bloc-alert elim"><strong>🔴 Éliminatoire immédiat</strong>';
+    html += '<div class="bloc-alert elim"><strong>🔴 Éliminatoire </strong>';
     const flags = c.flags_eliminatoires_parsed || [];
     if (flags.length) {
       html += '<div style="margin-top:.4rem">';
@@ -1102,7 +1102,7 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
     + '</div>';
 
   el.innerHTML =
-    mkSection('🔴 Éliminatoire immédiat',      '#c0392b','🔴', g.eliminatoire,     'elim')  +
+    mkSection('🔴 Éliminatoire ',      '#c0392b','🔴', g.eliminatoire,     'elim')  +
     mkSection('🟠 À vérifier dans le CV',       '#e67e22','🟠', g.a_verifier,       'verif') +
     mkSection('🟡 Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
     mkSection("⚠️ Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
