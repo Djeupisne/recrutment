@@ -34,6 +34,7 @@
                       border-radius:4px;cursor:pointer;transition:background .12s; }
     .grille-item:hover { background:#f4f6fa; }
     .grille-item input { margin-top:2px;cursor:pointer; }
+    .grille-item.checked span { text-decoration:line-through;opacity:.6; }
 
     /* ── Stars ──────────────────────────────────────────── */
     .star-btn { background:none;border:none;font-size:1.4rem;cursor:pointer;padding:0 2px;
@@ -56,6 +57,21 @@
     .td-small         { color:#6b7a99;font-size:.77rem; }
     .alert-info       { background:#cce5ff;color:#004085;border:1px solid #b8daff;
                         padding:.8rem 1rem;border-radius:8px;font-size:.85rem; }
+    
+    /* ── Score breakdown ───────────────────────────────── */
+    .score-breakdown { background:#f8fafd;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin:.8rem 0;font-size:.82rem; }
+    .sb-row { display:flex;justify-content:space-between;padding:.2rem 0;border-bottom:1px dashed #e2e8f0; }
+    .sb-row:last-child { border-bottom:none;font-weight:700;color:var(--primary); }
+    .sb-label { color:#64748b; }
+    .sb-val { font-weight:600; }
+    .sb-val.elim { color:#c0392b; }
+    .sb-val.ok { color:#1e7e34; }
+    
+    /* ── Alertes blocs ─────────────────────────────────── */
+    .bloc-alert { padding:.5rem .7rem;border-radius:6px;margin:.3rem 0;font-size:.8rem;display:flex;align-items:flex-start;gap:.4rem; }
+    .bloc-alert.elim { background:#fef2f2;border-left:3px solid #c0392b;color:#991b1b; }
+    .bloc-alert.attn { background:#fffbeb;border-left:3px solid #f59e0b;color:#92400e; }
+    .bloc-alert.signal { background:#ecfdf5;border-left:3px solid #1e7e34;color:#065f46; }
   </style>
 </head>
 <body>
@@ -199,7 +215,7 @@
 
 <!-- ══ MODAL DOSSIER ══ -->
 <div class="modal-overlay" id="modal-candidat">
-  <div class="modal" style="max-width:720px">
+  <div class="modal" style="max-width:780px">
     <div class="modal-header">
       <h3 id="modal-title">Dossier</h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
@@ -209,6 +225,13 @@
            style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem 1.4rem;margin-bottom:1.1rem;font-size:.87rem">
       </div>
       <div id="modal-fichiers" style="display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.3rem"></div>
+      
+      <!-- 🔍 Résumé analyse automatique (nouveau) -->
+      <div id="analyse-resume" style="margin:1rem 0;padding:1rem;background:#f8fafd;border-radius:8px;border:1px solid #e2e8f0;display:none">
+        <h4 style="margin:0 0 .5rem 0;font-size:.95rem">🧠 Analyse automatique</h4>
+        <div id="analyse-content"></div>
+      </div>
+      
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('eval',this)">📝 Évaluation</button>
         <button class="tab-btn"        onclick="switchTab('grille',this)">📋 Grille de présélection</button>
@@ -308,7 +331,6 @@ function showSection(name, el) {
   document.getElementById('section-candidats').style.display = name === 'candidats' ? 'block' : 'none';
   document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
   if (el) el.classList.add('active');
-  // Quand on arrive sur candidats → afficher le tableau avec les données déjà en cache
   if (name === 'candidats') renderTable(allCandidats);
 }
 
@@ -322,7 +344,7 @@ function switchTab(name, btn) {
 function refreshAll() { fetchStats(); fetchCandidats(); }
 
 /* ══════════════════════════════════════════════════════════
-   STATS + GRAPHIQUES NATIFS (zéro CDN externe)
+   STATS + GRAPHIQUES NATIFS
 ══════════════════════════════════════════════════════════ */
 async function fetchStats() {
   try {
@@ -343,7 +365,6 @@ async function fetchStats() {
   } catch (e) { console.error('fetchStats:', e); }
 }
 
-/* Donut SVG — pas de lib externe, pas de CDN */
 function renderDonut(d) {
   const total = d.total || 1;
   const segs  = [
@@ -353,7 +374,7 @@ function renderDonut(d) {
     { id: 'arc-rejete',    val: d.rejete     }
   ];
   const circ = 100;
-  let offset = 25; // début en haut
+  let offset = 25;
   segs.forEach(s => {
     const pct = (s.val / total) * circ;
     const el  = document.getElementById(s.id);
@@ -363,7 +384,6 @@ function renderDonut(d) {
   });
 }
 
-/* Bar chart CSS — pas de lib */
 function renderBarChart(byPoste) {
   const el = document.getElementById('bar-chart');
   if (!byPoste.length) {
@@ -383,7 +403,7 @@ function renderBarChart(byPoste) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   CANDIDATS — fetch + cache local + render
+   CANDIDATS — fetch + cache + render
 ══════════════════════════════════════════════════════════ */
 async function fetchCandidats() {
   try {
@@ -407,7 +427,6 @@ function populatePosteFilter(data) {
   });
 }
 
-/* Filtrage 100% côté client — zéro requête serveur, réactif */
 function applyFilters() {
   const search = document.getElementById('f-search').value.toLowerCase().trim();
   const poste  = document.getElementById('f-poste').value;
@@ -422,7 +441,7 @@ function applyFilters() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   🔧 CORRECTION APPLIQUÉE ICI : renderTable avec score clampé
+   🔧 renderTable : score clampé + tooltip breakdown
 ══════════════════════════════════════════════════════════ */
 function renderTable(data) {
   const tbody = document.getElementById('candidats-tbody');
@@ -438,11 +457,22 @@ function renderTable(data) {
       ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" style="color:var(--primary);font-size:.78rem;margin-left:.4rem">📃 LM</a>'
       : '';
     
-    // 🔧 CORRECTION : clamp le score entre 0 et 5 pour éviter RangeError sur .repeat()
+    // 🔧 Clamp score 0-5
     const scoreRaw = parseInt(c.score) || 0;
     const score = Math.max(0, Math.min(5, scoreRaw));
-    
     const stars  = '⭐'.repeat(score) + '☆'.repeat(5 - score);
+    
+    // 🎯 Tooltip avec breakdown si disponible
+    let scoreTitle = `Score: ${score}/5`;
+    if (c.score_breakdown_parsed) {
+      const sb = c.score_breakdown_parsed;
+      scoreTitle += `\n🔴 Éliminatoire: ${sb.bloc1_eliminatoire ? 'OUI' : 'NON'}`;
+      scoreTitle += `\n🟠 Cohérence: ${sb.bloc2_points} pts (${sb.bloc2_criteres_valides} critères)`;
+      scoreTitle += `\n🟡 Signaux: ${sb.bloc3_points} pts (${sb.bloc3_signaux_detectes} signaux)`;
+      scoreTitle += `\n📊 Total: ${sb.total_raw_points} pts → ${sb.score_final}/5`;
+      if (sb.note) scoreTitle += `\nℹ️ ${sb.note}`;
+    }
+    
     return '<tr>'
       + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong>'
       + '<br><span class="td-small">' + c.email + '</span>'
@@ -451,7 +481,7 @@ function renderTable(data) {
       + '<td style="font-size:.82rem">' + c.poste + '</td>'
       + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
       + '<td>' + badgePill(c.statut) + '</td>'
-      + '<td style="font-size:.85rem;letter-spacing:-1px">' + stars + '</td>'
+      + '<td style="font-size:.85rem;letter-spacing:-1px" title="' + escAttr(scoreTitle) + '">' + stars + '</td>'
       + '<td>' + cvLink + lmLink + '</td>'
       + '<td class="td-actions">'
       + '<button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">📋 Dossier</button> '
@@ -467,24 +497,28 @@ function renderRecent(data) {
     container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Aucune candidature.</p></div>';
     return;
   }
-  const rows = slice.map(c =>
-    '<tr>'
+  const rows = slice.map(c => {
+    const scoreRaw = parseInt(c.score) || 0;
+    const score = Math.max(0, Math.min(5, scoreRaw));
+    const stars = '⭐'.repeat(score) + '☆'.repeat(5 - score);
+    return '<tr>'
     + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br>'
     + '<small style="color:var(--text-muted)">' + c.email + '</small></td>'
     + '<td style="font-size:.82rem">' + c.poste + '</td>'
     + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
     + '<td>' + badgePill(c.statut) + '</td>'
+    + '<td style="font-size:.9rem">' + stars + '</td>'
     + '<td><button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">Voir →</button></td>'
-    + '</tr>'
-  ).join('');
+    + '</tr>';
+  }).join('');
   container.innerHTML =
     '<div class="table-wrap"><table>'
-    + '<thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th></th></tr></thead>'
+    + '<thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th>Score</th><th></th></tr></thead>'
     + '<tbody>' + rows + '</tbody></table></div>';
 }
 
 /* ══════════════════════════════════════════════════════════
-   MODAL DOSSIER — données depuis le cache (zéro appel /detail)
+   MODAL DOSSIER — avec résumé analyse 3 blocs
 ══════════════════════════════════════════════════════════ */
 function openModal(id) {
   const c = allCandidats.find(x => x.id === id);
@@ -511,6 +545,9 @@ function openModal(id) {
     : '<span style="color:var(--text-muted);font-size:.83rem">Lettre non fournie</span>';
   document.getElementById('modal-fichiers').innerHTML = cvLnk + ' ' + lmLnk;
 
+  // 🎯 RÉSUMÉ ANALYSE AUTOMATIQUE (3 blocs Word)
+  renderAnalyseResume(c);
+
   // Score & note
   renderStars(currentScore);
   document.getElementById('modal-note').value = c.note || '';
@@ -518,7 +555,7 @@ function openModal(id) {
   // Grille présélection
   renderGrille(c.poste, c.checklist || '');
 
-  // Reset tab
+  // Reset tabs
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelector('.tab-btn').classList.add('active');
@@ -527,25 +564,90 @@ function openModal(id) {
   document.getElementById('modal-candidat').classList.add('open');
 }
 
+/* ── 🎯 NOUVEAU : Affichage résumé analyse 3 blocs ───────── */
+function renderAnalyseResume(c) {
+  const container = document.getElementById('analyse-resume');
+  const content = document.getElementById('analyse-content');
+  
+  // Si pas de breakdown, masquer
+  if (!c.score_breakdown_parsed) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  container.style.display = 'block';
+  const sb = c.score_breakdown_parsed;
+  const details = c.analyse_details_parsed || {};
+  
+  let html = '';
+  
+  // 🔴 Bloc 1: Éliminatoire
+  if (sb.bloc1_eliminatoire) {
+    html += '<div class="bloc-alert elim"><strong>🔴 Éliminatoire</strong><div style="margin-top:.3rem">';
+    const flags = c.flags_eliminatoires_parsed || [];
+    flags.forEach(f => html += '• ' + escHtml(f) + '<br>');
+    html += '</div></div>';
+  }
+  
+  // 🟠 Bloc 2: Cohérence
+  if (sb.bloc2_criteres_valides > 0) {
+    html += '<div class="bloc-alert signal"><strong>🟠 Cohérence du parcours</strong> — ' + sb.bloc2_points + ' point' + (sb.bloc2_points>1?'s':'') + '';
+    if (details.criteres_valides_bloc2) {
+      html += '<div style="margin-top:.3rem">';
+      details.criteres_valides_bloc2.forEach(item => html += '• ' + escHtml(item.replace('🟠 ','')) + '<br>');
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  // 🟡 Bloc 3: Signaux forts
+  if (sb.bloc3_signaux_detectes > 0) {
+    html += '<div class="bloc-alert signal"><strong>🟡 Signaux de qualité</strong> — ' + sb.bloc3_points + ' points';
+    const signaux = c.signaux_detectes_parsed || [];
+    if (signaux.length) {
+      html += '<div style="margin-top:.3rem">';
+      signaux.forEach(s => html += '• ' + escHtml(s) + '<br>');
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  // ⚠️ Points d'attention
+  if (details.alertes_attention && details.alertes_attention.length) {
+    html += '<div class="bloc-alert attn"><strong>⚠️ Points d\'attention</strong><div style="margin-top:.3rem">';
+    details.alertes_attention.forEach(a => html += '• ' + escHtml(a.replace('⚠️ ','')) + '<br>');
+    html += '</div></div>';
+  }
+  
+  // Score breakdown détaillé
+  html += '<div class="score-breakdown">'
+    + '<div class="sb-row"><span class="sb-label">Points cohérence (🟠)</span><span class="sb-val">' + sb.bloc2_points + '</span></div>'
+    + '<div class="sb-row"><span class="sb-label">Points signaux (🟡 ×2)</span><span class="sb-val">' + sb.bloc3_points + '</span></div>'
+    + '<div class="sb-row"><span class="sb-label">Total brut</span><span class="sb-val">' + sb.total_raw_points + '</span></div>'
+    + '<div class="sb-row"><span class="sb-label">Score final</span><span class="sb-val ' + (sb.bloc1_eliminatoire?'elim':'ok') + '">' + sb.score_final + '/5</span></div>'
+    + '</div>';
+  
+  content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail d\'analyse disponible.</p>';
+}
+
 function info(label, val, raw) {
   return '<div>'
     + '<div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">' + label + '</div>'
     + '<div>' + (raw ? val : escHtml(String(val))) + '</div>'
     + '</div>';
 }
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s) { return String(s).replace(/"/g,'&quot;').replace(/\n/g,'\\n'); }
 
 function closeModal() {
   document.getElementById('modal-candidat').classList.remove('open');
   currentC = null;
 }
 
-/* ── Stars ──────────────────────────────────────────────────────────── */
-/* 🔧 CORRECTION : clamp du score dans renderStars aussi */
+/* ── Stars ───────────────────────────────────────────────── */
 function renderStars(n) {
   const row = document.getElementById('stars-row');
   row.innerHTML = '';
-  // 🔧 Clamp entre 0 et 5 pour éviter RangeError
   const score = Math.max(0, Math.min(5, parseInt(n) || 0));
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement('button');
@@ -558,7 +660,7 @@ function renderStars(n) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   GRILLE DE PRÉSÉLECTION (logique Word)
+   GRILLE DE PRÉSÉLECTION (3 blocs Word)
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
   "Responsable Administration de Crédit": {
@@ -612,9 +714,10 @@ function renderGrille(poste, checklistJson) {
     + icon + ' ' + title + '</div>'
     + items.map((item, i) => {
         const key = pfx + '_' + i;
-        return '<label class="grille-item">'
-          + '<input type="checkbox" data-key="' + key + '" ' + (checked[key] ? 'checked' : '') + ' onchange="syncChecklist()">'
-          + '<span>' + item + '</span></label>';
+        const isChecked = checked[key] === true;
+        return '<label class="grille-item' + (isChecked ? ' checked' : '') + '">'
+          + '<input type="checkbox" data-key="' + key + '" ' + (isChecked ? 'checked' : '') + ' onchange="syncChecklist()">'
+          + '<span>' + escHtml(item) + '</span></label>';
       }).join('')
     + '</div>';
 
@@ -645,7 +748,6 @@ async function updateStatut(statut) {
       { method:'PUT', headers: authH(), body: JSON.stringify({ statut, note, score: currentScore, checklist }) }
     );
     if (res.ok) {
-      // Mettre à jour le cache local immédiatement
       const idx = allCandidats.findIndex(x => x.id === currentC.id);
       if (idx !== -1) Object.assign(allCandidats[idx], { statut, note, score: String(currentScore), checklist });
       showToast('Statut mis à jour : ' + statut, 'success');
@@ -661,11 +763,10 @@ async function updateStatut(statut) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   EMAIL (100% JavaScript côté client — zéro dépendance backend)
+   EMAIL
 ══════════════════════════════════════════════════════════ */
 function openEmailModal() {
   if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
-  // Présélectionner le type selon le statut actuel
   const sel = document.getElementById('email-type');
   sel.value = ['retenu','entretien','rejete'].includes(currentC.statut) ? currentC.statut : 'retenu';
   buildEmail();
