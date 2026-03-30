@@ -34,10 +34,13 @@
                       border-radius:4px;cursor:default;background:#fff;border:1px solid transparent; }
     .grille-item.checked { background:#f0fdf4;border-color:#bbf7d0; }
     .grille-item.not-checked { background:#fef2f2;border-color:#fecaca; }
+    /* ── Force rouge éliminatoire ── */
+    .grille-item.elim-force { background:#fef2f2 !important;border-color:#f87171 !important;border-width:1.5px !important; }
     .grille-item input { margin:0;cursor:not-allowed;opacity:.5;width:16px;height:16px; }
     .grille-item .status-icon { margin-left:auto;font-weight:700;font-size:1.1rem; }
     .grille-item.checked .status-icon { color:#1e7e34; }
     .grille-item.not-checked .status-icon { color:#c0392b; }
+    .grille-item.elim-force .status-icon { color:#c0392b; }
 
     /* ── Stars ───────────────────────────── */
     .star-btn { background:none;border:none;font-size:1.4rem;cursor:default;padding:0 2px;line-height:1; }
@@ -84,9 +87,100 @@
       border:1px solid #e2e8f0;
     }
     .readonly-badge::before { content:"🔒"; }
+
+    /* ══════════════════════════════════════
+       FLOATING ELIMINATED ALERT
+    ══════════════════════════════════════ */
+    #eliminated-alert {
+      display: none;
+      position: fixed;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      background: linear-gradient(135deg, #c0392b 0%, #922b21 100%);
+      color: #fff;
+      padding: .85rem 1.4rem;
+      border-radius: 12px;
+      font-size: .95rem;
+      font-weight: 700;
+      box-shadow: 0 6px 28px rgba(192,57,43,.45), 0 2px 8px rgba(0,0,0,.2);
+      align-items: center;
+      gap: 1rem;
+      min-width: 340px;
+      max-width: 90vw;
+      border: 1.5px solid rgba(255,255,255,.25);
+      animation: slideDownAlert .3s cubic-bezier(.21,1.02,.73,1) both;
+    }
+    #eliminated-alert.visible { display: flex; }
+
+    @keyframes slideDownAlert {
+      from { opacity:0; transform:translateX(-50%) translateY(-18px) scale(.97); }
+      to   { opacity:1; transform:translateX(-50%) translateY(0)      scale(1);  }
+    }
+
+    .elim-alert-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 4px rgba(255,255,255,.4));
+    }
+    .elim-alert-text {
+      flex: 1;
+      line-height: 1.35;
+    }
+    .elim-alert-text strong {
+      display: block;
+      font-size: 1rem;
+      letter-spacing: .01em;
+    }
+    .elim-alert-text span {
+      font-size: .78rem;
+      font-weight: 500;
+      opacity: .88;
+    }
+    .elim-alert-close {
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.3);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: .3rem .5rem;
+      border-radius: 6px;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .elim-alert-close:hover {
+      background: rgba(255,255,255,.32);
+    }
+
+    /* ── Bandeau rouge en haut de la section éliminatoire ── */
+    .elim-section-banner {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: #c0392b;
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 700;
+      padding: .45rem .8rem;
+      border-radius: 6px;
+      margin-bottom: .6rem;
+      letter-spacing: .02em;
+    }
   </style>
 </head>
 <body>
+
+<!-- ══ FLOATING ELIMINATED ALERT ══ -->
+<div id="eliminated-alert" role="alert" aria-live="assertive">
+  <span class="elim-alert-icon">⛔</span>
+  <div class="elim-alert-text">
+    <strong>Candidat non expérimenté &amp; éliminé</strong>
+    <span>Un ou plusieurs critères éliminatoires ne sont pas satisfaits</span>
+  </div>
+  <button class="elim-alert-close" onclick="hideEliminatedAlert()" title="Fermer">✕</button>
+</div>
 
 <!-- NAVBAR -->
 <nav class="navbar">
@@ -662,6 +756,7 @@ function escAttr(s) { return String(s).replace(/"/g,'&quot;').replace(/\n/g,'\\n
 
 function closeModal() {
   document.getElementById('modal-candidat').classList.remove('open');
+  hideEliminatedAlert();
   currentC = null;
 }
 
@@ -681,8 +776,31 @@ function renderStars(n, readonly = true) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   GRILLE DE PRÉSÉLECTION — LECTURE SEULE (3 blocs Word EXACTS)
-   Basée sur le document Word : Adéquation structurelle / Cohérence / Signaux
+   🚨 ALERTE ÉLIMINATOIRE FLOTTANTE
+══════════════════════════════════════════════════════════ */
+function showEliminatedAlert() {
+  const alert = document.getElementById('eliminated-alert');
+  if (!alert) return;
+  alert.classList.add('visible');
+  // Re-jouer l'animation si déjà visible
+  alert.style.animation = 'none';
+  requestAnimationFrame(() => {
+    alert.style.animation = '';
+  });
+}
+
+function hideEliminatedAlert() {
+  const alert = document.getElementById('eliminated-alert');
+  if (!alert) return;
+  alert.classList.remove('visible');
+}
+
+/* ══════════════════════════════════════════════════════════
+   GRILLE DE PRÉSÉLECTION — LECTURE SEULE
+   ✅ Règle éliminatoire :
+      Si AU MOINS UN critère éliminatoire N'EST PAS validé,
+      TOUS les critères éliminatoires passent en rouge ❌
+      + alerte flottante "Candidat non expérimenté & éliminé"
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
   "Responsable Administration de Crédit": {
@@ -806,42 +924,67 @@ const GRILLE = {
   }
 };
 
-/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables
-   ✅ = critère validé (mots-clés exacts trouvés)
-   ❌ = critère non validé (mots-clés non trouvés)
-*/
 function renderGrille(poste, checklistJson) {
   const g  = GRILLE[poste];
   const el = document.getElementById('grille-content');
-  if (!g) { 
-    el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem;text-align:center;padding:1rem">Grille non définie pour ce poste.</p>'; 
-    return; 
-  }
-  
-  let checked = {};
-  try { checked = JSON.parse(checklistJson || '{}'); } catch {}
 
-  const mkSection = (title, color, icon, items, pfx) =>
-    '<div class="grille-section">'
-    + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">'
-    + icon + ' ' + title + '</div>'
-    + items.map((item, i) => {
-        const key = pfx + '_' + i;
-        const isValidated = checked[key] === true;
-        // 🔒 Lecture seule : checkbox disabled, pas de onchange, indicateur ✅/❌
-        return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + '">'
-          + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
-          + '<span>' + escHtml(item) + '</span>'
-          + '<span class="status-icon">' + (isValidated ? '✅' : '❌') + '</span>'
-          + '</label>';
-      }).join('')
-    + '</div>';
+  if (!g) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem;text-align:center;padding:1rem">Grille non définie pour ce poste.</p>';
+    hideEliminatedAlert();
+    return;
+  }
+
+  let checked = {};
+  try { checked = JSON.parse(checklistJson || '{}'); } catch(e) {}
+
+  /* ─── RÈGLE ÉLIMINATOIRE ───────────────────────────────────────
+     Si AU MOINS UN critère éliminatoire n'est pas validé (false ou absent),
+     on force TOUS les critères éliminatoires à rouge.
+  ──────────────────────────────────────────────────────────────── */
+  const anyEliminFails = g.eliminatoire.some((item, i) => checked['elim_' + i] !== true);
+
+  if (anyEliminFails) {
+    showEliminatedAlert();
+  } else {
+    hideEliminatedAlert();
+  }
+
+  /* ─── Génération d'une section ────────────────────────────────── */
+  const mkSection = (title, color, icon, items, pfx, forceAllRed) => {
+    let sectionHtml = '<div class="grille-section">'
+      + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">'
+      + icon + ' ' + title + '</div>';
+
+    /* Bandeau d'avertissement affiché seulement sur la section éliminatoire */
+    if (forceAllRed) {
+      sectionHtml += '<div class="elim-section-banner">'
+        + '⛔ Critères non satisfaits — tous les critères éliminatoires sont marqués en échec'
+        + '</div>';
+    }
+
+    items.forEach((item, i) => {
+      const key = pfx + '_' + i;
+      // Si forceAllRed : tous rouges, sinon lecture de la checklist
+      const isValidated = forceAllRed ? false : checked[key] === true;
+      const extraClass  = forceAllRed ? ' elim-force' : '';
+
+      sectionHtml += '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + extraClass + '">'
+        + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
+        + '<span>' + escHtml(item) + '</span>'
+        + '<span class="status-icon">' + (isValidated ? '✅' : '❌') + '</span>'
+        + '</label>';
+    });
+
+    sectionHtml += '</div>';
+    return sectionHtml;
+  };
 
   el.innerHTML =
-    mkSection('🔴 Éliminatoire immédiat',      '#c0392b','🔴', g.eliminatoire,     'elim')  +
-    mkSection('🟠 À vérifier dans le CV',       '#e67e22','🟠', g.a_verifier,       'verif') +
-    mkSection('🟡 Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
-    mkSection("⚠️ Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
+    /* 🔴 Section renommée "Éliminatoire" (sans "immédiat") */
+    mkSection('🔴 Éliminatoire',                  '#c0392b', '🔴', g.eliminatoire,     'elim',   anyEliminFails) +
+    mkSection('🟠 À vérifier dans le CV',          '#e67e22', '🟠', g.a_verifier,       'verif',  false) +
+    mkSection('🟡 Signaux forts — prioritaire',    '#1e7e34', '🟡', g.signaux_forts,    'signal', false) +
+    mkSection("⚠️ Points d'attention",             '#6c757d', '⚠️', g.points_attention, 'attn',   false);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -850,7 +993,6 @@ function renderGrille(poste, checklistJson) {
 async function updateStatut(statut) {
   if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
   const note = document.getElementById('modal-note').value;
-  // 🔒 On conserve la checklist d'origine — pas de modification possible
   const checklist = currentC?.checklist || '';
   
   try {
