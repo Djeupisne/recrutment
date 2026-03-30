@@ -79,7 +79,7 @@
           </select>
         </div>
 
-        <!-- 📁 Fichiers : CV + Lettre + Certificats -->
+        <!-- 📁 Fichiers : CV + Lettre + Certificats (MULTIPLE) -->
         <div class="form-row">
           <div class="form-group">
             <label>CV *</label>
@@ -97,16 +97,17 @@
           </div>
         </div>
         
-        <!-- 🎓 NOUVEAU : Certificats / Attestations -->
+        <!-- 🎓 Certificats / Attestations (MULTIPLE FILES) -->
         <div class="form-group" style="margin-top:.5rem">
-          <label>Certificats / Attestations (optionnel)</label>
+          <label>Certificats / Attestations (optionnel, plusieurs fichiers)</label>
           <div class="file-input-wrapper">
-            <label class="file-label" id="attestation-label" for="attestation-input">🎓 Ajouter un certificat</label>
-            <input type="file" id="attestation-input" name="attestation" accept=".pdf,.doc,.docx">
+            <label class="file-label" id="attestation-label" for="attestation-input">🎓 Ajouter des certificats</label>
+            <input type="file" id="attestation-input" name="attestation" accept=".pdf,.doc,.docx" multiple>
           </div>
           <p style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem">
-            Ex: Attestation de travail, certificats de formation, diplômes… (analyse incluse dans l'évaluation)
+            Ex: Attestation de travail, certificats de formation, diplômes… (tous analysés ensemble)
           </p>
+          <div id="attestation-list" style="margin-top:.5rem;font-size:.8rem;color:var(--text-muted)"></div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
@@ -190,7 +191,8 @@ fetch(`${API}/postes`)
   });
 
 // ── File inputs : gestion des labels ─────────────────────────────────────
-['cv','lettre','attestation'].forEach(name => {
+// CV et Lettre (single file)
+['cv','lettre'].forEach(name => {
   const input = document.getElementById(`${name}-input`);
   const label = document.getElementById(`${name}-label`);
   if (input && label) {
@@ -199,17 +201,52 @@ fetch(`${API}/postes`)
         label.textContent = '✅ ' + this.files[0].name;
         label.classList.add('has-file');
       } else {
-        const defaults = {
-          cv: '📎 Choisir mon CV',
-          lettre: '📎 Choisir ma lettre',
-          attestation: '🎓 Ajouter un certificat'
-        };
+        const defaults = { cv: '📎 Choisir mon CV', lettre: '📎 Choisir ma lettre' };
         label.textContent = defaults[name] || '📎 Choisir un fichier';
         label.classList.remove('has-file');
       }
     });
   }
 });
+
+// 🎓 Certificats (MULTIPLE files) - gestion avancée
+const attestationInput = document.getElementById('attestation-input');
+const attestationLabel = document.getElementById('attestation-label');
+const attestationList = document.getElementById('attestation-list');
+
+if (attestationInput && attestationLabel && attestationList) {
+  attestationInput.addEventListener('change', function() {
+    const files = Array.from(this.files);
+    
+    if (files.length === 0) {
+      attestationLabel.textContent = '🎓 Ajouter des certificats';
+      attestationLabel.classList.remove('has-file');
+      attestationList.innerHTML = '';
+      return;
+    }
+    
+    // Mise à jour du label
+    attestationLabel.textContent = `✅ ${files.length} fichier${files.length>1?'s':''} sélectionné${files.length>1?'s':''}`;
+    attestationLabel.classList.add('has-file');
+    
+    // Liste des fichiers sélectionnés
+    attestationList.innerHTML = files.map(f => 
+      `<div style="padding:.2rem 0;border-bottom:1px dashed #e2e8f0">📄 ${escHtml(f.name)} (${formatFileSize(f.size)})</div>`
+    ).join('');
+  });
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Octet';
+  const k = 1024;
+  const sizes = ['Octets', 'Ko', 'Mo', 'Go'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function escHtml(s) { 
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); 
+}
 
 // ── Soumission de la candidature ──────────────────────────────────────────
 document.getElementById('candidature-form').addEventListener('submit', async function(e) {
@@ -222,6 +259,7 @@ document.getElementById('candidature-form').addEventListener('submit', async fun
 
   try {
     const fd = new FormData(this);
+    // ✅ Les fichiers multiples avec le même nom "attestation" sont envoyés correctement
     const res = await fetch(`${API}/candidats/postuler`, { method: 'POST', body: fd });
     const data = await res.json();
     if (res.ok) {
@@ -242,18 +280,24 @@ document.getElementById('candidature-form').addEventListener('submit', async fun
 
 function resetForm() {
   document.getElementById('candidature-form').reset();
-  ['cv','lettre','attestation'].forEach(n => {
+  
+  // Reset CV et Lettre
+  ['cv','lettre'].forEach(n => {
     const lbl = document.getElementById(`${n}-label`);
-    const defaults = {
-      cv: '📎 Choisir mon CV',
-      lettre: '📎 Choisir ma lettre',
-      attestation: '🎓 Ajouter un certificat'
-    };
+    const defaults = { cv: '📎 Choisir mon CV', lettre: '📎 Choisir ma lettre' };
     if (lbl) {
       lbl.textContent = defaults[n] || '📎 Choisir un fichier';
       lbl.classList.remove('has-file');
     }
   });
+  
+  // Reset Certificats (multiple)
+  if (attestationLabel && attestationList) {
+    attestationLabel.textContent = '🎓 Ajouter des certificats';
+    attestationLabel.classList.remove('has-file');
+    attestationList.innerHTML = '';
+  }
+  
   document.getElementById('form-card').style.display = 'block';
   document.getElementById('candidature-success').style.display = 'none';
   document.getElementById('form-alert').innerHTML = '';
