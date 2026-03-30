@@ -195,6 +195,72 @@
       z-index: 9999;
       backdrop-filter: blur(4px);
     }
+
+    /* ── Export buttons section ──────────── */
+    .export-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 1.2rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .export-section h3 {
+      color: white;
+      margin: 0 0 1rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .export-buttons {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .export-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .export-btn:active {
+      transform: translateY(0);
+    }
+
+    .export-btn.excel {
+      background: #217346;
+      color: white;
+    }
+
+    .export-btn.csv {
+      background: #f0ad4e;
+      color: white;
+    }
+
+    .export-btn.pdf {
+      background: #d9534f;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -239,11 +305,23 @@
         <h2 class="dash-title" style="margin:0">Vue d'ensemble</h2>
         <button class="btn btn-blue btn-sm" onclick="refreshAll()">🔄 Actualiser</button>
       </div>
-<div style="display:flex;gap:.5rem;flex-wrap:wrap">
-  <button class="btn btn-blue btn-sm" onclick="exportReport('excel')">📊 Export Excel</button>
-  <button class="btn btn-success btn-sm" onclick="exportReport('csv')">📄 Export CSV</button>
-  <button class="btn btn-danger btn-sm" onclick="exportReport('pdf')">📕 Export PDF</button>
-</div>
+
+      <!-- ══ SECTION EXPORT ══ -->
+      <div class="export-section">
+        <h3>📊 Exporter les rapports</h3>
+        <div class="export-buttons">
+          <button class="export-btn excel" onclick="exportReport('excel')">
+            <span>📊</span> Excel (.xlsx)
+          </button>
+          <button class="export-btn csv" onclick="exportReport('csv')">
+            <span>📄</span> CSV
+          </button>
+          <button class="export-btn pdf" onclick="exportReport('pdf')">
+            <span>📕</span> PDF
+          </button>
+        </div>
+      </div>
+
       <div class="stats-grid">
         <div class="stat-card blue">  <div class="stat-icon">👥</div><div class="stat-value" id="s-total">–</div>    <div class="stat-label">Candidatures</div></div>
         <div class="stat-card amber"> <div class="stat-icon">⏳</div><div class="stat-value" id="s-attente">–</div>  <div class="stat-label">En attente</div></div>
@@ -470,11 +548,51 @@ function authH()  {
   return { 'Authorization': 'Bearer ' + jwtToken, 'Content-Type': 'application/json' };
 }
 
-  function exportReport(format) {
-  const token = jwtToken;
-  const url = `${API}/recruteur/export/${format}?token=${token}`;
-  window.open(url, '_blank');
-  showToast(`Téléchargement du rapport ${format.toUpperCase()}...`, 'info');
+/* ══════════════════════════════════════════════════════════
+   EXPORT REPORTS - VERSION CORRIGÉE
+══════════════════════════════════════════════════════════ */
+async function exportReport(format) {
+  try {
+    showToast(`Génération du rapport ${format.toUpperCase()}...`, 'info');
+    
+    const response = await fetch(`${API}/recruteur/export/${format}`, {
+      method: 'GET',
+      headers: authH()  // ✅ Utilise le header Authorization
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Erreur lors de l\'export');
+    }
+    
+    // Récupérer le blob (fichier binaire)
+    const blob = await response.blob();
+    
+    // Créer un lien de téléchargement temporaire
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // Nom du fichier avec timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const extensions = { excel: 'xlsx', csv: 'csv', pdf: 'pdf' };
+    a.download = `rapport_candidats_${timestamp}.${extensions[format] || 'xlsx'}`;
+    
+    // Déclencher le téléchargement
+    document.body.appendChild(a);
+    a.click();
+    
+    // Nettoyer
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }, 100);
+    
+    showToast(`Rapport ${format.toUpperCase()} téléchargé avec succès !`, 'success');
+  } catch (error) {
+    console.error('Erreur export:', error);
+    showToast(`Erreur: ${error.message}`, 'error');
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
