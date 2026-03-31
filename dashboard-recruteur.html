@@ -315,7 +315,7 @@
 <div id="security-warning">
   <div class="icon">🔒</div>
   <h2>⚠️ Accès Restreint</h2>
-  <p>action non autorisé veillez contacter DJEUPISNE Oualoumi via mon port folio <a href="https://djeupisne.vercel.app" target="_blank">djeupisne.vercel.app</a></p>
+  <p>action non autorisé veillez contacter DJEUPISNE Oualoumi via son port folio <a href="https://djeupisne.vercel.app" target="_blank">djeupisne.vercel.app</a></p>
 </div>
 
 <!-- NAVBAR -->
@@ -578,135 +578,79 @@
 <script src="script.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════
-   🔒 PROTECTION ANTI-INSPECTION DU SITE
-   Blocage des raccourcis et détection DevTools
+   🔒 PROTECTION ANTI-INSPECTION — VERSION CIBLÉE
+   Bloque uniquement l'accès au code source, sans perturber l'usage
    ══════════════════════════════════════════════════════════ */
 
 (function() {
-  const WARNING = document.getElementById('security-warning');
+  const WARNING_MSG = "action non autorisé veillez contacter DJEUPISNE Oualoumi via mon port folio djeupisne.vercel.app";
   
-  function showSecurityWarning() {
-    WARNING.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    // Optionnel : rediriger après quelques secondes
-    // setTimeout(() => { window.location.href = 'https://djeupisne.vercel.app'; }, 5000);
+  function showWarning() {
+    // Affiche une alerte native simple (non bloquante)
+    alert(WARNING_MSG);
+    // Optionnel : rediriger après l'alerte
+    // window.location.href = 'https://djeupisne.vercel.app';
   }
   
-  function hideSecurityWarning() {
-    WARNING.style.display = 'none';
-    document.body.style.overflow = '';
-  }
-  
-  // 🔴 Blocage du clic droit
-  document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-    showSecurityWarning();
-    return false;
-  });
-  
-  // 🔴 Blocage des raccourcis clavier d'inspection
+  // 🔴 Blocage des raccourcis clavier d'inspection UNIQUEMENT
   document.addEventListener('keydown', function(e) {
     // F12
     if (e.key === 'F12') {
       e.preventDefault();
-      showSecurityWarning();
+      showWarning();
       return false;
     }
     // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (DevTools)
     if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
       e.preventDefault();
-      showSecurityWarning();
+      showWarning();
       return false;
     }
     // Ctrl+U (Voir source)
     if (e.ctrlKey && e.key.toUpperCase() === 'U') {
       e.preventDefault();
-      showSecurityWarning();
+      showWarning();
       return false;
     }
     // Ctrl+Shift+S (Enregistrer page)
     if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'S') {
       e.preventDefault();
-      showSecurityWarning();
+      showWarning();
       return false;
     }
-    // Ctrl+Alt+I (autre variante DevTools)
+    // Ctrl+Alt+I (variante DevTools)
     if (e.ctrlKey && e.altKey && e.key.toUpperCase() === 'I') {
       e.preventDefault();
-      showSecurityWarning();
+      showWarning();
       return false;
     }
-    // PrtScn / Impr écran
-    if (e.key === 'PrintScreen') {
-      e.preventDefault();
-      showSecurityWarning();
-      return false;
+  }, { passive: false });
+  
+  // 🔴 Blocage du clic droit UNIQUEMENT pour afficher l'avertissement
+  // Mais on laisse les inputs/textareas fonctionner normalement
+  document.addEventListener('contextmenu', function(e) {
+    // Autoriser le clic droit dans les champs de formulaire pour coller du texte
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+      return; // Laisser faire
     }
-  });
+    // Pour le reste : afficher l'avertissement et empêcher le menu
+    e.preventDefault();
+    showWarning();
+    return false;
+  }, { passive: false });
   
-  // 🔴 Détection basique de l'ouverture des DevTools via redimensionnement
-  let lastWidth = window.innerWidth;
-  let lastHeight = window.innerHeight;
-  
-  setInterval(function() {
-    if (WARNING.style.display === 'flex') return; // Ne pas vérifier si déjà bloqué
-    
-    const currentWidth = window.innerWidth;
-    const currentHeight = window.innerHeight;
-    
-    // Détection : si la fenêtre est redimensionnée de manière suspecte (DevTools docked)
-    if (Math.abs(currentWidth - lastWidth) > 160 || Math.abs(currentHeight - lastHeight) > 160) {
-      // Vérification supplémentaire : si console est ouverte, window.outerHeight > window.innerHeight
-      const threshold = 160;
-      if (window.outerHeight - window.innerHeight > threshold || 
-          window.outerWidth - window.innerWidth > threshold) {
-        showSecurityWarning();
-      }
-    }
-    
-    lastWidth = currentWidth;
-    lastHeight = currentHeight;
-  }, 1000);
-  
-  // 🔴 Détection via console.log trick (méthode connue)
+  // 🔴 Détection légère des DevTools via console (méthode non intrusive)
   let devtools = /./;
   devtools.toString = function() {
-    showSecurityWarning();
+    showWarning();
     return '';
   };
   console.log(devtools);
   
-  // 🔴 Désactiver la sélection de texte (optionnel, pour éviter le copier-coller)
-  document.addEventListener('selectstart', function(e) {
-    // Autoriser la sélection dans les inputs et textareas
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-      return;
-    }
-    e.preventDefault();
-    return false;
-  });
-  
-  // 🔴 Désactiver le glisser-déposer d'images
-  document.addEventListener('dragstart', function(e) {
-    if (e.target.tagName === 'IMG') {
-      e.preventDefault();
-      return false;
-    }
-  });
-  
-  // 🔴 Bloquer les outils de développement via console API override (avancé)
-  (function() {
-    const originalConsole = console;
-    const originalLog = console.log;
-    console.log = function() {
-      // Si quelqu'un essaie d'inspecter via console
-      if (arguments[0] && typeof arguments[0] === 'string' && 
-          (arguments[0].includes('debugger') || arguments[0].includes('inspect'))) {
-        showSecurityWarning();
-      }
-      return originalLog.apply(originalConsole, arguments);
-    };
-  })();
+  // ✅ NE PAS bloquer :
+  // - selectstart (sélection de texte) → laissé actif pour l'UX
+  // - dragstart (glisser-déposer) → laissé actif pour les uploads
+  // - copy/cut → laissé actif pour l'UX
   
 })();
 
