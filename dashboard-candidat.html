@@ -6,51 +6,74 @@
   <title>Suivi Candidature – RecrutBank</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* ── PROTECTION ANTI-INSPECTION ──────────── */
-    #security-warning {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.95);
-      z-index: 99999;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      text-align: center;
-      color: #fff;
-      padding: 2rem;
-    }
-    #security-warning .icon {
-      font-size: 4rem;
-      margin-bottom: 1rem;
-      animation: pulse 1.5s infinite;
-    }
-    #security-warning h2 {
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
-      color: #ff6b6b;
-    }
-    #security-warning p {
-      font-size: 1.1rem;
-      max-width: 600px;
-      line-height: 1.6;
-      margin-bottom: 1.5rem;
-    }
-    #security-warning a {
-      color: #667eea;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    #security-warning a:hover {
-      text-decoration: underline;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
+   /* ── PROTECTION ANTI-INSPECTION — Modal centré et professionnel ──────────── */
+#security-warning {
+  display: none; /* Caché par défaut — ne s'affiche JAMAIS au chargement */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 99999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+  color: #fff;
+  padding: 2rem;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+#security-warning .icon {
+  font-size: 4.5rem;
+  margin-bottom: 1.2rem;
+  animation: pulse 1.8s infinite;
+  text-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+}
+
+#security-warning h2 {
+  font-size: 1.9rem;
+  margin-bottom: 1rem;
+  color: #ff6b6b;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+#security-warning p {
+  font-size: 1.15rem;
+  max-width: 550px;
+  line-height: 1.7;
+  margin: 0 auto 1.5rem;
+  color: #e2e8f0;
+  padding: 0 1rem;
+}
+
+#security-warning a {
+  color: #7c9bff;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.2s;
+  display: inline-block;
+  margin-top: 0.3rem;
+}
+
+#security-warning a:hover {
+  border-bottom-color: #7c9bff;
+  color: #fff;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.9; }
+}
   </style>
 </head>
 <body>
@@ -102,15 +125,20 @@
 <script>
 /* ══════════════════════════════════════════════════════════
    🔒 PROTECTION ANTI-INSPECTION — VERSION CIBLÉE
-   Bloque uniquement l'accès au code source, sans perturber l'usage
+   ✅ Aucune alerte au chargement
+   ✅ Modal centré et professionnel
+   ✅ Déclenchement UNIQUEMENT sur tentative d'inspection
    ══════════════════════════════════════════════════════════ */
 
 (function() {
-  const WARNING_MSG = "action non autorisé veillez contacter DJEUPISNE Oualoumi via mon port folio djeupisne.vercel.app";
+  const WARNING = document.getElementById('security-warning');
   
+  // Fonction pour afficher le modal (au lieu de alert())
   function showWarning() {
-    // Affiche une alerte native simple (non bloquante)
-    alert(WARNING_MSG);
+    if (WARNING && WARNING.style.display !== 'flex') {
+      WARNING.style.display = 'flex';
+      document.body.style.overflow = 'hidden'; // Empêche le scroll
+    }
   }
   
   // 🔴 Blocage des raccourcis clavier d'inspection UNIQUEMENT
@@ -150,20 +178,24 @@
   // 🔴 Blocage du clic droit UNIQUEMENT pour afficher l'avertissement
   // Mais on laisse les inputs/textareas fonctionner normalement
   document.addEventListener('contextmenu', function(e) {
-    // Autoriser le clic droit dans les champs de formulaire pour coller du texte
+    // Autoriser le clic droit dans les champs de formulaire
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
       return; // Laisser faire
     }
-    // Pour le reste : afficher l'avertissement et empêcher le menu
+    // Pour le reste : afficher le modal et empêcher le menu
     e.preventDefault();
     showWarning();
     return false;
   }, { passive: false });
   
   // 🔴 Détection légère des DevTools via console (méthode non intrusive)
+  // ⚠️ Ne déclenche PAS au chargement, seulement si console est ouverte
   let devtools = /./;
   devtools.toString = function() {
-    showWarning();
+    // Vérifier si le modal n'est pas déjà affiché
+    if (WARNING && WARNING.style.display !== 'flex') {
+      showWarning();
+    }
     return '';
   };
   console.log(devtools);
@@ -172,6 +204,9 @@
   // - selectstart (sélection de texte) → laissé actif pour l'UX
   // - dragstart (glisser-déposer) → laissé actif pour les uploads
   // - copy/cut → laissé actif pour l'UX
+  
+  // ✅ AUCUNE action au chargement de la page
+  // Le modal reste caché tant qu'aucune inspection n'est tentée
   
 })();
 
