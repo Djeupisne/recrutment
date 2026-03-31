@@ -6,9 +6,9 @@
   <title>Suivi Candidature – RecrutBank</title>
   <link rel="stylesheet" href="style.css">
   <style>
-   /* ── PROTECTION ANTI-INSPECTION — Modal centré et professionnel ──────────── */
+   /* ── PROTECTION ANTI-INSPECTION ──────────── */
 #security-warning {
-  display: none; /* Caché par défaut — ne s'affiche JAMAIS au chargement */
+  display: none; /* ✅ Caché par défaut — NE DOIT PAS s'afficher au chargement */
   position: fixed;
   top: 0;
   left: 0;
@@ -43,7 +43,6 @@
   margin-bottom: 1rem;
   color: #ff6b6b;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 #security-warning p {
@@ -52,27 +51,21 @@
   line-height: 1.7;
   margin: 0 auto 1.5rem;
   color: #e2e8f0;
-  padding: 0 1rem;
 }
 
 #security-warning a {
   color: #7c9bff;
   text-decoration: none;
   font-weight: 600;
-  border-bottom: 2px solid transparent;
-  transition: border-color 0.2s;
-  display: inline-block;
-  margin-top: 0.3rem;
 }
 
 #security-warning a:hover {
-  border-bottom-color: #7c9bff;
-  color: #fff;
+  text-decoration: underline;
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.08); opacity: 0.9; }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
 }
   </style>
 </head>
@@ -124,24 +117,26 @@
 <script src="script.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════
-   🔒 PROTECTION ANTI-INSPECTION — VERSION CIBLÉE
+   🔒 PROTECTION ANTI-INSPECTION — VERSION SÉCURISÉE
    ✅ Aucune alerte au chargement
-   ✅ Modal centré et professionnel
-   ✅ Déclenchement UNIQUEMENT sur tentative d'inspection
+   ✅ Déclenchement UNIQUEMENT sur action d'inspection
    ══════════════════════════════════════════════════════════ */
 
 (function() {
   const WARNING = document.getElementById('security-warning');
+  let warningShown = false; // Évite les déclenchements multiples
   
-  // Fonction pour afficher le modal (au lieu de alert())
+  // Fonction pour afficher le modal
   function showWarning() {
-    if (WARNING && WARNING.style.display !== 'flex') {
+    if (warningShown) return; // Déjà affiché → ne pas répéter
+    if (WARNING) {
       WARNING.style.display = 'flex';
-      document.body.style.overflow = 'hidden'; // Empêche le scroll
+      document.body.style.overflow = 'hidden';
+      warningShown = true;
     }
   }
   
-  // 🔴 Blocage des raccourcis clavier d'inspection UNIQUEMENT
+  // 🔴 Blocage des raccourcis clavier d'inspection
   document.addEventListener('keydown', function(e) {
     // F12
     if (e.key === 'F12') {
@@ -175,37 +170,22 @@
     }
   }, { passive: false });
   
-  // 🔴 Blocage du clic droit UNIQUEMENT pour afficher l'avertissement
-  // Mais on laisse les inputs/textareas fonctionner normalement
+  // 🔴 Blocage du clic droit (sauf dans les champs de formulaire)
   document.addEventListener('contextmenu', function(e) {
-    // Autoriser le clic droit dans les champs de formulaire
+    // Autoriser le clic droit dans les champs pour coller du texte
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-      return; // Laisser faire
+      return;
     }
-    // Pour le reste : afficher le modal et empêcher le menu
+    // Pour le reste : afficher le modal
     e.preventDefault();
     showWarning();
     return false;
   }, { passive: false });
   
-  // 🔴 Détection légère des DevTools via console (méthode non intrusive)
-  // ⚠️ Ne déclenche PAS au chargement, seulement si console est ouverte
-  let devtools = /./;
-  devtools.toString = function() {
-    // Vérifier si le modal n'est pas déjà affiché
-    if (WARNING && WARNING.style.display !== 'flex') {
-      showWarning();
-    }
-    return '';
-  };
-  console.log(devtools);
+  // ❌ SUPPRIMÉ : console.log(devtools) → cause du blocage au chargement
+  // Cette méthode est trop agressive et déclenche l'alerte même sans action utilisateur
   
-  // ✅ NE PAS bloquer :
-  // - selectstart (sélection de texte) → laissé actif pour l'UX
-  // - dragstart (glisser-déposer) → laissé actif pour les uploads
-  // - copy/cut → laissé actif pour l'UX
-  
-  // ✅ AUCUNE action au chargement de la page
+  // ✅ Aucune action au chargement de la page
   // Le modal reste caché tant qu'aucune inspection n'est tentée
   
 })();
