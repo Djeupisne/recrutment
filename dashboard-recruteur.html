@@ -922,17 +922,18 @@ function renderStars(n, readonly = true) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   📋 GRILLE DE PRÉSÉLECTION — MISE À JOUR SELON WORD
-   Critères ÉLIMINATOIRES en formulation POSITIVE :
-   - ✅ VERT si le critère positif est TROUVÉ dans les documents
-   - ❌ ROUGE si le critère positif n'est PAS trouvé → Éliminatoire
+   📋 GRILLE DE PRÉSÉLECTION — CRITÈRES POSITIFS + ÉLIMINATION STRICTE
+   🔴 Critères ÉLIMINATOIRES en formulation POSITIVE :
+      - ✅ VERT si le critère positif est TROUVÉ dans les documents
+      - ❌ ROUGE si le critère positif n'est PAS trouvé → ÉLIMINATION AUTOMATIQUE
+   ⚠️ Si UN SEUL critère éliminatoire manque → candidat éliminé automatiquement
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
   "Responsable Administration de Crédit": {
     eliminatoire: [
-      "Pas d'expérience bancaire",
-      "Moins de 3 ans en crédit / risque",
-      "Aucune exposition aux garanties ou conformité"
+      "Expérience bancaire",
+      "3 ans ou plus en crédit / risque",
+      "Exposition aux garanties ou conformité"
     ],
     a_verifier: [
       "A-t-il déjà validé des dossiers ?",
@@ -952,10 +953,9 @@ const GRILLE = {
   },
   "Analyste Crédit CCB": {
     eliminatoire: [
-      "Pas d'expérience en analyse crédit",
-      "Profil purement commercial sans analyse",
-      "Incapacité à lire des états financiers",
-      "Moins de 3 ans au sein d'une institution financière"
+      "Expérience en analyse crédit",
+      "Capacité à lire des états financiers",
+      "3 ans expérience institution financière"
     ],
     a_verifier: [
       "Type de clients : PME ?",
@@ -976,8 +976,8 @@ const GRILLE = {
   },
   "Archiviste (Administration Crédit)": {
     eliminatoire: [
-      "Aucune expérience en gestion documentaire structurée",
-      "Absence de rigueur démontrée"
+      "Expérience en gestion documentaire structurée",
+      "Rigueur démontrée"
     ],
     a_verifier: [
       "Expérience avec : archivage physique + électronique",
@@ -994,11 +994,10 @@ const GRILLE = {
   },
   "Senior Finance Officer": {
     eliminatoire: [
-      "Pas d'expérience en reporting financier structuré",
-      "Pas d'exposition à : états financiers",
-      "Pas d'exposition à : consolidation",
-      "Aucune interaction avec auditeurs",
-      "Moins de 3 ans d'expérience au sein d'un département finance"
+      "Expérience en reporting financier structuré",
+      "Exposition aux états financiers",
+      "Interaction avec auditeurs",
+      "3 ans expérience département finance"
     ],
     a_verifier: [
       "A-t-il déjà produit : états financiers ?",
@@ -1020,10 +1019,10 @@ const GRILLE = {
   },
   "Market Risk Officer": {
     eliminatoire: [
-      "Pas de base en risques de marché",
-      "Pas de compétences quantitatives",
-      "Aucune exposition à FX / taux / liquidité",
-      "Moins de 3 ans au sein d'une institution financière"
+      "Base en risques de marché",
+      "Compétences quantitatives",
+      "Exposition à FX / taux / liquidité",
+      "3 ans expérience institution financière"
     ],
     a_verifier: [
       "Maîtrise de : VaR / stress testing",
@@ -1045,10 +1044,10 @@ const GRILLE = {
   },
   "IT Réseau & Infrastructure": {
     eliminatoire: [
-      "Pas d'expérience en réseau / infrastructure",
-      "Pas d'exposition à environnement critique (banque, telco, datacenter)",
-      "Aucune notion de sécurité IT",
-      "Moins de 2 ans d'expérience"
+      "Expérience en réseau / infrastructure",
+      "Exposition à environnement critique (banque, telco, datacenter)",
+      "Notion de sécurité IT",
+      "2 ans expérience minimum"
     ],
     a_verifier: [
       "A-t-il géré : réseaux (LAN/WAN, VPN) ?",
@@ -1071,7 +1070,11 @@ const GRILLE = {
   }
 };
 
-/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables */
+/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables
+   ✅ LOGIQUE POSITIVE pour critères éliminatoires :
+   - Si isValidated = true (critère TROUVÉ) → ✅ VERT
+   - Si isValidated = false (critère NON TROUVÉ) → ❌ ROUGE + éliminatoire
+*/
 function renderGrille(poste, checklistJson, scoreBreakdown) {
   const g  = GRILLE[poste];
   const el = document.getElementById('grille-content');
@@ -1083,6 +1086,7 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
   let checked = {};
   try { checked = JSON.parse(checklistJson || '{}'); } catch {}
   
+  // 🔍 Vérifier si un critère éliminatoire est déclenché (NON trouvé)
   const hasEliminatoire = scoreBreakdown && scoreBreakdown.bloc1_eliminatoire;
 
   const mkSection = (title, color, icon, items, pfx) =>
@@ -1092,6 +1096,10 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
     + items.map((item, i) => {
         const key = pfx + '_' + i;
         const isValidated = checked[key] === true;
+        
+        // ✅ LOGIQUE POSITIVE pour critères éliminatoires :
+        // - Critère POSITIF trouvé (isValidated=true) → ✅ VERT
+        // - Critère POSITIF non trouvé (isValidated=false) → ❌ ROUGE + éliminatoire
         const eliminatoireClass = (pfx === 'elim' && !isValidated) ? 'eliminatoire-triggered' : '';
         
         return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + ' ' + eliminatoireClass + '">'
@@ -1108,6 +1116,7 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
     mkSection('🟡 Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
     mkSection("⚠️ Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
   
+  // 🔔 Afficher l'alerte flottante si critère éliminatoire déclenché
   if (hasEliminatoire && scoreBreakdown) {
     showEliminationAlert(scoreBreakdown);
   }
@@ -1119,18 +1128,21 @@ function showEliminationAlert(scoreBreakdown) {
   const alert = document.getElementById('elimination-alert');
   const details = document.getElementById('elimination-alert-details');
   
+  // Construire la liste des critères éliminatoires manquants (formulation positive)
   const g = GRILLE[currentC.poste];
-  let criteriaHtml = '<strong>Critères requis non trouvés :</strong><ul style="margin:.5rem 0;padding-left:1.5rem">';
+  let criteriaHtml = '<strong>Critères requis NON trouvés :</strong><ul style="margin:.5rem 0;padding-left:1.5rem">';
   
   if (g && g.eliminatoire) {
     g.eliminatoire.forEach((crit, i) => {
-      criteriaHtml += `<li style="margin:.3rem 0;color:#991b1b">❌ ${escHtml(crit)}</li>`;
+      // Afficher le critère POSITIF qui manque
+      criteriaHtml += `<li style="margin:.3rem 0;color:#991b1b">❌ ${escHtml(crit)} <span style="color:#666;font-size:.9rem">(requis)</span></li>`;
     });
   }
   criteriaHtml += '</ul><p style="font-size:.85rem;color:#7f1d1d;margin-top:.5rem"><strong>→ Candidat éliminé automatiquement</strong></p>';
   
   details.innerHTML = criteriaHtml;
   
+  // Afficher l'alerte
   overlay.style.display = 'block';
   alert.style.display = 'block';
 }
