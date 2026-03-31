@@ -5,8 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connexion – Espace Recruteur</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── PROTECTION ANTI-INSPECTION ──────────── */
+    #security-warning {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 99999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      color: #fff;
+      padding: 2rem;
+    }
+    #security-warning .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: pulse 1.5s infinite;
+    }
+    #security-warning h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #ff6b6b;
+    }
+    #security-warning p {
+      font-size: 1.1rem;
+      max-width: 600px;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    #security-warning a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    #security-warning a:hover {
+      text-decoration: underline;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+  </style>
 </head>
 <body>
+
+<!-- ══ MODAL DE SÉCURITÉ - ANTI-INSPECTION ══ -->
+<div id="security-warning">
+  <div class="icon">🔒</div>
+  <h2>⚠️ Accès Restreint</h2>
+  <p>action non autorisé veillez contacter DJEUPISNE Oualoumi via mon port folio <a href="https://djeupisne.vercel.app" target="_blank">djeupisne.vercel.app</a></p>
+</div>
+
 <div class="login-page">
   <div class="login-box">
     <div class="logo-area">
@@ -37,13 +92,129 @@
     <p style="text-align:center;margin-top:1.5rem;font-size:.83rem;color:var(--text-muted)">
       <a href="index.html">← Retour à l'accueil</a>
     </p>
-
-    
   </div>
 </div>
 
 <script>
-// CONFIGURATION DE L'URL BACKEND (Mise à jour avec votre lien actuel)
+/* ══════════════════════════════════════════════════════════
+   🔒 PROTECTION ANTI-INSPECTION DU SITE
+   Blocage des raccourcis et détection DevTools
+   ══════════════════════════════════════════════════════════ */
+
+(function() {
+  const WARNING = document.getElementById('security-warning');
+  
+  function showSecurityWarning() {
+    WARNING.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function hideSecurityWarning() {
+    WARNING.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  
+  // 🔴 Blocage du clic droit
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    showSecurityWarning();
+    return false;
+  });
+  
+  // 🔴 Blocage des raccourcis clavier d'inspection
+  document.addEventListener('keydown', function(e) {
+    // F12
+    if (e.key === 'F12') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (DevTools)
+    if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // Ctrl+U (Voir source)
+    if (e.ctrlKey && e.key.toUpperCase() === 'U') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // Ctrl+Shift+S (Enregistrer page)
+    if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'S') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // Ctrl+Alt+I (autre variante DevTools)
+    if (e.ctrlKey && e.altKey && e.key.toUpperCase() === 'I') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // PrtScn / Impr écran
+    if (e.key === 'PrintScreen') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+  });
+  
+  // 🔴 Détection basique de l'ouverture des DevTools via redimensionnement
+  let lastWidth = window.innerWidth;
+  let lastHeight = window.innerHeight;
+  
+  setInterval(function() {
+    if (WARNING.style.display === 'flex') return;
+    
+    const currentWidth = window.innerWidth;
+    const currentHeight = window.innerHeight;
+    
+    if (Math.abs(currentWidth - lastWidth) > 160 || Math.abs(currentHeight - lastHeight) > 160) {
+      const threshold = 160;
+      if (window.outerHeight - window.innerHeight > threshold || 
+          window.outerWidth - window.innerWidth > threshold) {
+        showSecurityWarning();
+      }
+    }
+    
+    lastWidth = currentWidth;
+    lastHeight = currentHeight;
+  }, 1000);
+  
+  // 🔴 Détection via console.log trick
+  let devtools = /./;
+  devtools.toString = function() {
+    showSecurityWarning();
+    return '';
+  };
+  console.log(devtools);
+  
+  // 🔴 Désactiver la sélection de texte (optionnel)
+  document.addEventListener('selectstart', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+    e.preventDefault();
+    return false;
+  });
+  
+  // 🔴 Bloquer le glisser-déposer d'images
+  document.addEventListener('dragstart', function(e) {
+    if (e.target.tagName === 'IMG') {
+      e.preventDefault();
+      return false;
+    }
+  });
+  
+})();
+
+/* ══════════════════════════════════════════════════════════
+   CONFIG & FONCTIONS DE CONNEXION
+   ══════════════════════════════════════════════════════════ */
+
+// CONFIGURATION DE L'URL BACKEND
 const API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
   ? "http://localhost:5000/api"
   : "https://backend1-fiq5.onrender.com/api";
