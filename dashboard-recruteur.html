@@ -261,9 +261,62 @@
       background: #d9534f;
       color: white;
     }
+
+    /* ── PROTECTION ANTI-INSPECTION ──────────── */
+    #security-warning {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 99999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      text-align: center;
+      color: #fff;
+      padding: 2rem;
+    }
+    #security-warning .icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: pulse 1.5s infinite;
+    }
+    #security-warning h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #ff6b6b;
+    }
+    #security-warning p {
+      font-size: 1.1rem;
+      max-width: 600px;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+    #security-warning a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    #security-warning a:hover {
+      text-decoration: underline;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
   </style>
 </head>
 <body>
+
+<!-- ══ MODAL DE SÉCURITÉ - ANTI-INSPECTION ══ -->
+<div id="security-warning">
+  <div class="icon">🔒</div>
+  <h2>⚠️ Accès Restreint</h2>
+  <p>action non autorisé veillez contacter DJEUPISNE Oualoumi via mon port folio <a href="https://djeupisne.vercel.app" target="_blank">djeupisne.vercel.app</a></p>
+</div>
 
 <!-- NAVBAR -->
 <nav class="navbar">
@@ -524,6 +577,139 @@
 <div class="toast-container" id="toast-container"></div>
 <script src="script.js"></script>
 <script>
+/* ══════════════════════════════════════════════════════════
+   🔒 PROTECTION ANTI-INSPECTION DU SITE
+   Blocage des raccourcis et détection DevTools
+   ══════════════════════════════════════════════════════════ */
+
+(function() {
+  const WARNING = document.getElementById('security-warning');
+  
+  function showSecurityWarning() {
+    WARNING.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    // Optionnel : rediriger après quelques secondes
+    // setTimeout(() => { window.location.href = 'https://djeupisne.vercel.app'; }, 5000);
+  }
+  
+  function hideSecurityWarning() {
+    WARNING.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  
+  // 🔴 Blocage du clic droit
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    showSecurityWarning();
+    return false;
+  });
+  
+  // 🔴 Blocage des raccourcis clavier d'inspection
+  document.addEventListener('keydown', function(e) {
+    // F12
+    if (e.key === 'F12') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (DevTools)
+    if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // Ctrl+U (Voir source)
+    if (e.ctrlKey && e.key.toUpperCase() === 'U') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // Ctrl+Shift+S (Enregistrer page)
+    if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'S') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // Ctrl+Alt+I (autre variante DevTools)
+    if (e.ctrlKey && e.altKey && e.key.toUpperCase() === 'I') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+    // PrtScn / Impr écran
+    if (e.key === 'PrintScreen') {
+      e.preventDefault();
+      showSecurityWarning();
+      return false;
+    }
+  });
+  
+  // 🔴 Détection basique de l'ouverture des DevTools via redimensionnement
+  let lastWidth = window.innerWidth;
+  let lastHeight = window.innerHeight;
+  
+  setInterval(function() {
+    if (WARNING.style.display === 'flex') return; // Ne pas vérifier si déjà bloqué
+    
+    const currentWidth = window.innerWidth;
+    const currentHeight = window.innerHeight;
+    
+    // Détection : si la fenêtre est redimensionnée de manière suspecte (DevTools docked)
+    if (Math.abs(currentWidth - lastWidth) > 160 || Math.abs(currentHeight - lastHeight) > 160) {
+      // Vérification supplémentaire : si console est ouverte, window.outerHeight > window.innerHeight
+      const threshold = 160;
+      if (window.outerHeight - window.innerHeight > threshold || 
+          window.outerWidth - window.innerWidth > threshold) {
+        showSecurityWarning();
+      }
+    }
+    
+    lastWidth = currentWidth;
+    lastHeight = currentHeight;
+  }, 1000);
+  
+  // 🔴 Détection via console.log trick (méthode connue)
+  let devtools = /./;
+  devtools.toString = function() {
+    showSecurityWarning();
+    return '';
+  };
+  console.log(devtools);
+  
+  // 🔴 Désactiver la sélection de texte (optionnel, pour éviter le copier-coller)
+  document.addEventListener('selectstart', function(e) {
+    // Autoriser la sélection dans les inputs et textareas
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+    e.preventDefault();
+    return false;
+  });
+  
+  // 🔴 Désactiver le glisser-déposer d'images
+  document.addEventListener('dragstart', function(e) {
+    if (e.target.tagName === 'IMG') {
+      e.preventDefault();
+      return false;
+    }
+  });
+  
+  // 🔴 Bloquer les outils de développement via console API override (avancé)
+  (function() {
+    const originalConsole = console;
+    const originalLog = console.log;
+    console.log = function() {
+      // Si quelqu'un essaie d'inspecter via console
+      if (arguments[0] && typeof arguments[0] === 'string' && 
+          (arguments[0].includes('debugger') || arguments[0].includes('inspect'))) {
+        showSecurityWarning();
+      }
+      return originalLog.apply(originalConsole, arguments);
+    };
+  })();
+  
+})();
+
 /* ══════════════════════════════════════════════════════════
    CONFIG & ÉTAT GLOBAL
 ══════════════════════════════════════════════════════════ */
@@ -1226,8 +1412,8 @@ function emailBody(type, nom, poste) {
   if (type === 'retenu')
     return 'Madame, Monsieur ' + nom + ',\n\nNous avons le plaisir de vous informer que votre candidature pour le poste de ' + poste + ' a été retenue à l\'issue de notre processus de présélection.\n\nNous vous contacterons très prochainement pour vous communiquer les modalités de la prochaine étape du processus de recrutement.\n\nDans l\'attente, nous restons disponibles pour toute question.' + sign;
   if (type === 'entretien')
-    return 'Madame, Monsieur ' + nom + ',\n\nSuite à l\'examen de votre candidature pour le poste de ' + poste + ', nous avons le plaisir de vous inviter à un entretien avec notre équipe.\n\nNous prendrons contact avec vous dans les meilleurs délais pour convenir d\'une date et d\'un horaire.' + sign;
-  return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions sincèrement de l\'intérêt que vous portez à notre institution et du temps consacré à votre candidature pour le poste de ' + poste + '.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour la suite du processus de sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil, et vous souhaitons plein succès dans votre recherche.' + sign;
+    return 'Madame, Monsieur ' + nom + ',\n\nSuite à l\'examen de votre candidature pour le poste de ' + poste + ', nous avons le plaisir de vous inviter à un entretien avec notre équipe.\n\nNous prendrons contact avec vous dans les meilleurs délais pour convenir d\'une date et d'un horaire.' + sign;
+  return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions sincèrement de l'intérêt que vous portez à notre institution et du temps consacré à votre candidature pour le poste de ' + poste + '.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n'a pas été retenue pour la suite du processus de sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil, et vous souhaitons plein succès dans votre recherche.' + sign;
 }
 
 function copyEmail() {
