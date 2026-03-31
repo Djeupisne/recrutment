@@ -5,78 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RecrutBank – Portail de Recrutement</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* ── PROTECTION ANTI-INSPECTION ──────────── */
-#security-warning {
-  display: none; /* ✅ Caché par défaut — NE DOIT PAS s'afficher au chargement */
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.92);
-  z-index: 99999;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  text-align: center;
-  color: #fff;
-  padding: 2rem;
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-#security-warning .icon {
-  font-size: 4.5rem;
-  margin-bottom: 1.2rem;
-  animation: pulse 1.8s infinite;
-  text-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
-}
-
-#security-warning h2 {
-  font-size: 1.9rem;
-  margin-bottom: 1rem;
-  color: #ff6b6b;
-  font-weight: 700;
-}
-
-#security-warning p {
-  font-size: 1.15rem;
-  max-width: 550px;
-  line-height: 1.7;
-  margin: 0 auto 1.5rem;
-  color: #e2e8f0;
-}
-
-#security-warning a {
-  color: #7c9bff;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-#security-warning a:hover {
-  text-decoration: underline;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-  </style>
 </head>
 <body>
-
-<!-- ══ MODAL DE SÉCURITÉ - ANTI-INSPECTION ══ -->
-<div id="security-warning">
-  <div class="icon">🔒</div>
-  <h2>⚠️ Accès Restreint</h2>
-  <p>action non autorisé veillez contacter DJEUPISNE Oualoumi via son port folio <a href="https://djeupisne.vercel.app" target="_blank">djeupisne.vercel.app</a></p>
-</div>
 
 <!-- ── NAVBAR ──────────────────────────────────────────────────────────── -->
 <nav class="navbar">
@@ -225,82 +155,6 @@
 
 <script src="script.js"></script>
 <script>
-/* ══════════════════════════════════════════════════════════
-   🔒 PROTECTION ANTI-INSPECTION — VERSION SÉCURISÉE
-   ✅ Aucune alerte au chargement
-   ✅ Déclenchement UNIQUEMENT sur action d'inspection
-   ══════════════════════════════════════════════════════════ */
-
-(function() {
-  const WARNING = document.getElementById('security-warning');
-  let warningShown = false; // Évite les déclenchements multiples
-  
-  // Fonction pour afficher le modal
-  function showWarning() {
-    if (warningShown) return; // Déjà affiché → ne pas répéter
-    if (WARNING) {
-      WARNING.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-      warningShown = true;
-    }
-  }
-  
-  // 🔴 Blocage des raccourcis clavier d'inspection
-  document.addEventListener('keydown', function(e) {
-    // F12
-    if (e.key === 'F12') {
-      e.preventDefault();
-      showWarning();
-      return false;
-    }
-    // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (DevTools)
-    if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
-      e.preventDefault();
-      showWarning();
-      return false;
-    }
-    // Ctrl+U (Voir source)
-    if (e.ctrlKey && e.key.toUpperCase() === 'U') {
-      e.preventDefault();
-      showWarning();
-      return false;
-    }
-    // Ctrl+Shift+S (Enregistrer page)
-    if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'S') {
-      e.preventDefault();
-      showWarning();
-      return false;
-    }
-    // Ctrl+Alt+I (variante DevTools)
-    if (e.ctrlKey && e.altKey && e.key.toUpperCase() === 'I') {
-      e.preventDefault();
-      showWarning();
-      return false;
-    }
-  }, { passive: false });
-  
-  // 🔴 Blocage du clic droit (sauf dans les champs de formulaire)
-  document.addEventListener('contextmenu', function(e) {
-    // Autoriser le clic droit dans les champs pour coller du texte
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-      return;
-    }
-    // Pour le reste : afficher le modal
-    e.preventDefault();
-    showWarning();
-    return false;
-  }, { passive: false });
-  
-  // ❌ SUPPRIMÉ : console.log(devtools) → cause du blocage au chargement
-  // Cette méthode est trop agressive et déclenche l'alerte même sans action utilisateur
-  
-  // ✅ Aucune action au chargement de la page
-  // Le modal reste caché tant qu'aucune inspection n'est tentée
-  
-})();
-/* ══════════════════════════════════════════════════════════
-   CONFIG & FONCTIONS EXISTANTES
-   ══════════════════════════════════════════════════════════ */
 const API = 'https://backend1-fiq5.onrender.com/api';
 
 const POSTES_INFO = {
@@ -337,6 +191,7 @@ fetch(`${API}/postes`)
   });
 
 // ── File inputs : gestion des labels ─────────────────────────────────────
+// CV et Lettre (single file)
 ['cv','lettre'].forEach(name => {
   const input = document.getElementById(`${name}-input`);
   const label = document.getElementById(`${name}-label`);
@@ -354,7 +209,7 @@ fetch(`${API}/postes`)
   }
 });
 
-// 🎓 Certificats (MULTIPLE files)
+// 🎓 Certificats (MULTIPLE files) - gestion avancée
 const attestationInput = document.getElementById('attestation-input');
 const attestationLabel = document.getElementById('attestation-label');
 const attestationList = document.getElementById('attestation-list');
@@ -370,9 +225,11 @@ if (attestationInput && attestationLabel && attestationList) {
       return;
     }
     
+    // Mise à jour du label
     attestationLabel.textContent = `✅ ${files.length} fichier${files.length>1?'s':''} sélectionné${files.length>1?'s':''}`;
     attestationLabel.classList.add('has-file');
     
+    // Liste des fichiers sélectionnés
     attestationList.innerHTML = files.map(f => 
       `<div style="padding:.2rem 0;border-bottom:1px dashed #e2e8f0">📄 ${escHtml(f.name)} (${formatFileSize(f.size)})</div>`
     ).join('');
@@ -402,6 +259,7 @@ document.getElementById('candidature-form').addEventListener('submit', async fun
 
   try {
     const fd = new FormData(this);
+    // ✅ Les fichiers multiples avec le même nom "attestation" sont envoyés correctement
     const res = await fetch(`${API}/candidats/postuler`, { method: 'POST', body: fd });
     const data = await res.json();
     if (res.ok) {
@@ -423,6 +281,7 @@ document.getElementById('candidature-form').addEventListener('submit', async fun
 function resetForm() {
   document.getElementById('candidature-form').reset();
   
+  // Reset CV et Lettre
   ['cv','lettre'].forEach(n => {
     const lbl = document.getElementById(`${n}-label`);
     const defaults = { cv: '📎 Choisir mon CV', lettre: '📎 Choisir ma lettre' };
@@ -432,6 +291,7 @@ function resetForm() {
     }
   });
   
+  // Reset Certificats (multiple)
   if (attestationLabel && attestationList) {
     attestationLabel.textContent = '🎓 Ajouter des certificats';
     attestationLabel.classList.remove('has-file');
