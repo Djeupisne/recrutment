@@ -549,7 +549,7 @@ function authH()  {
 }
 
 /* ══════════════════════════════════════════════════════════
-   EXPORT REPORTS - VERSION CORRIGÉE
+   EXPORT REPORTS
 ══════════════════════════════════════════════════════════ */
 async function exportReport(format) {
   try {
@@ -557,7 +557,7 @@ async function exportReport(format) {
     
     const response = await fetch(`${API}/recruteur/export/${format}`, {
       method: 'GET',
-      headers: authH()  // ✅ Utilise le header Authorization
+      headers: authH()
     });
     
     if (!response.ok) {
@@ -565,24 +565,18 @@ async function exportReport(format) {
       throw new Error(error.error || 'Erreur lors de l\'export');
     }
     
-    // Récupérer le blob (fichier binaire)
     const blob = await response.blob();
-    
-    // Créer un lien de téléchargement temporaire
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     
-    // Nom du fichier avec timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const extensions = { excel: 'xlsx', csv: 'csv', pdf: 'pdf' };
     a.download = `rapport_candidats_${timestamp}.${extensions[format] || 'xlsx'}`;
     
-    // Déclencher le téléchargement
     document.body.appendChild(a);
     a.click();
     
-    // Nettoyer
     setTimeout(() => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
@@ -713,7 +707,7 @@ function applyFilters() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   renderTable : score clampé + tooltip breakdown
+   renderTable
 ══════════════════════════════════════════════════════════ */
 function renderTable(data) {
   const tbody = document.getElementById('candidats-tbody');
@@ -733,7 +727,7 @@ function renderTable(data) {
       : '';
     
     const scoreRaw = parseInt(c.score) || 0;
-    const score = Math.max(0, Math.min(10, scoreRaw));  // ✅ Sur 10
+    const score = Math.max(0, Math.min(10, scoreRaw));
     const stars  = '⭐'.repeat(Math.floor(score/2)) + '☆'.repeat(5 - Math.floor(score/2));
     
     let scoreTitle = `Score: ${score}/10 (analyse automatique)`;
@@ -791,7 +785,7 @@ function renderRecent(data) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   MODAL DOSSIER — avec résumé analyse 3 blocs Word
+   MODAL DOSSIER
 ══════════════════════════════════════════════════════════ */
 function openModal(id) {
   const c = allCandidats.find(x => x.id === id);
@@ -801,7 +795,6 @@ function openModal(id) {
 
   document.getElementById('modal-title').textContent = c.prenom + ' ' + c.nom;
 
-  // Infos
   document.getElementById('modal-infos').innerHTML =
     info('Email',           c.email) +
     info('Téléphone',       c.telephone || '–') +
@@ -809,7 +802,6 @@ function openModal(id) {
     info('Statut actuel',   badgePill(c.statut), true) +
     info('Date candidature',fmtDateLong(c.date_candidature));
 
-  // Fichiers
   const files = [];
   if (c.cv_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-blue btn-sm">📄 CV</a>');
   else files.push('<span style="color:var(--text-muted);font-size:.83rem">CV non fourni</span>');
@@ -817,17 +809,11 @@ function openModal(id) {
   if (c.attestation_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.attestation_filename + '" target="_blank" class="btn btn-blue btn-sm">🎓 Certificats</a>');
   document.getElementById('modal-fichiers').innerHTML = files.join(' ');
 
-  // 🎯 RÉSUMÉ ANALYSE AUTOMATIQUE (3 blocs Word)
   renderAnalyseResume(c);
-
-  // Score & note (étoiles en lecture seule)
   renderStars(currentScore, true);
   document.getElementById('modal-note').value = c.note || '';
-
-  // Grille présélection (lecture seule - résultats exacts)
   renderGrille(c.poste, c.checklist || '', c.score_breakdown_parsed);
 
-  // Reset tabs
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelector('.tab-btn').classList.add('active');
@@ -852,7 +838,6 @@ function renderAnalyseResume(c) {
   
   let html = '';
   
-  // 🔴 Bloc 1: Éliminatoire (critères positifs requis)
   if (sb.bloc1_eliminatoire) {
     html += '<div class="bloc-alert elim"><strong>🔴 Éliminatoire</strong>';
     const flags = c.flags_eliminatoires_parsed || [];
@@ -864,7 +849,6 @@ function renderAnalyseResume(c) {
     html += '</div>';
   }
   
-  // 🟠 Bloc 2: Cohérence du parcours (+1 pt/critère)
   if (sb.bloc2_criteres_valides > 0) {
     html += '<div class="bloc-alert signal"><strong>🟠 Cohérence du parcours</strong> — ' + sb.bloc2_points + ' point' + (sb.bloc2_points>1?'s':'');
     if (details.criteres_valides_bloc2 && details.criteres_valides_bloc2.length) {
@@ -875,7 +859,6 @@ function renderAnalyseResume(c) {
     html += '</div>';
   }
   
-  // 🟡 Bloc 3: Signaux de qualité (+2 pts/signal)
   if (sb.bloc3_signaux_detectes > 0) {
     html += '<div class="bloc-alert signal"><strong>🟡 Signaux de qualité</strong> — ' + sb.bloc3_points + ' points';
     const signaux = c.signaux_detectes_parsed || [];
@@ -887,7 +870,6 @@ function renderAnalyseResume(c) {
     html += '</div>';
   }
   
-  // ⚠️ Points d'attention (alertes uniquement)
   if (details.alertes_attention && details.alertes_attention.length) {
     html += '<div class="bloc-alert attn"><strong>⚠️ Points d\'attention</strong>';
     html += '<div style="margin-top:.4rem">';
@@ -895,7 +877,6 @@ function renderAnalyseResume(c) {
     html += '</div></div>';
   }
   
-  // Score breakdown détaillé (transparence)
   html += '<div class="score-breakdown">'
     + '<div class="sb-row"><span class="sb-label">Points cohérence (🟠 ×1)</span><span class="sb-val">' + sb.bloc2_points + '</span></div>'
     + '<div class="sb-row"><span class="sb-label">Points signaux (🟡 ×2)</span><span class="sb-val">' + sb.bloc3_points + '</span></div>'
@@ -934,7 +915,6 @@ function renderStars(n, readonly = true) {
     btn.title = `Score: ${score}/10 (calculé automatiquement)`;
     row.appendChild(btn);
   }
-  // Ajouter le score texte
   const scoreText = document.createElement('span');
   scoreText.style.cssText = 'margin-left:1rem;font-weight:700;color:var(--primary);font-size:1.1rem';
   scoreText.textContent = `${score}/10`;
@@ -942,22 +922,22 @@ function renderStars(n, readonly = true) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   GRILLE DE PRÉSÉLECTION — LECTURE SEULE (3 blocs Word EXACTS)
+   📋 GRILLE DE PRÉSÉLECTION — MISE À JOUR SELON WORD
    Critères ÉLIMINATOIRES en formulation POSITIVE :
-   - ✅ VERT si le critère positif est TROUVÉ dans le CV
+   - ✅ VERT si le critère positif est TROUVÉ dans les documents
    - ❌ ROUGE si le critère positif n'est PAS trouvé → Éliminatoire
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
   "Responsable Administration de Crédit": {
     eliminatoire: [
-      "Expérience bancaire",
-      "3 ans ou plus en crédit / risque",
-      "Exposition aux garanties ou conformité"
+      "Pas d'expérience bancaire",
+      "Moins de 3 ans en crédit / risque",
+      "Aucune exposition aux garanties ou conformité"
     ],
     a_verifier: [
       "A-t-il déjà validé des dossiers ?",
-      "A-t-il géré des garanties ?",
-      "A-t-il participé à des audits ?"
+      "A-t-il déjà géré des garanties ?",
+      "A-t-il déjà participé à des audits ?"
     ],
     signaux_forts: [
       "Mention de : IFRS 9",
@@ -965,16 +945,17 @@ const GRILLE = {
       "Mention de : suivi portefeuille / impayés"
     ],
     points_attention: [
-      "Parcours trop « comptable pur »",
+      "Parcours trop \"comptable pur\"",
       "Rôle uniquement administratif sans responsabilité",
       "CV flou (missions génériques)"
     ]
   },
   "Analyste Crédit CCB": {
     eliminatoire: [
-      "Expérience en analyse crédit",
-      "Capacité à lire des états financiers",
-      "Expérience technique ou analytique"
+      "Pas d'expérience en analyse crédit",
+      "Profil purement commercial sans analyse",
+      "Incapacité à lire des états financiers",
+      "Moins de 3 ans au sein d'une institution financière"
     ],
     a_verifier: [
       "Type de clients : PME ?",
@@ -988,15 +969,15 @@ const GRILLE = {
       "Mention de : comités de crédit"
     ],
     points_attention: [
-      "CV trop « relation client »",
+      "CV trop \"relation client\"",
       "Aucune notion de risque",
       "Expériences très courtes sans progression"
     ]
   },
   "Archiviste (Administration Crédit)": {
     eliminatoire: [
-      "Expérience en gestion documentaire structurée",
-      "Rigueur démontrée"
+      "Aucune expérience en gestion documentaire structurée",
+      "Absence de rigueur démontrée"
     ],
     a_verifier: [
       "Expérience avec : archivage physique + électronique",
@@ -1013,67 +994,84 @@ const GRILLE = {
   },
   "Senior Finance Officer": {
     eliminatoire: [
-      "Expérience en finance senior",
-      "Maîtrise des outils de reporting financier"
+      "Pas d'expérience en reporting financier structuré",
+      "Pas d'exposition à : états financiers",
+      "Pas d'exposition à : consolidation",
+      "Aucune interaction avec auditeurs",
+      "Moins de 3 ans d'expérience au sein d'un département finance"
     ],
     a_verifier: [
-      "Maîtrise des normes IFRS ?",
-      "Expérience en pilotage budgétaire ?"
+      "A-t-il déjà produit : états financiers ?",
+      "A-t-il déjà produit : reporting groupe ?",
+      "Connaît-il : IFRS ?",
+      "Connaît-il : contraintes réglementaires ?"
     ],
     signaux_forts: [
-      "Expérience en consolidation financière",
-      "Maîtrise Excel avancé / Power BI"
+      "Mention de : IFRS / consolidation",
+      "Mention de : reporting groupe",
+      "Mention de : interaction avec CAC",
+      "Mention de : outils type SPECTRA / CERBER / ERP"
     ],
     points_attention: [
-      "Profil trop opérationnel sans vision stratégique",
-      "Manque d'expérience en environnement bancaire"
+      "Profil \"comptable junior amélioré\"",
+      "Pas de responsabilité réelle",
+      "CV flou sur les livrables"
     ]
   },
   "Market Risk Officer": {
     eliminatoire: [
-      "Expérience en gestion des risques de marché",
-      "Connaissance des produits financiers"
+      "Pas de base en risques de marché",
+      "Pas de compétences quantitatives",
+      "Aucune exposition à FX / taux / liquidité",
+      "Moins de 3 ans au sein d'une institution financière"
     ],
     a_verifier: [
-      "Maîtrise des modèles VaR / stress testing ?",
-      "Expérience en back-testing ?"
+      "Maîtrise de : VaR / stress testing",
+      "Maîtrise de : analyse des positions",
+      "Outils : Excel avancé",
+      "Outils : idéalement VBA / Python"
     ],
     signaux_forts: [
-      "Mention Basel III / IV",
-      "Expérience en salle des marchés",
-      "Maîtrise Python / R pour modélisation"
+      "Mention de : Bâle II / III",
+      "Mention de : gestion ALM / liquidité",
+      "Mention de : produits FICC (FX, taux, commodities)",
+      "Mention de : reporting risque"
     ],
     points_attention: [
-      "Profil purement académique sans expérience terrain",
-      "Expérience uniquement en risque crédit"
+      "CV trop théorique (académique sans pratique)",
+      "Aucune mention d'outils",
+      "Incapacité implicite à modéliser"
     ]
   },
   "IT Réseau & Infrastructure": {
     eliminatoire: [
-      "Certification réseau (Cisco, CompTIA…)",
-      "Expérience en administration système"
+      "Pas d'expérience en réseau / infrastructure",
+      "Pas d'exposition à environnement critique (banque, telco, datacenter)",
+      "Aucune notion de sécurité IT",
+      "Moins de 2 ans d'expérience"
     ],
     a_verifier: [
-      "Expérience environnements bancaires sécurisés ?",
-      "Gestion d'incidents en production ?"
+      "A-t-il géré : réseaux (LAN/WAN, VPN) ?",
+      "A-t-il géré : serveurs (Windows/Linux) ?",
+      "A-t-il géré : cloud (même basique) ?",
+      "A-t-il déjà géré des incidents ?",
+      "A-t-il déjà assuré la disponibilité ?"
     ],
     signaux_forts: [
-      "Certification CCNA / CCNP",
-      "Expérience en cybersécurité",
-      "Maîtrise virtualisation (VMware, Hyper-V)"
+      "Mention de : cybersécurité / firewall",
+      "Mention de : haute disponibilité / PRA/PCA",
+      "Mention de : gestion ATM ou systèmes bancaires",
+      "Mention de : certifications (Cisco, Microsoft, etc.)"
     ],
     points_attention: [
-      "Profil trop orienté développement",
-      "Manque d'expérience en environnement haute disponibilité"
+      "Profil trop \"helpdesk\"",
+      "CV sans détail technique",
+      "Aucune mention de sécurité"
     ]
   }
 };
 
-/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables
-   ✅ NOUVELLE LOGIQUE pour critères éliminatoires POSITIFS :
-   - Si isValidated = true (critère trouvé) → VERT ✅
-   - Si isValidated = false (critère non trouvé) → ROUGE ❌ + éliminatoire
-*/
+/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables */
 function renderGrille(poste, checklistJson, scoreBreakdown) {
   const g  = GRILLE[poste];
   const el = document.getElementById('grille-content');
@@ -1085,7 +1083,6 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
   let checked = {};
   try { checked = JSON.parse(checklistJson || '{}'); } catch {}
   
-  // 🔍 Vérifier si un critère éliminatoire est déclenché
   const hasEliminatoire = scoreBreakdown && scoreBreakdown.bloc1_eliminatoire;
 
   const mkSection = (title, color, icon, items, pfx) =>
@@ -1095,10 +1092,6 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
     + items.map((item, i) => {
         const key = pfx + '_' + i;
         const isValidated = checked[key] === true;
-        
-        // ✅ NOUVELLE LOGIQUE pour critères éliminatoires POSITIFS :
-        // - Critère POSITIF trouvé (isValidated=true) → VERT ✅
-        // - Critère POSITIF non trouvé (isValidated=false) → ROUGE ❌ (éliminatoire)
         const eliminatoireClass = (pfx === 'elim' && !isValidated) ? 'eliminatoire-triggered' : '';
         
         return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + ' ' + eliminatoireClass + '">'
@@ -1115,7 +1108,6 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
     mkSection('🟡 Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
     mkSection("⚠️ Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
   
-  // 🔔 Afficher l'alerte flottante si critère éliminatoire déclenché
   if (hasEliminatoire && scoreBreakdown) {
     showEliminationAlert(scoreBreakdown);
   }
@@ -1127,7 +1119,6 @@ function showEliminationAlert(scoreBreakdown) {
   const alert = document.getElementById('elimination-alert');
   const details = document.getElementById('elimination-alert-details');
   
-  // Construire la liste des critères éliminatoires manquants
   const g = GRILLE[currentC.poste];
   let criteriaHtml = '<strong>Critères requis non trouvés :</strong><ul style="margin:.5rem 0;padding-left:1.5rem">';
   
@@ -1140,7 +1131,6 @@ function showEliminationAlert(scoreBreakdown) {
   
   details.innerHTML = criteriaHtml;
   
-  // Afficher l'alerte
   overlay.style.display = 'block';
   alert.style.display = 'block';
 }
@@ -1153,12 +1143,11 @@ function closeEliminationAlert() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   MISE À JOUR STATUT — sans modification de la grille
+   MISE À JOUR STATUT
 ══════════════════════════════════════════════════════════ */
 async function updateStatut(statut) {
   if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
   const note = document.getElementById('modal-note').value;
-  // 🔒 On conserve la checklist d'origine — pas de modification possible
   const checklist = currentC?.checklist || '';
   
   try {
@@ -1171,7 +1160,7 @@ async function updateStatut(statut) {
       if (idx !== -1) Object.assign(allCandidats[idx], { statut, note, score: String(currentScore) });
       showToast('Statut mis à jour : ' + statut, 'success');
       closeModal();
-      closeEliminationAlert();  // Fermer l'alerte si ouverte
+      closeEliminationAlert();
       applyFilters();
       renderRecent(allCandidats);
       fetchStats();
