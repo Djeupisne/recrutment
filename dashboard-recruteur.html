@@ -215,7 +215,7 @@
     /* ── SECTION EXPORT AMÉLIORÉE ────────────────────── */
     .export-section {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 1.5rem;
+      padding: 1.2rem 1.5rem;
       border-radius: 12px;
       margin-bottom: 1.5rem;
       box-shadow: var(--shadow-hover);
@@ -234,6 +234,40 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .export-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    #export-poste-select {
+      max-width: 320px;
+      background: rgba(255,255,255,0.95);
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    #export-poste-select:hover {
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    #export-poste-select:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
     }
 
     .export-buttons {
@@ -255,6 +289,7 @@
       gap: 0.4rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
       min-width: 110px;
+      justify-content: center;
     }
 
     .export-btn:hover {
@@ -383,19 +418,37 @@
     }
 
     /* ── RESPONSIVE ─────────────────────────────────── */
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       .export-section {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
+      }
+      .export-controls {
+        justify-content: flex-start;
+        width: 100%;
+      }
+      #export-poste-select {
+        flex: 1;
+        max-width: none;
       }
       .export-buttons {
         width: 100%;
-        justify-content: space-between;
+        justify-content: center;
       }
       .export-btn {
         flex: 1;
         min-width: 90px;
-        justify-content: center;
+        max-width: 120px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .export-buttons {
+        flex-direction: column;
+      }
+      .export-btn {
+        width: 100%;
+        max-width: none;
       }
       .td-actions {
         flex-direction: column;
@@ -450,19 +503,25 @@
         <button class="btn btn-blue btn-sm" onclick="refreshAll()">🔄 Actualiser</button>
       </div>
 
-      <!-- ══ SECTION EXPORT AMÉLIORÉE ══ -->
+      <!-- ══ SECTION EXPORT AMÉLIORÉE AVEC SÉLECTEUR ══ -->
       <div class="export-section">
         <h3>📊 Exporter les rapports</h3>
-        <div class="export-buttons">
-          <button class="export-btn excel" onclick="exportReport('excel')" title="Télécharger en Excel">
-            <span>📊</span> Excel
-          </button>
-          <button class="export-btn csv" onclick="exportReport('csv')" title="Télécharger en CSV">
-            <span>📄</span> CSV
-          </button>
-          <button class="export-btn pdf" onclick="exportReport('pdf')" title="Télécharger en PDF">
-            <span>📕</span> PDF
-          </button>
+        <div class="export-controls">
+          <select id="export-poste-select" class="form-control">
+            <option value="">🌍 Rapport GLOBAL (tous les postes)</option>
+            <!-- Les postes seront ajoutés dynamiquement par JS -->
+          </select>
+          <div class="export-buttons">
+            <button class="export-btn excel" onclick="exportReport('excel')" title="Télécharger en Excel">
+              <span>📊</span> Excel
+            </button>
+            <button class="export-btn csv" onclick="exportReport('csv')" title="Télécharger en CSV">
+              <span>📄</span> CSV
+            </button>
+            <button class="export-btn pdf" onclick="exportReport('pdf')" title="Télécharger en PDF">
+              <span>📕</span> PDF
+            </button>
+          </div>
         </div>
       </div>
 
@@ -693,13 +752,44 @@ function authH()  {
 }
 
 /* ══════════════════════════════════════════════════════════
-   EXPORT REPORTS
+   PEUPLER LE SELECTEUR D'EXPORT PAR POSTE
+══════════════════════════════════════════════════════════ */
+function populateExportPosteSelect(data) {
+  const sel = document.getElementById('export-poste-select');
+  if (!sel) return;
+  
+  const postes = [...new Set(data.map(c => c.poste).filter(p => p))].sort();
+  
+  // Garder l'option "Global" (première option)
+  while (sel.options.length > 1) sel.remove(1);
+  
+  postes.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = '📋 ' + p;
+    sel.appendChild(opt);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   EXPORT REPORTS — avec sélection de poste
 ══════════════════════════════════════════════════════════ */
 async function exportReport(format) {
   try {
-    showToast(`Génération du rapport ${format.toUpperCase()}...`, 'info');
+    const posteSelect = document.getElementById('export-poste-select');
+    const posteValue = posteSelect ? posteSelect.value : '';
     
-    const response = await fetch(`${API}/recruteur/export/${format}`, {
+    // Message personnalisé selon le filtre
+    const scope = posteValue ? `pour "${posteValue}"` : 'GLOBAL';
+    showToast(`Génération du rapport ${format.toUpperCase()} ${scope}...`, 'info');
+    
+    // Construire l'URL avec le paramètre poste si sélectionné
+    let url = `${API}/recruteur/export/${format}`;
+    if (posteValue) {
+      url += `?poste=${encodeURIComponent(posteValue)}`;
+    }
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: authH()
     });
@@ -710,23 +800,26 @@ async function exportReport(format) {
     }
     
     const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
+    const urlBlob = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
+    a.href = urlBlob;
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const extensions = { excel: 'xlsx', csv: 'csv', pdf: 'pdf' };
-    a.download = `rapport_candidats_${timestamp}.${extensions[format] || 'xlsx'}`;
+    
+    // Nom de fichier avec le poste si filtré
+    const posteSuffix = posteValue ? `_${posteValue.replace(/[^a-z0-9]/gi, '_')}` : '_global';
+    a.download = `rapport${posteSuffix}_${timestamp}.${extensions[format] || 'xlsx'}`;
     
     document.body.appendChild(a);
     a.click();
     
     setTimeout(() => {
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(urlBlob);
       document.body.removeChild(a);
     }, 100);
     
-    showToast(`Rapport ${format.toUpperCase()} téléchargé avec succès !`, 'success');
+    showToast(`Rapport ${format.toUpperCase()} ${scope} téléchargé !`, 'success');
   } catch (error) {
     console.error('Erreur export:', error);
     showToast(`Erreur: ${error.message}`, 'error');
@@ -821,7 +914,11 @@ async function fetchCandidats() {
     if (res.status === 401) { logout(); return; }
     if (!res.ok) { showToast('Erreur chargement candidats', 'error'); return; }
     allCandidats = await res.json();
+    
+    // Peupler les deux sélecteurs
     populatePosteFilter(allCandidats);
+    populateExportPosteSelect(allCandidats);
+    
     renderTable(allCandidats);
     renderRecent(allCandidats);
   } catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
@@ -1343,7 +1440,7 @@ function quickEmail(id) {
   if (!c) return;
   currentC = c;
   const sel = document.getElementById('email-type');
-  sel.value = ['retenu','entretien','rejete'].includes(c.statut) ? c.statut : 'retenu';
+  sel.value = ['retenu','entretien','rejete'].includes(c.statut) ? currentC.statut : 'retenu';
   buildEmail();
   document.getElementById('modal-email').classList.add('open');
 }
