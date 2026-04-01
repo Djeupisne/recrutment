@@ -46,6 +46,11 @@
     <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:.5rem">Déposer une Candidature</h2>
     <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">Formats acceptés : PDF, DOC, DOCX (max 10 Mo par fichier)</p>
 
+    <!-- ℹ️ Note multi-postes -->
+    <div style="max-width:700px;margin:0 auto 1.5rem auto;padding:.75rem 1rem;background:#EBF5FB;border-left:4px solid #2980B9;border-radius:6px;font-size:.85rem;color:#1a3a5c">
+      💡 <strong>Bon à savoir :</strong> Vous pouvez postuler à plusieurs postes distincts avec le même email. Une candidature distincte sera créée pour chaque poste.
+    </div>
+
     <div class="card" style="max-width:700px;margin:0 auto" id="form-card">
       <div id="form-alert"></div>
       <form id="candidature-form" enctype="multipart/form-data">
@@ -53,11 +58,11 @@
         <div class="form-row">
           <div class="form-group">
             <label>Prénom *</label>
-            <input class="form-control" name="prenom" placeholder="ex. emmanuel" required>
+            <input class="form-control" name="prenom" placeholder="ex. Emmanuel" required>
           </div>
           <div class="form-group">
             <label>Nom *</label>
-            <input class="form-control" name="nom" placeholder="ex. djeupisne" required>
+            <input class="form-control" name="nom" placeholder="ex. Djeupisne" required>
           </div>
         </div>
 
@@ -72,11 +77,28 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Poste souhaité *</label>
-          <select class="form-control" name="poste" id="poste-select" required>
-            <option value="">— Choisir un poste —</option>
-          </select>
+        <!-- ── NOUVEAU : N° Dossier + Poste sur la même ligne ────────────── -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>N° Dossier *</label>
+            <input
+              class="form-control"
+              name="numero_dossier"
+              id="numero-dossier"
+              placeholder="ex. DOS-2026-001"
+              required
+              style="font-family:monospace;font-weight:600;letter-spacing:.04em"
+            >
+            <p style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem">
+              Numéro fourni par le service RH lors du dépôt physique du dossier.
+            </p>
+          </div>
+          <div class="form-group">
+            <label>Poste souhaité *</label>
+            <select class="form-control" name="poste" id="poste-select" required>
+              <option value="">— Choisir un poste —</option>
+            </select>
+          </div>
         </div>
 
         <!-- 📁 Fichiers : CV + Lettre + Certificats (MULTIPLE) -->
@@ -96,7 +118,7 @@
             </div>
           </div>
         </div>
-        
+
         <!-- 🎓 Certificats / Attestations (MULTIPLE FILES) -->
         <div class="form-group" style="margin-top:.5rem">
           <label>Certificats / Attestations (optionnel, plusieurs fichiers)</label>
@@ -120,13 +142,30 @@
     <div id="candidature-success" class="card" style="max-width:700px;margin:1.5rem auto;display:none;text-align:center">
       <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
       <h3 style="color:var(--success);font-size:1.3rem;margin-bottom:.5rem">Candidature soumise avec succès !</h3>
-      <p style="color:var(--text-muted);margin-bottom:1.2rem">Conservez précieusement votre numéro de suivi :</p>
-      <div style="background:#f4f6fa;border:2px dashed var(--border);border-radius:8px;padding:1rem;font-family:monospace;font-size:1rem;font-weight:700;color:var(--primary);word-break:break-all" id="token-display"></div>
+      <p style="color:var(--text-muted);margin-bottom:1.2rem">Conservez précieusement vos références de suivi :</p>
+
+      <!-- N° Dossier -->
+      <div style="margin-bottom:.8rem">
+        <p style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">N° Dossier</p>
+        <div style="background:#EBF5FB;border:2px solid #2980B9;border-radius:8px;padding:.7rem 1rem;font-family:monospace;font-size:1rem;font-weight:700;color:#1a3a5c" id="dossier-display"></div>
+      </div>
+
+      <!-- Token de suivi -->
+      <div>
+        <p style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Numéro de suivi en ligne</p>
+        <div style="background:#f4f6fa;border:2px dashed var(--border);border-radius:8px;padding:.7rem 1rem;font-family:monospace;font-size:.88rem;font-weight:700;color:var(--primary);word-break:break-all" id="token-display"></div>
+      </div>
+
       <p style="margin-top:1rem;font-size:.85rem;color:var(--text-muted)">
         🔍 Votre dossier (CV + lettre + certificats) est en cours d'analyse automatique.<br>
-        Utilisez ce code dans la section <strong>Suivi de dossier</strong> ci-dessous.
+        Utilisez le numéro de suivi dans la section <strong>Suivi de dossier</strong> ci-dessous.
       </p>
-      <button class="btn btn-blue" style="margin-top:1.2rem" onclick="resetForm()">Déposer une autre candidature</button>
+
+      <!-- Bouton postuler à un autre poste -->
+      <div style="margin-top:1.4rem;display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-blue" onclick="resetForm()">📄 Postuler à un autre poste</button>
+        <button class="btn btn-outline" onclick="document.getElementById('suivi-token').value=document.getElementById('token-display').textContent;document.getElementById('suivi').scrollIntoView({behavior:'smooth'})">🔍 Suivre ce dossier</button>
+      </div>
     </div>
   </div>
 </section>
@@ -191,7 +230,6 @@ fetch(`${API}/postes`)
   });
 
 // ── File inputs : gestion des labels ─────────────────────────────────────
-// CV et Lettre (single file)
 ['cv','lettre'].forEach(name => {
   const input = document.getElementById(`${name}-input`);
   const label = document.getElementById(`${name}-label`);
@@ -209,28 +247,23 @@ fetch(`${API}/postes`)
   }
 });
 
-// 🎓 Certificats (MULTIPLE files) - gestion avancée
+// 🎓 Certificats (MULTIPLE files)
 const attestationInput = document.getElementById('attestation-input');
 const attestationLabel = document.getElementById('attestation-label');
-const attestationList = document.getElementById('attestation-list');
+const attestationList  = document.getElementById('attestation-list');
 
 if (attestationInput && attestationLabel && attestationList) {
   attestationInput.addEventListener('change', function() {
     const files = Array.from(this.files);
-    
     if (files.length === 0) {
       attestationLabel.textContent = '🎓 Ajouter des certificats';
       attestationLabel.classList.remove('has-file');
       attestationList.innerHTML = '';
       return;
     }
-    
-    // Mise à jour du label
     attestationLabel.textContent = `✅ ${files.length} fichier${files.length>1?'s':''} sélectionné${files.length>1?'s':''}`;
     attestationLabel.classList.add('has-file');
-    
-    // Liste des fichiers sélectionnés
-    attestationList.innerHTML = files.map(f => 
+    attestationList.innerHTML = files.map(f =>
       `<div style="padding:.2rem 0;border-bottom:1px dashed #e2e8f0">📄 ${escHtml(f.name)} (${formatFileSize(f.size)})</div>`
     ).join('');
   });
@@ -244,28 +277,30 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-function escHtml(s) { 
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); 
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ── Soumission de la candidature ──────────────────────────────────────────
 document.getElementById('candidature-form').addEventListener('submit', async function(e) {
   e.preventDefault();
-  const btn = document.getElementById('submit-btn');
+  const btn      = document.getElementById('submit-btn');
   const alertDiv = document.getElementById('form-alert');
   alertDiv.innerHTML = '';
   btn.innerHTML = '<span class="spinner"></span> Envoi en cours...';
   btn.disabled = true;
 
   try {
-    const fd = new FormData(this);
-    // ✅ Les fichiers multiples avec le même nom "attestation" sont envoyés correctement
+    const fd  = new FormData(this);
     const res = await fetch(`${API}/candidats/postuler`, { method: 'POST', body: fd });
     const data = await res.json();
+
     if (res.ok) {
-      document.getElementById('form-card').style.display = 'none';
+      // Affiche les deux références (N° dossier + token)
+      document.getElementById('form-card').style.display         = 'none';
       document.getElementById('candidature-success').style.display = 'block';
-      document.getElementById('token-display').textContent = data.token;
+      document.getElementById('dossier-display').textContent     = data.numero_dossier || fd.get('numero_dossier') || '–';
+      document.getElementById('token-display').textContent       = data.token;
       showToast('Candidature soumise avec succès ! Analyse automatique en cours...', 'success');
     } else {
       alertDiv.innerHTML = `<div class="alert alert-error">⚠️ ${data.error}</div>`;
@@ -274,33 +309,35 @@ document.getElementById('candidature-form').addEventListener('submit', async fun
     console.error(err);
     alertDiv.innerHTML = `<div class="alert alert-error">⚠️ Impossible de contacter le serveur. Vérifiez votre connexion.</div>`;
   }
+
   btn.innerHTML = '🚀 Soumettre ma candidature';
-  btn.disabled = false;
+  btn.disabled  = false;
 });
 
+// ── Réinitialisation du formulaire ────────────────────────────────────────
 function resetForm() {
   document.getElementById('candidature-form').reset();
-  
-  // Reset CV et Lettre
+
+  // Reset labels CV / Lettre
   ['cv','lettre'].forEach(n => {
     const lbl = document.getElementById(`${n}-label`);
     const defaults = { cv: '📎 Choisir mon CV', lettre: '📎 Choisir ma lettre' };
-    if (lbl) {
-      lbl.textContent = defaults[n] || '📎 Choisir un fichier';
-      lbl.classList.remove('has-file');
-    }
+    if (lbl) { lbl.textContent = defaults[n] || '📎 Choisir un fichier'; lbl.classList.remove('has-file'); }
   });
-  
-  // Reset Certificats (multiple)
+
+  // Reset certificats
   if (attestationLabel && attestationList) {
     attestationLabel.textContent = '🎓 Ajouter des certificats';
     attestationLabel.classList.remove('has-file');
     attestationList.innerHTML = '';
   }
-  
-  document.getElementById('form-card').style.display = 'block';
-  document.getElementById('candidature-success').style.display = 'none';
-  document.getElementById('form-alert').innerHTML = '';
+
+  document.getElementById('form-card').style.display              = 'block';
+  document.getElementById('candidature-success').style.display    = 'none';
+  document.getElementById('form-alert').innerHTML                  = '';
+
+  // Scroll vers le formulaire
+  document.getElementById('postuler').scrollIntoView({ behavior:'smooth' });
 }
 
 // ── Suivi dossier ─────────────────────────────────────────────────────────
@@ -325,14 +362,20 @@ async function checkSuivi() {
     };
     const icons = { en_attente:'⏳', retenu:'🎉', rejete:'😔', entretien:'🤝' };
 
+    // Bloc N° Dossier dans le résultat de suivi
+    const numDossierBlock = d.numero_dossier
+      ? `<div style="margin:.6rem auto;max-width:240px;padding:.4rem .8rem;background:#EBF5FB;border-radius:6px;font-family:monospace;font-size:.85rem;font-weight:700;color:#1a3a5c">🗂️ Dossier : ${escHtml(d.numero_dossier)}</div>`
+      : '';
+
     area.innerHTML = `
       <div style="text-align:center;padding:1rem 0">
         <div style="font-size:2.5rem;margin-bottom:.6rem">${icons[d.statut]||'📋'}</div>
-        <div style="font-weight:700;font-size:1.05rem">${d.prenom} ${d.nom}</div>
-        <div style="color:var(--text-muted);font-size:.85rem;margin-bottom:.8rem">${d.poste}</div>
+        <div style="font-weight:700;font-size:1.05rem">${escHtml(d.prenom)} ${escHtml(d.nom)}</div>
+        <div style="color:var(--text-muted);font-size:.85rem;margin-bottom:.5rem">${escHtml(d.poste)}</div>
+        ${numDossierBlock}
         <span class="badge ${badges[d.statut]||'badge-pending'}" style="font-size:.88rem;padding:.4rem 1rem">${labels[d.statut]||d.statut}</span>
         <p style="margin-top:1rem;font-size:.88rem;color:var(--text)">${messages[d.statut]||''}</p>
-        ${d.note ? `<div style="margin-top:.8rem;padding:.8rem;background:#f8fafd;border-radius:6px;font-size:.85rem;border-left:3px solid var(--accent)"><strong>Message RH :</strong> ${d.note}</div>` : ''}
+        ${d.note ? `<div style="margin-top:.8rem;padding:.8rem;background:#f8fafd;border-radius:6px;font-size:.85rem;border-left:3px solid var(--accent)"><strong>Message RH :</strong> ${escHtml(d.note)}</div>` : ''}
         <div style="margin-top:.8rem;font-size:.78rem;color:var(--text-muted)">
           Dossier déposé le ${new Date(d.date_candidature).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}
         </div>
