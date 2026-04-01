@@ -6,27 +6,43 @@
   <title>Tableau de Bord – Recruteur</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* ── Donut chart SVG natif ────────────── */
+    /* ── VARIABLES CSS ───────────────────────────────── */
+    :root {
+      --primary: #1a3a5c;
+      --primary-hover: #152d47;
+      --success: #1e7e34;
+      --warning: #e67e22;
+      --danger: #c0392b;
+      --info: #2980b9;
+      --text: #1a2433;
+      --text-muted: #6b7a99;
+      --border: #dce3ef;
+      --bg-light: #f8fafd;
+      --shadow: 0 2px 8px rgba(0,0,0,0.1);
+      --shadow-hover: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    /* ── Donut chart SVG natif ───────────────────────── */
     .donut-wrap { position:relative;width:180px;height:180px;margin:0 auto 1rem; }
     .donut-wrap svg { transform:rotate(-90deg); }
     .donut-center {
       position:absolute;inset:0;display:flex;flex-direction:column;
       align-items:center;justify-content:center;pointer-events:none;
     }
-    .donut-center .dn { font-size:1.8rem;font-weight:800;color:var(--text,#1a2433); }
-    .donut-center .dl { font-size:.7rem;color:var(--text-muted,#6b7a99);font-weight:600;text-transform:uppercase;letter-spacing:.5px; }
+    .donut-center .dn { font-size:1.8rem;font-weight:800;color:var(--text); }
+    .donut-center .dl { font-size:.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px; }
     .chart-legend { display:flex;flex-wrap:wrap;gap:.5rem .9rem;justify-content:center;font-size:.78rem; }
     .legend-dot { display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:.3rem; }
 
-    /* ── Bar chart CSS ───────────────────── */
+    /* ── Bar chart CSS ───────────────────────────────── */
     .bar-chart { display:flex;flex-direction:column;gap:.6rem; }
     .bar-row   { display:flex;align-items:center;gap:.7rem;font-size:.78rem; }
     .bar-label { width:140px;min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500; }
     .bar-track { flex:1;height:14px;background:#e8edf5;border-radius:7px;overflow:hidden; }
-    .bar-fill  { height:100%;background:var(--primary,#1a3a5c);border-radius:7px;transition:width .5s; }
-    .bar-val   { width:24px;text-align:right;font-weight:700;color:var(--text-muted,#6b7a99); }
+    .bar-fill  { height:100%;background:var(--primary);border-radius:7px;transition:width .5s; }
+    .bar-val   { width:24px;text-align:right;font-weight:700;color:var(--text-muted); }
 
-    /* ── Grille présélection ─────────────── */
+    /* ── Grille présélection ─────────────────────────── */
     .grille-section { margin-bottom:1.1rem; }
     .grille-header  { display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:.82rem;
                       padding:.35rem .7rem;border-radius:6px;margin-bottom:.4rem;border-left:3px solid; }
@@ -49,11 +65,11 @@
       50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
     }
 
-    /* ── Stars ───────────────────────────── */
+    /* ── Stars ───────────────────────────────────────── */
     .star-btn { background:none;border:none;font-size:1.4rem;cursor:default;padding:0 2px;line-height:1; }
     .star-btn:disabled { opacity:.7; }
 
-    /* ── Email preview ───────────────────── */
+    /* ── Email preview ───────────────────────────────── */
     .email-preview { background:#f8fafd;border:1px solid #dce3ef;border-radius:8px;padding:1.1rem; }
     .ep-field  { margin-bottom:.4rem;font-size:.84rem; }
     .ep-label  { font-weight:700;color:#6b7a99;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;margin-right:.4rem; }
@@ -61,7 +77,7 @@
                     font-family:inherit;font-size:.85rem;min-height:200px;resize:vertical;
                     background:#fff;line-height:1.7;box-sizing:border-box; }
 
-    /* ── Score breakdown ─────────────────── */
+    /* ── Score breakdown ─────────────────────────────── */
     .score-breakdown { background:#f8fafd;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin:.8rem 0;font-size:.82rem; }
     .sb-row { display:flex;justify-content:space-between;padding:.25rem 0;border-bottom:1px dashed #e2e8f0; }
     .sb-row:last-child { border-bottom:none;font-weight:700;color:var(--primary);font-size:.9rem; }
@@ -70,14 +86,14 @@
     .sb-val.elim { color:#c0392b; }
     .sb-val.ok { color:#1e7e34; }
     
-    /* ── Alertes blocs ───────────────────── */
+    /* ── Alertes blocs ───────────────────────────────── */
     .bloc-alert { padding:.6rem .8rem;border-radius:6px;margin:.4rem 0;font-size:.8rem;display:flex;align-items:flex-start;gap:.5rem; }
     .bloc-alert.elim { background:#fef2f2;border-left:4px solid #c0392b;color:#991b1b; }
     .bloc-alert.attn { background:#fffbeb;border-left:4px solid #f59e0b;color:#92400e; }
     .bloc-alert.signal { background:#ecfdf5;border-left:4px solid #1e7e34;color:#065f46; }
     .bloc-alert strong { display:block;margin-bottom:.2rem; }
 
-    /* ── Badge & Extras ──────────────────── */
+    /* ── Badge & Extras ──────────────────────────────── */
     .stat-card.purple { border-color:#8e44ad; }
     .badge-interview  { background:#cce5ff;color:#004085; }
     .btn-info         { background:#2980b9;color:#fff; }
@@ -86,7 +102,7 @@
     .alert-info       { background:#cce5ff;color:#004085;border:1px solid #b8daff;
                         padding:.8rem 1rem;border-radius:8px;font-size:.85rem; }
     
-    /* ── Lecture seule indicator ─────────── */
+    /* ── Lecture seule indicator ─────────────────────── */
     .readonly-badge { 
       display:inline-flex;align-items:center;gap:.3rem;
       background:#f1f5f9;color:#64748b;font-size:.7rem;font-weight:600;
@@ -95,7 +111,7 @@
     }
     .readonly-badge::before { content:"🔒"; }
 
-    /* ── ALERTE FLOTTANTE ÉLIMINATOIRE ───── */
+    /* ── ALERTE FLOTTANTE ÉLIMINATOIRE ───────────────── */
     .elimination-alert {
       position: fixed;
       top: 50%;
@@ -196,19 +212,24 @@
       backdrop-filter: blur(4px);
     }
 
-    /* ── Export buttons section ──────────── */
+    /* ── SECTION EXPORT AMÉLIORÉE ────────────────────── */
     .export-section {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 1.2rem;
+      padding: 1.5rem;
       border-radius: 12px;
       margin-bottom: 1.5rem;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      box-shadow: var(--shadow-hover);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
 
     .export-section h3 {
       color: white;
-      margin: 0 0 1rem 0;
-      font-size: 1rem;
+      margin: 0;
+      font-size: 1.1rem;
       font-weight: 600;
       display: flex;
       align-items: center;
@@ -217,30 +238,28 @@
 
     .export-buttons {
       display: flex;
-      gap: 0.75rem;
+      gap: 0.5rem;
       flex-wrap: wrap;
     }
 
     .export-btn {
-      flex: 1;
-      min-width: 140px;
-      padding: 0.75rem 1rem;
+      padding: 0.6rem 1rem;
       border: none;
       border-radius: 8px;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      gap: 0.4rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      min-width: 110px;
     }
 
     .export-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .export-btn:active {
@@ -251,15 +270,140 @@
       background: #217346;
       color: white;
     }
+    .export-btn.excel:hover { background: #1a5c38; }
 
     .export-btn.csv {
       background: #f0ad4e;
       color: white;
     }
+    .export-btn.csv:hover { background: #d99432; }
 
     .export-btn.pdf {
       background: #d9534f;
       color: white;
+    }
+    .export-btn.pdf:hover { background: #c9302c; }
+
+    /* ── BOUTONS GÉNÉRAUX AMÉLIORÉS ──────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      border-radius: 5px;
+    }
+
+    .btn-blue {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-blue:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+    .btn-success:hover {
+      background: #186a2c;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
+    }
+    .btn-warning:hover {
+      background: #d35400;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #a93226;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.4);
+      color: white;
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* ── TABLEAUX & ACTIONS ─────────────────────────── */
+    .td-actions {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .td-actions .btn {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
+    }
+
+    /* ── MODAL FOOTER ───────────────────────────────── */
+    .modal-footer {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .modal-footer .btn {
+      min-width: auto;
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────── */
+    @media (max-width: 768px) {
+      .export-section {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .export-buttons {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .export-btn {
+        flex: 1;
+        min-width: 90px;
+        justify-content: center;
+      }
+      .td-actions {
+        flex-direction: column;
+      }
+      .td-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
     }
   </style>
 </head>
@@ -306,17 +450,17 @@
         <button class="btn btn-blue btn-sm" onclick="refreshAll()">🔄 Actualiser</button>
       </div>
 
-      <!-- ══ SECTION EXPORT ══ -->
+      <!-- ══ SECTION EXPORT AMÉLIORÉE ══ -->
       <div class="export-section">
         <h3>📊 Exporter les rapports</h3>
         <div class="export-buttons">
-          <button class="export-btn excel" onclick="exportReport('excel')">
-            <span>📊</span> Excel (.xlsx)
+          <button class="export-btn excel" onclick="exportReport('excel')" title="Télécharger en Excel">
+            <span>📊</span> Excel
           </button>
-          <button class="export-btn csv" onclick="exportReport('csv')">
+          <button class="export-btn csv" onclick="exportReport('csv')" title="Télécharger en CSV">
             <span>📄</span> CSV
           </button>
-          <button class="export-btn pdf" onclick="exportReport('pdf')">
+          <button class="export-btn pdf" onclick="exportReport('pdf')" title="Télécharger en PDF">
             <span>📕</span> PDF
           </button>
         </div>
@@ -751,7 +895,7 @@ function renderTable(data) {
       + '<td style="font-size:.85rem;letter-spacing:-1px" title="' + escAttr(scoreTitle) + '">' + stars + ` (${score}/10)` + '</td>'
       + '<td>' + cvLink + lmLink + attLink + '</td>'
       + '<td class="td-actions">'
-      + '<button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">📋 Dossier</button> '
+      + '<button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">📋 Dossier</button>'
       + '<button class="btn btn-info btn-sm"  onclick="quickEmail(\'' + c.id + '\')">📧</button>'
       + '</td></tr>';
   }).join('');
