@@ -914,11 +914,25 @@ async function fetchCandidats() {
     if (res.status === 401) { logout(); return; }
     if (!res.ok) { showToast('Erreur chargement candidats', 'error'); return; }
     allCandidats = await res.json();
-    
-    // Peupler les deux sélecteurs
+
+    // ✅ FIX : Parser tous les champs JSON string → objet JS
+    allCandidats.forEach(c => {
+      if (c.score_breakdown && !c.score_breakdown_parsed) {
+        try { c.score_breakdown_parsed = JSON.parse(c.score_breakdown); } catch {}
+      }
+      if (c.flags_eliminatoires && !c.flags_eliminatoires_parsed) {
+        try { c.flags_eliminatoires_parsed = JSON.parse(c.flags_eliminatoires); } catch {}
+      }
+      if (c.signaux_detectes && !c.signaux_detectes_parsed) {
+        try { c.signaux_detectes_parsed = JSON.parse(c.signaux_detectes); } catch {}
+      }
+      if (c.analyse_details && !c.analyse_details_parsed) {
+        try { c.analyse_details_parsed = JSON.parse(c.analyse_details); } catch {}
+      }
+    });
+
     populatePosteFilter(allCandidats);
     populateExportPosteSelect(allCandidats);
-    
     renderTable(allCandidats);
     renderRecent(allCandidats);
   } catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
@@ -1319,30 +1333,24 @@ const GRILLE = {
 function renderGrille(poste, checklistJson, scoreBreakdown) {
   const g  = GRILLE[poste];
   const el = document.getElementById('grille-content');
-  if (!g) { 
-    el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem;text-align:center;padding:1rem">Grille non définie pour ce poste.</p>'; 
-    return; 
+  if (!g) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:.87rem;text-align:center;padding:1rem">Grille non définie pour ce poste.</p>';
+    return;
   }
-  
+
   let checked = {};
   try { checked = JSON.parse(checklistJson || '{}'); } catch {}
-  
-  // 🔍 Vérifier si un critère éliminatoire est déclenché (NON trouvé)
-  const hasEliminatoire = scoreBreakdown && scoreBreakdown.bloc1_eliminatoire;
+
+  const hasEliminatoire = scoreBreakdown && scoreBreakdown.bloc1_eliminatoire === true;
 
   const mkSection = (title, color, icon, items, pfx) =>
     '<div class="grille-section">'
     + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">'
     + icon + ' ' + title + '</div>'
     + items.map((item, i) => {
-        const key = pfx + '_' + i;
+        const key         = pfx + '_' + i;
         const isValidated = checked[key] === true;
-        
-        // ✅ LOGIQUE POSITIVE pour critères éliminatoires :
-        // - Critère POSITIF trouvé (isValidated=true) → ✅ VERT
-        // - Critère POSITIF non trouvé (isValidated=false) → ❌ ROUGE + éliminatoire
         const eliminatoireClass = (pfx === 'elim' && !isValidated) ? 'eliminatoire-triggered' : '';
-        
         return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + ' ' + eliminatoireClass + '">'
           + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
           + '<span>' + escHtml(item) + '</span>'
@@ -1352,40 +1360,52 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
     + '</div>';
 
   el.innerHTML =
-    mkSection('🔴 Éliminatoire',      '#c0392b','🔴', g.eliminatoire,     'elim')  +
-    mkSection('🟠 À vérifier dans le CV',       '#e67e22','🟠', g.a_verifier,       'verif') +
-    mkSection('🟡 Signaux forts — prioritaire', '#1e7e34','🟡', g.signaux_forts,    'signal')+
-    mkSection("⚠️ Points d'attention",          '#6c757d','⚠️', g.points_attention, 'attn');
-  
-  // 🔔 Afficher l'alerte flottante si critère éliminatoire déclenché
-  if (hasEliminatoire && scoreBreakdown) {
-    showEliminationAlert(scoreBreakdown);
+    mkSection('🔴 Éliminatoire',               '#c0392b', '🔴', g.eliminatoire,     'elim')  +
+    mkSection('🟠 À vérifier dans le CV',       '#e67e22', '🟠', g.a_verifier,       'verif') +
+    mkSection('🟡 Signaux forts — prioritaire', '#1e7e34', '🟡', g.signaux_forts,    'signal')+
+    mkSection("⚠️ Points d'attention",          '#6c757d', '⚠️', g.points_attention, 'attn');
+
+  // ✅ FIX : Passer checked pour n'afficher que les critères réellement échoués
+  if (hasEliminatoire) {
+    showEliminationAlert(checked);
   }
 }
 
 /* 🔔 ALERTE FLOTTANTE ÉLIMINATOIRE */
-function showEliminationAlert(scoreBreakdown) {
+function showEliminationAlert(checked) {
   const overlay = document.getElementById('elimination-alert-overlay');
-  const alert = document.getElementById('elimination-alert');
+  const alert   = document.getElementById('elimination-alert');
   const details = document.getElementById('elimination-alert-details');
-  
-  // Construire la liste des critères éliminatoires manquants (formulation positive)
-  const g = GRILLE[currentC.poste];
-  let criteriaHtml = '<strong>Critères requis NON trouvés :</strong><ul style="margin:.5rem 0;padding-left:1.5rem">';
-  
-  if (g && g.eliminatoire) {
-    g.eliminatoire.forEach((crit, i) => {
-      // Afficher le critère POSITIF qui manque
-      criteriaHtml += `<li style="margin:.3rem 0;color:#991b1b">❌ ${escHtml(crit)} <span style="color:#666;font-size:.9rem">(requis)</span></li>`;
-    });
-  }
-  criteriaHtml += '</ul><p style="font-size:.85rem;color:#7f1d1d;margin-top:.5rem"><strong>→ Candidat éliminé automatiquement</strong></p>';
-  
+
+  const g = GRILLE[currentC ? currentC.poste : ''];
+  if (!g) return;
+
+  // ✅ FIX : N'afficher QUE les critères qui ont réellement échoué (elim_X === false/absent)
+  let failedCount = 0;
+  let criteriaHtml = '<strong>Critères requis NON trouvés dans les documents :</strong>'
+                   + '<ul style="margin:.5rem 0;padding-left:1.5rem">';
+
+  g.eliminatoire.forEach((crit, i) => {
+    const key         = 'elim_' + i;
+    const isValidated = checked && checked[key] === true;
+    if (!isValidated) {
+      failedCount++;
+      criteriaHtml += `<li style="margin:.3rem 0;color:#991b1b">
+        ❌ <strong>${escHtml(crit)}</strong>
+        <span style="color:#7f1d1d;font-size:.85rem"> — non trouvé dans les documents</span>
+      </li>`;
+    }
+  });
+
+  criteriaHtml += '</ul>';
+  criteriaHtml += `<p style="font-size:.85rem;color:#7f1d1d;margin-top:.5rem;padding:.6rem;
+    background:rgba(255,255,255,.5);border-radius:4px;font-weight:600">
+    → ${failedCount} critère(s) manquant(s) — candidat éliminé automatiquement (score : 0/10)
+  </p>`;
+
   details.innerHTML = criteriaHtml;
-  
-  // Afficher l'alerte
   overlay.style.display = 'block';
-  alert.style.display = 'block';
+  alert.style.display   = 'block';
 }
 
 function closeEliminationAlert() {
