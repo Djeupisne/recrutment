@@ -752,6 +752,26 @@ function authH()  {
 }
 
 /* ══════════════════════════════════════════════════════════
+   ⭐ PATCH 2 : FONCTION HELPER PARSING ROBUSTE
+══════════════════════════════════════════════════════════ */
+function parseJSONField(raw, fieldName, candidatId, poste) {
+  if (!raw) return null;
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    // Normaliser les booléens pour bloc1_eliminatoire
+    if (fieldName === 'score_breakdown' && parsed?.bloc1_eliminatoire !== undefined) {
+      const val = parsed.bloc1_eliminatoire;
+      parsed.bloc1_eliminatoire = (val === true || val === "true" || val === 1 || val === "1");
+    }
+    return parsed;
+  } catch (e) {
+    console.warn(`⚠️ Échec parsing ${fieldName} pour candidat ${candidatId} (poste: ${poste}):`, e.message);
+    console.log(`   Raw value: ${String(raw).slice(0, 200)}...`);
+    return null;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
    PEUPLER LE SELECTEUR D'EXPORT PAR POSTE
 ══════════════════════════════════════════════════════════ */
 function populateExportPosteSelect(data) {
@@ -915,19 +935,29 @@ async function fetchCandidats() {
     if (!res.ok) { showToast('Erreur chargement candidats', 'error'); return; }
     allCandidats = await res.json();
 
-    // ✅ FIX : Parser tous les champs JSON string → objet JS
+    // ✅ PATCH 2 : Parsing robuste avec logging + normalisation booléens
     allCandidats.forEach(c => {
+      const id = c.id || 'inconnu';
+      const poste = c.poste || 'inconnu';
+      
       if (c.score_breakdown && !c.score_breakdown_parsed) {
-        try { c.score_breakdown_parsed = JSON.parse(c.score_breakdown); } catch {}
+        c.score_breakdown_parsed = parseJSONField(c.score_breakdown, 'score_breakdown', id, poste);
       }
       if (c.flags_eliminatoires && !c.flags_eliminatoires_parsed) {
-        try { c.flags_eliminatoires_parsed = JSON.parse(c.flags_eliminatoires); } catch {}
+        c.flags_eliminatoires_parsed = parseJSONField(c.flags_eliminatoires, 'flags_eliminatoires', id, poste);
       }
       if (c.signaux_detectes && !c.signaux_detectes_parsed) {
-        try { c.signaux_detectes_parsed = JSON.parse(c.signaux_detectes); } catch {}
+        c.signaux_detectes_parsed = parseJSONField(c.signaux_detectes, 'signaux_detectes', id, poste);
       }
       if (c.analyse_details && !c.analyse_details_parsed) {
-        try { c.analyse_details_parsed = JSON.parse(c.analyse_details); } catch {}
+        c.analyse_details_parsed = parseJSONField(c.analyse_details, 'analyse_details', id, poste);
+      }
+      
+      // ✅ Normalisation explicite bloc1_eliminatoire (compatibilité string/bool)
+      if (c.score_breakdown_parsed?.bloc1_eliminatoire !== undefined) {
+        const val = c.score_breakdown_parsed.bloc1_eliminatoire;
+        c.score_breakdown_parsed.bloc1_eliminatoire = 
+          (val === true || val === "true" || val === 1 || val === "1");
       }
     });
 
@@ -1178,10 +1208,6 @@ function renderStars(n, readonly = true) {
 
 /* ══════════════════════════════════════════════════════════
    📋 GRILLE DE PRÉSÉLECTION — CRITÈRES POSITIFS + ÉLIMINATION STRICTE
-   🔴 Critères ÉLIMINATOIRES en formulation POSITIVE :
-      - ✅ VERT si le critère positif est TROUVÉ dans les documents
-      - ❌ ROUGE si le critère positif n'est PAS trouvé → ÉLIMINATION AUTOMATIQUE
-   ⚠️ Si UN SEUL critère éliminatoire manque → candidat éliminé automatiquement
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
   "Responsable Administration de Crédit": {
@@ -1275,7 +1301,6 @@ const GRILLE = {
   "Market Risk Officer": {
     eliminatoire: [
       "Base en risques de marché",
-      
       "Exposition à FX / taux / liquidité",
       "3 ans expérience institution financière"
     ],
@@ -1325,11 +1350,7 @@ const GRILLE = {
   }
 };
 
-/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables
-   ✅ LOGIQUE POSITIVE pour critères éliminatoires :
-   - Si isValidated = true (critère TROUVÉ) → ✅ VERT
-   - Si isValidated = false (critère NON TROUVÉ) → ❌ ROUGE + éliminatoire
-*/
+/* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables */
 function renderGrille(poste, checklistJson, scoreBreakdown) {
   const g  = GRILLE[poste];
   const el = document.getElementById('grille-content');
@@ -1341,7 +1362,13 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
   let checked = {};
   try { checked = JSON.parse(checklistJson || '{}'); } catch {}
 
-  const hasEliminatoire = scoreBreakdown && scoreBreakdown.bloc1_eliminatoire === true;
+  // ✅ PATCH 3 : Comparaison souple pour bloc1_eliminatoire (supporte true, "true", 1, "1")
+  const hasEliminatoire = scoreBreakdown && (
+    scoreBreakdown.bloc1_eliminatoire === true ||
+    scoreBreakdown.bloc1_eliminatoire === "true" ||
+    scoreBreakdown.bloc1_eliminatoire === 1 ||
+    scoreBreakdown.bloc1_eliminatoire === "1"
+  );
 
   const mkSection = (title, color, icon, items, pfx) =>
     '<div class="grille-section">'
@@ -1365,22 +1392,47 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
     mkSection('🟡 Signaux forts — prioritaire', '#1e7e34', '🟡', g.signaux_forts,    'signal')+
     mkSection("⚠️ Points d'attention",          '#6c757d', '⚠️', g.points_attention, 'attn');
 
-  // ✅ FIX : Passer checked pour n'afficher que les critères réellement échoués
+  // ✅ Déclencher l'alerte si éliminatoire
   if (hasEliminatoire) {
     showEliminationAlert(checked);
   }
 }
 
-/* 🔔 ALERTE FLOTTANTE ÉLIMINATOIRE */
+/* 🔔 PATCH 4 : ALERTE FLOTTANTE ÉLIMINATOIRE AVEC DEBUG */
 function showEliminationAlert(checked) {
   const overlay = document.getElementById('elimination-alert-overlay');
   const alert   = document.getElementById('elimination-alert');
   const details = document.getElementById('elimination-alert-details');
 
-  const g = GRILLE[currentC ? currentC.poste : ''];
-  if (!g) return;
+  const poste = currentC?.poste;
+  const g = GRILLE[poste];
+  
+  // ✅ DEBUG : loguer si poste non trouvé dans GRILLE
+  if (!g) {
+    console.error(`❌ ALERTE ÉLIMINATOIRE : Poste non trouvé dans GRILLE frontend`);
+    console.error(`   Poste reçu : "${poste}"`);
+    console.log(`   Postes disponibles dans GRILLE :`, Object.keys(GRILLE));
+    
+    // Fallback : afficher alerte générique si bloc1_eliminatoire est vrai
+    const sb = currentC?.score_breakdown_parsed;
+    if (sb?.bloc1_eliminatoire) {
+      details.innerHTML = `
+        <strong>⚠️ Candidat éliminé automatiquement</strong>
+        <p style="margin:.5rem 0;color:#7f1d1d">
+          Critères éliminatoires non satisfaits (poste: "${poste || 'inconnu'}")
+        </p>
+        <p style="font-size:.8rem;color:#991b1b">
+          💡 Si ce poste devrait être supporté, vérifiez que son nom correspond exactement 
+          à une clé de la grille frontend (accents, espaces, majuscules).
+        </p>
+      `;
+      overlay.style.display = 'block';
+      alert.style.display   = 'block';
+    }
+    return;
+  }
 
-  // ✅ FIX : N'afficher QUE les critères qui ont réellement échoué (elim_X === false/absent)
+  // ✅ N'afficher QUE les critères qui ont réellement échoué
   let failedCount = 0;
   let criteriaHtml = '<strong>Critères requis NON trouvés dans les documents :</strong>'
                    + '<ul style="margin:.5rem 0;padding-left:1.5rem">';
@@ -1519,6 +1571,31 @@ function badgePill(s) {
 }
 function fmtDate(iso)     { return iso ? new Date(iso).toLocaleDateString('fr-FR') : '–'; }
 function fmtDateLong(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) : '–'; }
+
+/* ══════════════════════════════════════════════════════════
+   ⭐ PATCH BONUS : FONCTION DEBUG POUR TESTER L'ALERTE
+══════════════════════════════════════════════════════════ */
+window.debugEliminationAlert = function(candidatId) {
+  const c = allCandidats.find(x => x.id === candidatId);
+  if (!c) {
+    console.log(`❌ Candidat ${candidatId} non trouvé`);
+    return;
+  }
+  
+  console.log(`🔍 Debug candidat : ${c.prenom} ${c.nom} – ${c.poste}`);
+  console.log(`   Score breakdown :`, c.score_breakdown_parsed);
+  console.log(`   Bloc1 éliminatoire :`, c.score_breakdown_parsed?.bloc1_eliminatoire);
+  
+  currentC = c;
+  
+  let checked = {};
+  try { checked = JSON.parse(c.checklist || '{}'); } catch {}
+  
+  // Forcer l'affichage de l'alerte pour test
+  showEliminationAlert(checked);
+  
+  console.log(`✅ Alert triggered (si éliminé)`);
+};
 
 /* ══════════════════════════════════════════════════════════
    INIT
