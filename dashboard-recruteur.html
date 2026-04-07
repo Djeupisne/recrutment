@@ -319,6 +319,12 @@
     }
     .export-btn.pdf:hover { background: #c9302c; }
 
+    .export-btn.word {
+      background: #2b579a;
+      color: white;
+    }
+    .export-btn.word:hover { background: #1e3f6f; }
+
     /* ── BOUTONS GÉNÉRAUX AMÉLIORÉS ──────────────────── */
     .btn {
       display: inline-flex;
@@ -427,7 +433,8 @@
         justify-content: flex-start;
         width: 100%;
       }
-      #export-poste-select {
+      #export-poste-select,
+      #dossier-poste-select {
         flex: 1;
         max-width: none;
       }
@@ -520,6 +527,27 @@
             </button>
             <button class="export-btn pdf" onclick="exportReport('pdf')" title="Télécharger en PDF">
               <span>📕</span> PDF
+            </button>
+            <button class="export-btn word" onclick="exportReport('word')" title="Télécharger en Word">
+              <span>📝</span> Word
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SECTION TÉLÉCHARGEMENT DES DOSSIERS ══ -->
+      <div class="export-section" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); margin-top: 1rem;">
+        <h3>📁 Télécharger les dossiers candidats</h3>
+        <div class="export-controls">
+          <select id="dossier-poste-select" class="form-control">
+            <option value="">🌍 Tous les postes</option>
+            <!-- Les postes seront ajoutés dynamiquement par JS -->
+          </select>
+          <input type="date" id="dossier-date-start" class="form-control" style="background: rgba(255,255,255,0.95); border: none; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.85rem; font-weight: 500; color: var(--text); cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.1);" title="Date de début">
+          <input type="date" id="dossier-date-end" class="form-control" style="background: rgba(255,255,255,0.95); border: none; border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.85rem; font-weight: 500; color: var(--text); cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.1);" title="Date de fin">
+          <div class="export-buttons">
+            <button class="export-btn" style="background: #fff; color: #11998e;" onclick="downloadAllDossiers()" title="Télécharger tous les dossiers en ZIP">
+              <span>📦</span> ZIP
             </button>
           </div>
         </div>
@@ -789,6 +817,27 @@ function populateExportPosteSelect(data) {
     opt.textContent = '📋 ' + p;
     sel.appendChild(opt);
   });
+
+  // Peupler aussi le selecteur de dossiers
+  populateDossierPosteSelect(postes);
+}
+
+/* ══════════════════════════════════════════════════════════
+   PEUPLER LE SELECTEUR DE DOSSIERS PAR POSTE
+══════════════════════════════════════════════════════════ */
+function populateDossierPosteSelect(postes) {
+  const sel = document.getElementById('dossier-poste-select');
+  if (!sel) return;
+  
+  // Garder l'option "Tous les postes" (première option)
+  while (sel.options.length > 1) sel.remove(1);
+  
+  postes.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = '📋 ' + p;
+    sel.appendChild(opt);
+  });
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -825,7 +874,7 @@ async function exportReport(format) {
     a.href = urlBlob;
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    const extensions = { excel: 'xlsx', csv: 'csv', pdf: 'pdf' };
+    const extensions = { excel: 'xlsx', csv: 'csv', pdf: 'pdf', word: 'docx' };
     
     // Nom de fichier avec le poste si filtré
     const posteSuffix = posteValue ? `_${posteValue.replace(/[^a-z0-9]/gi, '_')}` : '_global';
@@ -842,6 +891,73 @@ async function exportReport(format) {
     showToast(`Rapport ${format.toUpperCase()} ${scope} téléchargé !`, 'success');
   } catch (error) {
     console.error('Erreur export:', error);
+    showToast(`Erreur: ${error.message}`, 'error');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TÉLÉCHARGER TOUS LES DOSSIERS EN ZIP
+══════════════════════════════════════════════════════════ */
+async function downloadAllDossiers() {
+  try {
+    const posteSelect = document.getElementById('dossier-poste-select');
+    const dateStart = document.getElementById('dossier-date-start').value;
+    const dateEnd = document.getElementById('dossier-date-end').value;
+    const posteValue = posteSelect ? posteSelect.value : '';
+    
+    // Construire l'URL avec les paramètres de filtre
+    let url = `${API}/recruteur/dossiers/zip`;
+    const params = new URLSearchParams();
+    
+    if (posteValue) {
+      params.append('poste', posteValue);
+    }
+    if (dateStart) {
+      params.append('date_start', dateStart);
+    }
+    if (dateEnd) {
+      params.append('date_end', dateEnd);
+    }
+    
+    if (params.toString()) {
+      url += '?' + params.toString();
+    }
+    
+    const scope = posteValue ? `pour "${posteValue}"` : 'tous les postes';
+    const dateInfo = dateStart && dateEnd ? ` (${dateStart} au ${dateEnd})` : (dateStart ? ` (depuis ${dateStart})` : (dateEnd ? ` (jusqu'au ${dateEnd})` : ''));
+    
+    showToast(`Génération du ZIP ${scope}${dateInfo}...`, 'info');
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: authH()
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Erreur lors du téléchargement des dossiers');
+    }
+    
+    const blob = await response.blob();
+    const urlBlob = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = urlBlob;
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const posteSuffix = posteValue ? `_${posteValue.replace(/[^a-z0-9]/gi, '_')}` : '_tous_postes';
+    a.download = `dossiers_candidats${posteSuffix}_${timestamp}.zip`;
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    setTimeout(() => {
+      window.URL.revokeObjectURL(urlBlob);
+      document.body.removeChild(a);
+    }, 100);
+    
+    showToast(`Dossiers candidats téléchargés avec succès !`, 'success');
+  } catch (error) {
+    console.error('Erreur téléchargement ZIP:', error);
     showToast(`Erreur: ${error.message}`, 'error');
   }
 }
