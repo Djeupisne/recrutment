@@ -80,17 +80,17 @@
         <!-- ── NOUVEAU : N° Dossier + Poste sur la même ligne ────────────── -->
         <div class="form-row">
           <div class="form-group">
-            <label>N° Dossier *</label>
+            <label>N° Dossier</label>
             <input
               class="form-control"
               name="numero_dossier"
               id="numero-dossier"
-              placeholder="ex. DOS-2026-001"
-              required
-              style="font-family:monospace;font-weight:600;letter-spacing:.04em"
+              placeholder="Généré automatiquement après soumission"
+              readonly
+              style="font-family:monospace;font-weight:600;letter-spacing:.04em;background:#f8f9fa;cursor:not-allowed"
             >
             <p style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem">
-              Numéro fourni par le service RH lors du dépôt physique du dossier.
+              Numéro généré automatiquement par le système lors de la soumission.
             </p>
           </div>
           <div class="form-group">
