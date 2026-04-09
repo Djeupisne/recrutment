@@ -1,1 +1,2 @@
-Nothing should be ignored based on the provided file changes. The modified files (`dashboard-recruteur.html` and `index.html`) are standard HTML source files that should be tracked in version control. No build artifacts, dependencies, temporary files, or other ignorable content was detected in the changes.
+# No build artifacts, dependencies, or temporary files detected in changes
+# Source file modifications only - no additional ignores needed
