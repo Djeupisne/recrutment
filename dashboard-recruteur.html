@@ -1323,10 +1323,11 @@ function renderStars(n, readonly = true) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   📋 GRILLE DE PRÉSÉLECTION — CRITÈRES POSITIFS + ÉLIMINATION STRICTE
+   📋 GRILLE DE PRÉSÉLECTION — NOUVEAU SYSTÈME DE SCORING
+   Structure : CV (70pts) + Lettre (20pts) + Diplôme (10pts) = 100pts
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
-  // ── 6 POSTES EXISTANTS ─────────────────────────────────────
+  // ── 6 POSTES EXISTANTS (inchangés) ────────────────────────
   "Responsable Administration de Crédit": {
     eliminatoire: [
       "Expérience bancaire",
@@ -1465,17 +1466,119 @@ const GRILLE = {
       "Aucune mention de sécurité"
     ]
   },
-  // ── 6 NOUVEAUX POSTES ─────────────────────────────────────
+  
+  // ── 6 NOUVEAUX POSTES AVEC NOUVEAU SYSTÈME DE SCORING ─────
   "Auditeur interne": {
+    // 🔴 Critique : expérience réelle en audit
+    // Profil éliminé si : < 3 ans audit OU pas d'expérience cabinet ou banque
     eliminatoire: [
-      "Expérience en audit interne ou externe",
-      "Connaissance des processus bancaires",
-      "3 ans expérience en contrôle/audit"
+      "Minimum 3 ans d'expérience en audit (interne ou externe)",
+      "Expérience en cabinet d'audit OU département audit bancaire",
+      "Connaissance des normes d'audit et contrôle interne"
     ],
+    // Barèmes de scoring détaillés
+    barèmes: {
+      CV_Exp: { // 20 points - Expérience pertinente (alignement avec poste)
+        rubriques: [
+          "Missions d'audit réellement similaires",
+          "Exposition aux problématiques d'audit bancaire",
+          "Niveau de responsabilité sur missions d'audit"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun lien avec l'audit" },
+          { note: 4, desc: "Lien très indirect" },
+          { note: 8, desc: "Exposition partielle" },
+          { note: 12, desc: "Expérience correcte mais incomplète" },
+          { note: 16, desc: "Bonne expérience directement liée" },
+          { note: 20, desc: "Expérience solide et répétée en audit" }
+        ]
+      },
+      CV_Niveau: { // 10 points - Volume + séniorité
+        echelle: [
+          { note: 0, desc: "< 2 ans" },
+          { note: 2, desc: "2-3 ans" },
+          { note: 4, desc: "3-5 ans" },
+          { note: 6, desc: "5-8 ans" },
+          { note: 8, desc: "8-12 ans" },
+          { note: 10, desc: "> 12 ans avec responsabilités" }
+        ]
+      },
+      CV_Secteur: { // 10 points - Expérience sectorielle (CRITIQUE)
+        echelle: [
+          { note: 0, desc: "Aucun lien avec finance" },
+          { note: 2, desc: "Secteur éloigné" },
+          { note: 4, desc: "Secteur connexe" },
+          { note: 6, desc: "Expérience partielle en banque" },
+          { note: 8, desc: "Expérience significative" },
+          { note: 10, desc: "Carrière majoritairement bancaire" }
+        ]
+      },
+      CV_Tech: { // 15 points - Compétences techniques (normes, contrôle interne)
+        rubriques: [
+          "Normes d'audit (IFAC, COSO, ISA)",
+          "Contrôle interne bancaire",
+          "Connaissance réglementaire (COBAC, Bâle)"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucune compétence clé" },
+          { note: 3, desc: "Notions basiques" },
+          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 10, desc: "Compétences opérationnelles" },
+          { note: 12, desc: "Maîtrise solide" },
+          { note: 15, desc: "Expertise reconnue" }
+        ]
+      },
+      CV_Progression: { // 5 points - Évolution de carrière
+        echelle: [
+          { note: 0, desc: "Régression ou incohérences" },
+          { note: 1, desc: "Stagnation totale" },
+          { note: 2, desc: "Faible progression" },
+          { note: 3, desc: "Progression normale" },
+          { note: 4, desc: "Bonne évolution" },
+          { note: 5, desc: "Progression rapide et cohérente" }
+        ]
+      },
+      CV_Management: { // 5 points - Capacité managériale (si chef de service)
+        note: "Non applicable pour auditeur non-manager",
+        echelle: [
+          { note: 0, desc: "Aucun management" },
+          { note: 1, desc: "Coordination ponctuelle" },
+          { note: 2, desc: "Supervision informelle" },
+          { note: 3, desc: "Encadrement d'équipe réduit" },
+          { note: 4, desc: "Management structuré" },
+          { note: 5, desc: "Management confirmé avec résultats" }
+        ]
+      },
+      CV_Stabilité: { // 5 points - Stabilité / cohérence
+        echelle: [
+          { note: 0, desc: "Parcours incohérent" },
+          { note: 1, desc: "Changements fréquents (<1 an)" },
+          { note: 2, desc: "Instabilité modérée" },
+          { note: 3, desc: "Parcours globalement cohérent" },
+          { note: 4, desc: "Bonne stabilité" },
+          { note: 5, desc: "Parcours très structuré et logique" }
+        ]
+      },
+      Lettre: { // 20 points - Lettre de motivation
+        criteres: [
+          { nom: "Compréhension du poste", pts: 5, desc: "Reformulation intelligente des enjeux" },
+          { nom: "Cohérence profil/poste", pts: 5, desc: "Candidature logique, pas opportuniste" },
+          { nom: "Motivation réelle", pts: 5, desc: "Arguments concrets, lien avec parcours" },
+          { nom: "Qualité rédactionnelle", pts: 5, desc: "Clarté, structure, orthographe" }
+        ]
+      },
+      Diplome: { // 10 points - Formation
+        criteres: [
+          { nom: "Niveau académique", pts: 4, desc: "Bac+3/Bac+4/Bac+5" },
+          { nom: "Spécialisation pertinente", pts: 3, desc: "Finance, audit, comptabilité" },
+          { nom: "Certifications", pts: 3, desc: "ACCA, CPA, CIA, etc." }
+        ]
+      }
+    },
     a_verifier: [
-      "A-t-il déjà mené : missions d'audit ?",
-      "A-t-il déjà rédigé : rapports d'audit ?",
-      "Connaît-il : normes d'audit (IFAC, COSO) ?",
+      "A-t-il déjà mené : missions d'audit complètes ?",
+      "A-t-il déjà rédigé : rapports d'audit formels ?",
+      "Connaît-il : normes d'audit (IFAC, COSO, ISA) ?",
       "A-t-il déjà évalué : dispositifs de contrôle interne ?"
     ],
     signaux_forts: [
@@ -1486,17 +1589,121 @@ const GRILLE = {
     ],
     points_attention: [
       "Profil trop \"comptable\" sans vision processus",
-      "Aucune expérience terrain",
+      "Aucune expérience terrain en audit",
       "Rapports d'audit non mentionnés"
     ]
   },
   "Chef service contrôle des engagements": {
+    // 🔴 Critique : maîtrise du risque crédit
+    // Red flag : profil purement commercial sans analyse crédit
     eliminatoire: [
-      "Expérience en contrôle des engagements",
-      "Connaissance des garanties bancaires",
-      "5 ans expérience en crédit/risques",
-      "Encadrement d'équipe"
+      "Minimum 5 ans d'expérience en crédit/risques",
+      "Expérience avérée en analyse financière et crédit",
+      "Encadrement d'équipe (management structuré)"
     ],
+    barèmes: {
+      CV_Exp: { // 20 points → 25 points (renforcé pour crédit)
+        max: 25,
+        rubriques: [
+          "Analyse financière de dossiers crédit",
+          "Contrôle des engagements hors bilan",
+          "Gestion des garanties bancaires"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun lien avec le crédit" },
+          { note: 5, desc: "Lien très indirect" },
+          { note: 10, desc: "Exposition partielle" },
+          { note: 15, desc: "Expérience correcte mais incomplète" },
+          { note: 20, desc: "Bonne expérience directement liée" },
+          { note: 25, desc: "Expérience solide en contrôle des engagements" }
+        ]
+      },
+      CV_Niveau: { // 10 points
+        echelle: [
+          { note: 0, desc: "< 2 ans" },
+          { note: 2, desc: "2-3 ans" },
+          { note: 4, desc: "3-5 ans" },
+          { note: 6, desc: "5-8 ans" },
+          { note: 8, desc: "8-12 ans" },
+          { note: 10, desc: "> 12 ans avec responsabilités" }
+        ]
+      },
+      CV_Secteur: { // 10 points - CRITIQUE
+        echelle: [
+          { note: 0, desc: "Aucun lien avec finance" },
+          { note: 2, desc: "Secteur éloigné" },
+          { note: 4, desc: "Secteur connexe" },
+          { note: 6, desc: "Expérience partielle en banque" },
+          { note: 8, desc: "Expérience significative" },
+          { note: 10, desc: "Carrière majoritairement bancaire" }
+        ]
+      },
+      CV_Tech: { // 15 points
+        rubriques: [
+          "Analyse financière et crédit",
+          "Procédures de déblocage",
+          "Réglementation COBAC"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucune compétence clé" },
+          { note: 3, desc: "Notions basiques" },
+          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 10, desc: "Compétences opérationnelles" },
+          { note: 12, desc: "Maîtrise solide" },
+          { note: 15, desc: "Expertise reconnue" }
+        ]
+      },
+      CV_Progression: { // 5 points
+        echelle: [
+          { note: 0, desc: "Régression ou incohérences" },
+          { note: 1, desc: "Stagnation totale" },
+          { note: 2, desc: "Faible progression" },
+          { note: 3, desc: "Progression normale" },
+          { note: 4, desc: "Bonne évolution" },
+          { note: 5, desc: "Progression rapide et cohérente" }
+        ]
+      },
+      CV_Management: { // 5 points - IMPORTANT pour chef de service
+        rubriques: [
+          "Taille d'équipe encadrée",
+          "Responsabilité hiérarchique réelle",
+          "Encadrement structuré (pas juste coordination)"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun management" },
+          { note: 1, desc: "Coordination ponctuelle" },
+          { note: 2, desc: "Supervision informelle" },
+          { note: 3, desc: "Encadrement d'équipe réduit" },
+          { note: 4, desc: "Management structuré" },
+          { note: 5, desc: "Management confirmé avec résultats" }
+        ]
+      },
+      CV_Stabilité: { // 5 points
+        echelle: [
+          { note: 0, desc: "Parcours incohérent" },
+          { note: 1, desc: "Changements fréquents (<1 an)" },
+          { note: 2, desc: "Instabilité modérée" },
+          { note: 3, desc: "Parcours globalement cohérent" },
+          { note: 4, desc: "Bonne stabilité" },
+          { note: 5, desc: "Parcours très structuré et logique" }
+        ]
+      },
+      Lettre: { // 20 points
+        criteres: [
+          { nom: "Compréhension du poste", pts: 5, desc: "Reformulation intelligente des enjeux" },
+          { nom: "Cohérence profil/poste", pts: 5, desc: "Candidature logique, pas opportuniste" },
+          { nom: "Motivation réelle", pts: 5, desc: "Arguments concrets, lien avec parcours" },
+          { nom: "Qualité rédactionnelle", pts: 5, desc: "Clarté, structure, orthographe" }
+        ]
+      },
+      Diplome: { // 10 points
+        criteres: [
+          { nom: "Niveau académique", pts: 4, desc: "Bac+3/Bac+4/Bac+5" },
+          { nom: "Spécialisation pertinente", pts: 3, desc: "Finance, banque, gestion" },
+          { nom: "Certifications", pts: 3, desc: "ACCA, CPA, formations crédit" }
+        ]
+      }
+    },
     a_verifier: [
       "A-t-il déjà validé : engagements hors bilan ?",
       "A-t-il déjà géré : garanties réelles/personnelles ?",
@@ -1510,20 +1717,128 @@ const GRILLE = {
       "Mention de : outils de suivi des garanties"
     ],
     points_attention: [
-      "Profil trop opérationnel sans vision stratégique",
+      "Profil trop commercial sans analyse crédit",
       "Pas d'expérience managériale",
       "Méconnaissance des risques de contrepartie"
     ]
   },
   "Chef service IT (maintenance/support)": {
+    // 🔴 Critique : compétence technique réelle
+    // Élimination directe si : pas de background IT solide
     eliminatoire: [
-      "Expérience en support/maintenance IT",
-      "Gestion d'infrastructure critique",
-      "3 ans expérience en environnement bancaire/telco",
-      "Encadrement d'équipe technique"
+      "Diplôme IT obligatoire (Bac+3 minimum en informatique)",
+      "Minimum 5 ans d'expérience en support/maintenance IT",
+      "Background technique solide (réseau, systèmes, bases de données)"
     ],
+    barèmes: {
+      CV_Exp: { // 20 points
+        rubriques: [
+          "Support/maintenance IT en environnement critique",
+          "Gestion d'infrastructure",
+          "Résolution d'incidents complexes"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun lien avec l'IT" },
+          { note: 4, desc: "Lien très indirect" },
+          { note: 8, desc: "Exposition partielle" },
+          { note: 12, desc: "Expérience correcte mais incomplète" },
+          { note: 16, desc: "Bonne expérience directement liée" },
+          { note: 20, desc: "Expérience solide en maintenance/support" }
+        ]
+      },
+      CV_Niveau: { // 10 points
+        echelle: [
+          { note: 0, desc: "< 2 ans" },
+          { note: 2, desc: "2-3 ans" },
+          { note: 4, desc: "3-5 ans" },
+          { note: 6, desc: "5-8 ans" },
+          { note: 8, desc: "8-12 ans" },
+          { note: 10, desc: "> 12 ans avec responsabilités" }
+        ]
+      },
+      CV_Secteur: { // 10 points
+        echelle: [
+          { note: 0, desc: "Aucun lien avec IT" },
+          { note: 2, desc: "Secteur éloigné" },
+          { note: 4, desc: "Secteur connexe" },
+          { note: 6, desc: "Expérience partielle en banque/telco" },
+          { note: 8, desc: "Expérience significative" },
+          { note: 10, desc: "Carrière majoritairement IT bancaire" }
+        ]
+      },
+      CV_Tech: { // 15 points → 25 points (RENFORCÉ - CRITIQUE)
+        max: 25,
+        rubriques: [
+          "Langages et bases de données",
+          "Réseaux (LAN/WAN, VPN, firewall)",
+          "Systèmes (Windows/Linux Server)",
+          "Supervision / monitoring",
+          "ITIL / bonnes pratiques"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucune compétence clé" },
+          { note: 5, desc: "Notions basiques" },
+          { note: 10, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 15, desc: "Compétences opérationnelles" },
+          { note: 20, desc: "Maîtrise solide" },
+          { note: 25, desc: "Expertise technique reconnue" }
+        ]
+      },
+      CV_Progression: { // 5 points
+        echelle: [
+          { note: 0, desc: "Régression ou incohérences" },
+          { note: 1, desc: "Stagnation totale" },
+          { note: 2, desc: "Faible progression" },
+          { note: 3, desc: "Progression normale" },
+          { note: 4, desc: "Bonne évolution" },
+          { note: 5, desc: "Progression rapide et cohérente" }
+        ]
+      },
+      CV_Management: { // 5 points
+        rubriques: [
+          "Taille d'équipe technique encadrée",
+          "Gestion de planning/astreintes",
+          "Management structuré"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun management" },
+          { note: 1, desc: "Coordination ponctuelle" },
+          { note: 2, desc: "Supervision informelle" },
+          { note: 3, desc: "Encadrement d'équipe réduit" },
+          { note: 4, desc: "Management structuré" },
+          { note: 5, desc: "Management confirmé avec résultats" }
+        ]
+      },
+      CV_Stabilité: { // 5 points
+        echelle: [
+          { note: 0, desc: "Parcours incohérent" },
+          { note: 1, desc: "Changements fréquents (<1 an)" },
+          { note: 2, desc: "Instabilité modérée" },
+          { note: 3, desc: "Parcours globalement cohérent" },
+          { note: 4, desc: "Bonne stabilité" },
+          { note: 5, desc: "Parcours très structuré et logique" }
+        ]
+      },
+      Lettre: { // 20 points - QUASI SECONDAIRE pour IT
+        criteres: [
+          { nom: "Compréhension du poste", pts: 5, desc: "Reformulation intelligente des enjeux" },
+          { nom: "Cohérence profil/poste", pts: 5, desc: "Candidature logique, pas opportuniste" },
+          { nom: "Motivation réelle", pts: 5, desc: "Arguments concrets, lien avec parcours" },
+          { nom: "Qualité rédactionnelle", pts: 5, desc: "Clarté, structure, orthographe" }
+        ],
+        note: "Critère quasi secondaire pour profil IT technique"
+      },
+      Diplome: { // 10 points - OBLIGATOIRE IT
+        criteres: [
+          { nom: "Niveau académique", pts: 4, desc: "Bac+3/Bac+4/Bac+5 en informatique" },
+          { nom: "Spécialisation pertinente", pts: 3, desc: "Réseau, systèmes, maintenance" },
+          { nom: "Certifications", pts: 3, desc: "ITIL, Microsoft, Cisco, etc." }
+        ],
+        note: "Diplôme IT obligatoire - éliminatoire sinon"
+      }
+    },
     a_verifier: [
-      "A-t-il géré : parc informatique ?",
+      "A-t-il géré : parc informatique (>100 postes) ?",
       "A-t-il géré : incidents critiques ?",
       "Connaît-il : ITIL / bonnes pratiques ?",
       "A-t-il déjà mis en place : SLA / indicateurs ?"
@@ -1541,12 +1856,121 @@ const GRILLE = {
     ]
   },
   "Chef service finance": {
+    // 🔴 Poste stratégique → niveau élevé exigé
+    // Élimination si : < 7 ans OU pas d'expérience bancaire
     eliminatoire: [
+      "Minimum 7 ans d'expérience en finance bancaire",
       "Expérience en direction/administration financière",
-      "Reporting financier consolidé",
-      "5 ans expérience département finance",
-      "Encadrement d'équipe finance"
+      "Reporting financier consolidé et IFRS",
+      "Encadrement d'équipe finance structuré"
     ],
+    barèmes: {
+      CV_Exp: { // 20 points → 25 points (RENFORCÉ)
+        max: 25,
+        rubriques: [
+          "Direction/administration financière",
+          "Reporting financier consolidé",
+          "Relations avec commissaires aux comptes",
+          "Pilotage budgétaire et forecasts"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun lien avec finance direction" },
+          { note: 5, desc: "Lien très indirect" },
+          { note: 10, desc: "Exposition partielle" },
+          { note: 15, desc: "Expérience correcte mais incomplète" },
+          { note: 20, desc: "Bonne expérience directement liée" },
+          { note: 25, desc: "Expérience solide en direction financière" }
+        ]
+      },
+      CV_Niveau: { // 10 points
+        echelle: [
+          { note: 0, desc: "< 2 ans" },
+          { note: 2, desc: "2-3 ans" },
+          { note: 4, desc: "3-5 ans" },
+          { note: 6, desc: "5-8 ans" },
+          { note: 8, desc: "8-12 ans" },
+          { note: 10, desc: "> 12 ans avec responsabilités" }
+        ]
+      },
+      CV_Secteur: { // 10 points - CRITIQUE
+        echelle: [
+          { note: 0, desc: "Aucun lien avec finance" },
+          { note: 2, desc: "Secteur éloigné" },
+          { note: 4, desc: "Secteur connexe" },
+          { note: 6, desc: "Expérience partielle en banque" },
+          { note: 8, desc: "Expérience significative" },
+          { note: 10, desc: "Carrière majoritairement bancaire" }
+        ]
+      },
+      CV_Tech: { // 15 points
+        rubriques: [
+          "IFRS / normes comptables internationales",
+          "Consolidation financière",
+          "Reporting groupe",
+          "Optimisation fiscale",
+          "Outils (SPECTRA, ERP)"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucune compétence clé" },
+          { note: 3, desc: "Notions basiques" },
+          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 10, desc: "Compétences opérationnelles" },
+          { note: 12, desc: "Maîtrise solide" },
+          { note: 15, desc: "Expertise reconnue" }
+        ]
+      },
+      CV_Progression: { // 5 points
+        echelle: [
+          { note: 0, desc: "Régression ou incohérences" },
+          { note: 1, desc: "Stagnation totale" },
+          { note: 2, desc: "Faible progression" },
+          { note: 3, desc: "Progression normale" },
+          { note: 4, desc: "Bonne évolution" },
+          { note: 5, desc: "Progression rapide et cohérente" }
+        ]
+      },
+      CV_Management: { // 5 points → RENFORCÉ
+        rubriques: [
+          "Taille d'équipe finance encadrée",
+          "Responsabilité hiérarchique réelle",
+          "Management structuré avec résultats"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun management" },
+          { note: 1, desc: "Coordination ponctuelle" },
+          { note: 2, desc: "Supervision informelle" },
+          { note: 3, desc: "Encadrement d'équipe réduit" },
+          { note: 4, desc: "Management structuré" },
+          { note: 5, desc: "Management confirmé avec résultats" }
+        ]
+      },
+      CV_Stabilité: { // 5 points
+        echelle: [
+          { note: 0, desc: "Parcours incohérent" },
+          { note: 1, desc: "Changements fréquents (<1 an)" },
+          { note: 2, desc: "Instabilité modérée" },
+          { note: 3, desc: "Parcours globalement cohérent" },
+          { note: 4, desc: "Bonne stabilité" },
+          { note: 5, desc: "Parcours très structuré et logique" }
+        ]
+      },
+      Lettre: { // 20 points
+        criteres: [
+          { nom: "Compréhension du poste", pts: 5, desc: "Reformulation intelligente des enjeux" },
+          { nom: "Cohérence profil/poste", pts: 5, desc: "Candidature logique, pas opportuniste" },
+          { nom: "Motivation réelle", pts: 5, desc: "Arguments concrets, lien avec parcours" },
+          { nom: "Qualité rédactionnelle", pts: 5, desc: "Clarté, structure, orthographe" }
+        ]
+      },
+      Diplome: { // 10 points - CRITIQUE (Bac+5 + certif requis)
+        criteres: [
+          { nom: "Niveau académique", pts: 4, desc: "Bac+5 obligatoire (Master, MBA)" },
+          { nom: "Spécialisation pertinente", pts: 3, desc: "Finance, comptabilité, gestion" },
+          { nom: "Certifications", pts: 3, desc: "ACCA, CPA, CFA - critique pour ce poste" }
+        ],
+        note: "Bac+5 + certifications critiques - éliminatoire sinon"
+      }
+    },
     a_verifier: [
       "A-t-il déjà produit : états financiers consolidés ?",
       "A-t-il déjà géré : relations commissaires aux comptes ?",
@@ -1566,12 +1990,119 @@ const GRILLE = {
     ]
   },
   "Chef service risques de marché": {
+    // 🔴 Profil rare → attention
+    // Élimination si : pas d'exposition aux marchés (trésorerie, ALM...)
     eliminatoire: [
-      "Expérience en risques de marché (FX, taux, liquidité)",
-      "Modélisation financière (VaR, stress tests)",
-      "5 ans expérience en institution financière",
+      "Minimum 5 ans d'expérience en risques de marché",
+      "Expérience avérée en modélisation (VaR, stress tests)",
+      "Exposition aux marchés (FX, taux, liquidité, ALM)",
       "Encadrement d'équipe risques"
     ],
+    barèmes: {
+      CV_Exp: { // 20 points - CRITIQUE
+        rubriques: [
+          "Risques de marché (FX, taux, liquidité)",
+          "Développement de modèles de VaR",
+          "Stress tests / backtesting",
+          "Présentation en comités des risques"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun lien avec risques de marché" },
+          { note: 4, desc: "Lien très indirect" },
+          { note: 8, desc: "Exposition partielle" },
+          { note: 12, desc: "Expérience correcte mais incomplète" },
+          { note: 16, desc: "Bonne expérience directement liée" },
+          { note: 20, desc: "Expérience solide en risques de marché" }
+        ]
+      },
+      CV_Niveau: { // 10 points
+        echelle: [
+          { note: 0, desc: "< 2 ans" },
+          { note: 2, desc: "2-3 ans" },
+          { note: 4, desc: "3-5 ans" },
+          { note: 6, desc: "5-8 ans" },
+          { note: 8, desc: "8-12 ans" },
+          { note: 10, desc: "> 12 ans avec responsabilités" }
+        ]
+      },
+      CV_Secteur: { // 10 points - CRITIQUE
+        echelle: [
+          { note: 0, desc: "Aucun lien avec finance" },
+          { note: 2, desc: "Secteur éloigné" },
+          { note: 4, desc: "Secteur connexe" },
+          { note: 6, desc: "Expérience partielle en banque" },
+          { note: 8, desc: "Expérience significative" },
+          { note: 10, desc: "Carrière majoritairement bancaire" }
+        ]
+      },
+      CV_Tech: { // 15 points - COMPÉTENCES ANALYTIQUES ÉLEVÉES
+        rubriques: [
+          "Modélisation financière (VaR, stress tests)",
+          "Produits dérivés / couverture",
+          "ALM / gestion actif-passif",
+          "Outils (Python, VBA, MATLAB) - DIFFÉRENCIANT",
+          "Réglementations (Bâle II/III)"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucune compétence clé" },
+          { note: 3, desc: "Notions basiques" },
+          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 10, desc: "Compétences opérationnelles" },
+          { note: 12, desc: "Maîtrise solide" },
+          { note: 15, desc: "Expertise reconnue" }
+        ]
+      },
+      CV_Progression: { // 5 points
+        echelle: [
+          { note: 0, desc: "Régression ou incohérences" },
+          { note: 1, desc: "Stagnation totale" },
+          { note: 2, desc: "Faible progression" },
+          { note: 3, desc: "Progression normale" },
+          { note: 4, desc: "Bonne évolution" },
+          { note: 5, desc: "Progression rapide et cohérente" }
+        ]
+      },
+      CV_Management: { // 5 points
+        rubriques: [
+          "Taille d'équipe risques encadrée",
+          "Présentation en comités",
+          "Management structuré"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun management" },
+          { note: 1, desc: "Coordination ponctuelle" },
+          { note: 2, desc: "Supervision informelle" },
+          { note: 3, desc: "Encadrement d'équipe réduit" },
+          { note: 4, desc: "Management structuré" },
+          { note: 5, desc: "Management confirmé avec résultats" }
+        ]
+      },
+      CV_Stabilité: { // 5 points
+        echelle: [
+          { note: 0, desc: "Parcours incohérent" },
+          { note: 1, desc: "Changements fréquents (<1 an)" },
+          { note: 2, desc: "Instabilité modérée" },
+          { note: 3, desc: "Parcours globalement cohérent" },
+          { note: 4, desc: "Bonne stabilité" },
+          { note: 5, desc: "Parcours très structuré et logique" }
+        ]
+      },
+      Lettre: { // 20 points
+        criteres: [
+          { nom: "Compréhension du poste", pts: 5, desc: "Reformulation intelligente des enjeux" },
+          { nom: "Cohérence profil/poste", pts: 5, desc: "Candidature logique, pas opportuniste" },
+          { nom: "Motivation réelle", pts: 5, desc: "Arguments concrets, lien avec parcours" },
+          { nom: "Qualité rédactionnelle", pts: 5, desc: "Clarté, structure, orthographe" }
+        ]
+      },
+      Diplome: { // 10 points
+        criteres: [
+          { nom: "Niveau académique", pts: 4, desc: "Bac+5 (Master finance, ingénierie financière)" },
+          { nom: "Spécialisation pertinente", pts: 3, desc: "Risques, finance de marché, mathématiques" },
+          { nom: "Certifications", pts: 3, desc: "FRM, PRM, CFA" }
+        ]
+      }
+    },
     a_verifier: [
       "A-t-il déjà développé : modèles de VaR ?",
       "A-t-il déjà réalisé : stress tests / backtesting ?",
@@ -1591,12 +2122,120 @@ const GRILLE = {
     ]
   },
   "Chef service reporting réglementaire": {
+    // 🔴 Précision technique
+    // Élimination si : profil généraliste sans reporting bancaire
     eliminatoire: [
-      "Expérience en reporting prudentiel/réglementaire",
-      "Connaissance COBAC / BCEAO / Bâle",
-      "5 ans expérience en conformité/reporting",
+      "Minimum 5 ans d'expérience en reporting prudentiel",
+      "Connaissance approfondie COBAC / BCEAO / Bâle",
+      "Expérience avérée en production d'états réglementaires",
       "Encadrement d'équipe"
     ],
+    barèmes: {
+      CV_Exp: { // 20 points → 25 points (RENFORCÉ)
+        max: 25,
+        rubriques: [
+          "Comptabilité bancaire",
+          "Reporting prudentiel/réglementaire",
+          "Production d'états COBAC / BCEAO",
+          "Gestion d'inspections réglementaires"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun lien avec reporting bancaire" },
+          { note: 5, desc: "Lien très indirect" },
+          { note: 10, desc: "Exposition partielle" },
+          { note: 15, desc: "Expérience correcte mais incomplète" },
+          { note: 20, desc: "Bonne expérience directement liée" },
+          { note: 25, desc: "Expérience solide en reporting réglementaire" }
+        ]
+      },
+      CV_Niveau: { // 10 points
+        echelle: [
+          { note: 0, desc: "< 2 ans" },
+          { note: 2, desc: "2-3 ans" },
+          { note: 4, desc: "3-5 ans" },
+          { note: 6, desc: "5-8 ans" },
+          { note: 8, desc: "8-12 ans" },
+          { note: 10, desc: "> 12 ans avec responsabilités" }
+        ]
+      },
+      CV_Secteur: { // 10 points - CRITIQUE
+        echelle: [
+          { note: 0, desc: "Aucun lien avec finance" },
+          { note: 2, desc: "Secteur éloigné" },
+          { note: 4, desc: "Secteur connexe" },
+          { note: 6, desc: "Expérience partielle en banque" },
+          { note: 8, desc: "Expérience significative" },
+          { note: 10, desc: "Carrière majoritairement bancaire" }
+        ]
+      },
+      CV_Tech: { // 15 points
+        rubriques: [
+          "Normes COBAC / BCEAO / Bâle",
+          "Ratios prudentiels (LCR, NSFR, etc.)",
+          "COREP / FINREP",
+          "Outils de reporting (SPECTRA, etc.)",
+          "Veille réglementaire"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucune compétence clé" },
+          { note: 3, desc: "Notions basiques" },
+          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 10, desc: "Compétences opérationnelles" },
+          { note: 12, desc: "Maîtrise solide" },
+          { note: 15, desc: "Expertise reconnue" }
+        ]
+      },
+      CV_Progression: { // 5 points
+        echelle: [
+          { note: 0, desc: "Régression ou incohérences" },
+          { note: 1, desc: "Stagnation totale" },
+          { note: 2, desc: "Faible progression" },
+          { note: 3, desc: "Progression normale" },
+          { note: 4, desc: "Bonne évolution" },
+          { note: 5, desc: "Progression rapide et cohérente" }
+        ]
+      },
+      CV_Management: { // 5 points
+        rubriques: [
+          "Taille d'équipe encadrée",
+          "Gestion de processus de reporting",
+          "Management structuré"
+        ],
+        echelle: [
+          { note: 0, desc: "Aucun management" },
+          { note: 1, desc: "Coordination ponctuelle" },
+          { note: 2, desc: "Supervision informelle" },
+          { note: 3, desc: "Encadrement d'équipe réduit" },
+          { note: 4, desc: "Management structuré" },
+          { note: 5, desc: "Management confirmé avec résultats" }
+        ]
+      },
+      CV_Stabilité: { // 5 points - RIGUEUR ESSENTIELLE
+        echelle: [
+          { note: 0, desc: "Parcours incohérent" },
+          { note: 1, desc: "Changements fréquents (<1 an)" },
+          { note: 2, desc: "Instabilité modérée" },
+          { note: 3, desc: "Parcours globalement cohérent" },
+          { note: 4, desc: "Bonne stabilité" },
+          { note: 5, desc: "Parcours très structuré et logique" }
+        ]
+      },
+      Lettre: { // 20 points
+        criteres: [
+          { nom: "Compréhension du poste", pts: 5, desc: "Reformulation intelligente des enjeux" },
+          { nom: "Cohérence profil/poste", pts: 5, desc: "Candidature logique, pas opportuniste" },
+          { nom: "Motivation réelle", pts: 5, desc: "Arguments concrets, lien avec parcours" },
+          { nom: "Qualité rédactionnelle", pts: 5, desc: "Clarté, structure, orthographe" }
+        ]
+      },
+      Diplome: { // 10 points
+        criteres: [
+          { nom: "Niveau académique", pts: 4, desc: "Bac+3/Bac+4/Bac+5" },
+          { nom: "Spécialisation pertinente", pts: 3, desc: "Comptabilité bancaire, finance, conformité" },
+          { nom: "Certifications", pts: 3, desc: "ACCA, CPA, formations réglementaires" }
+        ]
+      }
+    },
     a_verifier: [
       "A-t-il déjà produit : états COBAC ?",
       "A-t-il déjà géré : inspections réglementaires ?",
@@ -1605,7 +2244,7 @@ const GRILLE = {
     ],
     signaux_forts: [
       "Mention de : COREP / FINREP",
-      "Mention de : LCR / NSFR / ratios liquidié",
+      "Mention de : LCR / NSFR / ratios liquidité",
       "Mention de : outils de reporting (SPECTRA, etc.)",
       "Mention de : veille réglementaire"
     ],
