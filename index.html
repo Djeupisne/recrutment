@@ -33,7 +33,7 @@
 <section class="section" id="postes">
   <div class="container">
     <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:.5rem">Postes Ouverts</h2>
-    <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">6 opportunités dans nos pôles Finance, Crédit et IT</p>
+    <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">12 opportunités dans nos pôles Finance, Crédit, IT, Audit, Risques et Conformité</p>
     <div class="postes-grid" id="postes-list">
       <div class="empty-state"><div class="empty-icon">⏳</div><p>Chargement des postes...</p></div>
     </div>
@@ -107,11 +107,14 @@
             <label>CV *</label>
             <div class="file-input-wrapper">
               <label class="file-label" id="cv-label" for="cv-input">📎 Choisir mon CV</label>
-              <input type="file" id="cv-input" name="cv" accept=".pdf,.doc,.docx" required>
+              <input type="file" id="cv-input" name="cv" accept=".pdf,.doc,.docx" required placeholder="Collez le CV ici (Français ou Anglais accepté)">
             </div>
+            <p style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem;display:flex;align-items:center;gap:.4rem">
+              <span>🌐</span> Français ou Anglais accepté
+            </p>
           </div>
           <div class="form-group">
-            <label>Lettre de motivation</label>
+            <label>Lettre de motivation <span id="lettre-badge" style="display:none;background:#e8f4fd;color:#1a3a5c;font-size:.65rem;padding:2px 6px;border-radius:4px;margin-left:.4rem">Optionnel pour ce poste</span></label>
             <div class="file-input-wrapper">
               <label class="file-label" id="lettre-label" for="lettre-input">📎 Choisir ma lettre</label>
               <input type="file" id="lettre-input" name="lettre" accept=".pdf,.doc,.docx">
@@ -197,35 +200,55 @@
 const API = 'https://backend1-fiq5.onrender.com/api';
 
 const POSTES_INFO = {
-  "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS" },
-  "Analyste Crédit CCB":                  { icon:"📊", desc:"Analyse financière, montage et suivi de crédits" },
-  "Archiviste (Administration Crédit)":   { icon:"🗂️", desc:"Gestion documentaire et archivage des dossiers" },
-  "Senior Finance Officer":               { icon:"💰", desc:"Pilotage financier et reporting senior" },
-  "Market Risk Officer":                  { icon:"📈", desc:"Gestion et modélisation des risques de marché" },
-  "IT Réseau & Infrastructure":           { icon:"🖥️", desc:"Administration réseau, sécurité et infrastructure" }
+  // ── 6 POSTES EXISTANTS ─────────────────────────────────────
+  "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS", category:"credit" },
+  "Analyste Crédit CCB":                  { icon:"📊", desc:"Analyse financière, montage et suivi de crédits", category:"credit" },
+  "Archiviste (Administration Crédit)":   { icon:"🗂️", desc:"Gestion documentaire et archivage des dossiers", category:"credit" },
+  "Senior Finance Officer":               { icon:"💰", desc:"Pilotage financier et reporting senior", category:"finance" },
+  "Market Risk Officer":                  { icon:"📈", desc:"Gestion et modélisation des risques de marché", category:"risque" },
+  "IT Réseau & Infrastructure":           { icon:"🖥️", desc:"Administration réseau, sécurité et infrastructure", category:"it" },
+  // ── 6 NOUVEAUX POSTES ─────────────────────────────────────
+  "Auditeur interne":                     { icon:"🔍", desc:"Audit interne et contrôle des processus", category:"audit", highlight:"certifications" },
+  "Chef service contrôle des engagements":{ icon:"📋", desc:"Contrôle des engagements et garanties", category:"risque", senior:true },
+  "Chef service IT (maintenance/support)":{ icon:"🛠️", desc:"Maintenance et support informatique", category:"it", badge:"technique", reduceLetter:true },
+  "Chef service finance":                 { icon:"💵", desc:"Management de la fonction finance", category:"finance", senior:true },
+  "Chef service risques de marché":       { icon:"📉", desc:"Gestion des risques financiers et de marché", category:"risque", senior:true },
+  "Chef service reporting réglementaire": { icon:"📑", desc:"Reporting prudentiel et réglementaire", category:"conformite", senior:true }
 };
 
 // ── Charger les postes ────────────────────────────────────────────────────
 fetch(`${API}/postes`)
   .then(r => r.json())
   .then(postes => {
-    const grid = document.getElementById('postes-list');
-    const sel  = document.getElementById('poste-select');
-    grid.innerHTML = '';
+    const grid = document.getElementById("postes-list");
+    const sel  = document.getElementById("poste-select");
+    grid.innerHTML = "";
     postes.forEach(p => {
-      const info = POSTES_INFO[p] || { icon:'💼', desc:'' };
+      const info = POSTES_INFO[p] || { icon:"💼", desc:"" };
+      const catBadge = info.category ? `<span style="display:inline-block;font-size:.65rem;background:#e8f4fd;color:#1a3a5c;padding:2px 6px;border-radius:4px;margin-left:.4rem">${info.category}</span>` : "";
+      const certHighlight = info.highlight === "certifications" ? `<div style="font-size:.75rem;color:#1e7e34;margin-top:.3rem">🎯 <strong>Certifications requises</strong></div>` : "";
+      const techBadge = info.badge === "technique" ? `<span style="display:inline-block;font-size:.65rem;background:#d4edda;color:#155724;padding:2px 6px;border-radius:4px;margin-left:.4rem">Technique</span>` : "";
+      const seniorIndicator = info.senior ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.3rem">⚠️ Niveau Senior Requis (> 7 ans)</div>` : "";
       grid.innerHTML += `
         <div class="poste-card">
-          <div style="font-size:1.8rem;margin-bottom:.6rem">${info.icon}</div>
-          <h3>${p}</h3>
+          <div style="font-size:1.8rem;margin-bottom:.6rem;display:flex;align-items:center">${info.icon}${techBadge}</div>
+          <h3>${p}${catBadge}</h3>
           <p>${info.desc}</p>
+          ${certHighlight}
+          ${seniorIndicator}
           <a href="#postuler" style="display:inline-block;margin-top:.8rem;font-size:.82rem;font-weight:600;color:var(--accent)">Postuler →</a>
         </div>`;
-      sel.innerHTML += `<option value="${p}">${p}</option>`;
+      sel.innerHTML += `<option value="${p}" data-category="${info.category||""}" data-senior="${info.senior||false}" data-reduce-letter="${info.reduceLetter||false}">${p}</option>`;
+    });
+    sel.addEventListener("change", function() {
+      const selectedOpt = this.options[this.selectedIndex];
+      const reduceLetter = selectedOpt.dataset.reduceLetter === "true";
+      const badge = document.getElementById("lettre-badge");
+      if (badge) { badge.style.display = reduceLetter ? "inline-block" : "none"; }
     });
   })
   .catch(() => {
-    document.getElementById('postes-list').innerHTML =
+    document.getElementById("postes-list").innerHTML =
       '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Impossible de charger les postes. Vérifiez la connexion au serveur.</p></div>';
   });
 

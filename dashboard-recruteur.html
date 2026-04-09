@@ -1326,6 +1326,7 @@ function renderStars(n, readonly = true) {
    📋 GRILLE DE PRÉSÉLECTION — CRITÈRES POSITIFS + ÉLIMINATION STRICTE
 ══════════════════════════════════════════════════════════ */
 const GRILLE = {
+  // ── 6 POSTES EXISTANTS ─────────────────────────────────────
   "Responsable Administration de Crédit": {
     eliminatoire: [
       "Expérience bancaire",
@@ -1462,6 +1463,156 @@ const GRILLE = {
       "Profil trop \"helpdesk\"",
       "CV sans détail technique",
       "Aucune mention de sécurité"
+    ]
+  },
+  // ── 6 NOUVEAUX POSTES ─────────────────────────────────────
+  "Auditeur interne": {
+    eliminatoire: [
+      "Expérience en audit interne ou externe",
+      "Connaissance des processus bancaires",
+      "3 ans expérience en contrôle/audit"
+    ],
+    a_verifier: [
+      "A-t-il déjà mené : missions d'audit ?",
+      "A-t-il déjà rédigé : rapports d'audit ?",
+      "Connaît-il : normes d'audit (IFAC, COSO) ?",
+      "A-t-il déjà évalué : dispositifs de contrôle interne ?"
+    ],
+    signaux_forts: [
+      "Mention de : certifications (CIA, CPA, ACCA)",
+      "Mention de : audit IT / systèmes",
+      "Mention de : conformité réglementaire",
+      "Mention de : recommandations implémentées"
+    ],
+    points_attention: [
+      "Profil trop \"comptable\" sans vision processus",
+      "Aucune expérience terrain",
+      "Rapports d'audit non mentionnés"
+    ]
+  },
+  "Chef service contrôle des engagements": {
+    eliminatoire: [
+      "Expérience en contrôle des engagements",
+      "Connaissance des garanties bancaires",
+      "5 ans expérience en crédit/risques",
+      "Encadrement d'équipe"
+    ],
+    a_verifier: [
+      "A-t-il déjà validé : engagements hors bilan ?",
+      "A-t-il déjà géré : garanties réelles/personnelles ?",
+      "Connaît-il : procédures de déblocage ?",
+      "A-t-il déjà formé : équipes de crédit ?"
+    ],
+    signaux_forts: [
+      "Mention de : COBAC / réglementation",
+      "Mention de : comité des engagements",
+      "Mention de : cartographie des risques",
+      "Mention de : outils de suivi des garanties"
+    ],
+    points_attention: [
+      "Profil trop opérationnel sans vision stratégique",
+      "Pas d'expérience managériale",
+      "Méconnaissance des risques de contrepartie"
+    ]
+  },
+  "Chef service IT (maintenance/support)": {
+    eliminatoire: [
+      "Expérience en support/maintenance IT",
+      "Gestion d'infrastructure critique",
+      "3 ans expérience en environnement bancaire/telco",
+      "Encadrement d'équipe technique"
+    ],
+    a_verifier: [
+      "A-t-il géré : parc informatique ?",
+      "A-t-il géré : incidents critiques ?",
+      "Connaît-il : ITIL / bonnes pratiques ?",
+      "A-t-il déjà mis en place : SLA / indicateurs ?"
+    ],
+    signaux_forts: [
+      "Mention de : certifications (ITIL, Microsoft, Cisco)",
+      "Mention de : supervision / monitoring",
+      "Mention de : PRA/PCA",
+      "Mention de : gestion de parc (>100 postes)"
+    ],
+    points_attention: [
+      "Profil trop technique sans management",
+      "Pas de gestion de priorités",
+      "Aucune mention de sécurité"
+    ]
+  },
+  "Chef service finance": {
+    eliminatoire: [
+      "Expérience en direction/administration financière",
+      "Reporting financier consolidé",
+      "5 ans expérience département finance",
+      "Encadrement d'équipe finance"
+    ],
+    a_verifier: [
+      "A-t-il déjà produit : états financiers consolidés ?",
+      "A-t-il déjà géré : relations commissaires aux comptes ?",
+      "Connaît-il : IFRS / normes locales ?",
+      "A-t-il déjà piloté : budget / forecasts ?"
+    ],
+    signaux_forts: [
+      "Mention de : IFRS / consolidation",
+      "Mention de : reporting groupe",
+      "Mention de : optimisation fiscale",
+      "Mention de : transformation digitale finance"
+    ],
+    points_attention: [
+      "Profil trop comptable sans vision stratégique",
+      "Pas d'expérience en pilotage financier",
+      "Méconnaissance des enjeux bancaires"
+    ]
+  },
+  "Chef service risques de marché": {
+    eliminatoire: [
+      "Expérience en risques de marché (FX, taux, liquidité)",
+      "Modélisation financière (VaR, stress tests)",
+      "5 ans expérience en institution financière",
+      "Encadrement d'équipe risques"
+    ],
+    a_verifier: [
+      "A-t-il déjà développé : modèles de VaR ?",
+      "A-t-il déjà réalisé : stress tests / backtesting ?",
+      "Connaît-il : Bâle II/III / réglementations ?",
+      "A-t-il déjà présenté : comités des risques ?"
+    ],
+    signaux_forts: [
+      "Mention de : produits dérivés / couverture",
+      "Mention de : ALM / gestion actif-passif",
+      "Mention de : outils (Python, VBA, MATLAB)",
+      "Mention de : limites de risques"
+    ],
+    points_attention: [
+      "Profil trop académique sans pratique",
+      "Pas de gestion de portefeuilles réels",
+      "Méconnaissance des produits complexes"
+    ]
+  },
+  "Chef service reporting réglementaire": {
+    eliminatoire: [
+      "Expérience en reporting prudentiel/réglementaire",
+      "Connaissance COBAC / BCEAO / Bâle",
+      "5 ans expérience en conformité/reporting",
+      "Encadrement d'équipe"
+    ],
+    a_verifier: [
+      "A-t-il déjà produit : états COBAC ?",
+      "A-t-il déjà géré : inspections réglementaires ?",
+      "Connaît-il : ratios prudentiels ?",
+      "A-t-il déjà automatisé : processus de reporting ?"
+    ],
+    signaux_forts: [
+      "Mention de : COREP / FINREP",
+      "Mention de : LCR / NSFR / ratios liquidié",
+      "Mention de : outils de reporting (SPECTRA, etc.)",
+      "Mention de : veille réglementaire"
+    ],
+    points_attention: [
+      "Profil trop administratif sans analyse",
+      "Pas de connaissance approfondie COBAC",
+      "Méconnaissance des délais réglementaires"
     ]
   }
 };
