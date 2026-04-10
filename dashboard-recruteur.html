@@ -1136,8 +1136,9 @@ function renderTable(data) {
     const scoreMax = getScoreMax(c.poste);
     const scoreRaw = parseInt(c.score) || 0;
     const score = Math.max(0, Math.min(scoreMax, scoreRaw));
-    // Pour les étoiles, on normalise toujours sur 10 (5 étoiles = score/2)
-    const starUnit = scoreMax / 10;
+    // Pour les étoiles, on divise par 5 (chaque étoile = scoreMax/5 points)
+    // Exemple: 53/100 → 53/20 = 2.65 → 2 étoiles
+    const starUnit = scoreMax / 5;
     const stars  = '⭐'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
     
     let scoreTitle = `Score: ${score}/${scoreMax} (analyse automatique)`;
@@ -1179,7 +1180,9 @@ function renderRecent(data) {
     const scoreMax = getScoreMax(c.poste);
     const scoreRaw = parseInt(c.score) || 0;
     const score = Math.max(0, Math.min(scoreMax, scoreRaw));
-    const starUnit = scoreMax / 10;
+    // Pour les étoiles, on divise par 5 (chaque étoile = scoreMax/5 points)
+    // Exemple: 53/100 → 53/20 = 2.65 → 2 étoiles
+    const starUnit = scoreMax / 5;
     const stars = '⭐'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
     
     return '<tr>'
@@ -1423,7 +1426,9 @@ function renderStars(n, readonly = true) {
   // Pour avoir un affichage cohérent des étoiles partout
   const scoreRaw = parseInt(n) || 0;
   const score = Math.max(0, Math.min(scoreMax, scoreRaw));
-  const starUnit = scoreMax / 10;
+  // Pour les étoiles, on divise par 5 (chaque étoile = scoreMax/5 points)
+  // Exemple: 53/100 → 53/20 = 2.65 → 2 étoiles
+  const starUnit = scoreMax / 5;
   const starCount = Math.floor(score / starUnit);
   
   for (let i = 1; i <= 5; i++) {
