@@ -1169,6 +1169,13 @@ function renderRecent(data) {
     return;
   }
   const rows = slice.map(c => {
+    // Calcul du score et des étoiles pour l'affichage récent
+    const scoreMax = getScoreMax(c.poste);
+    const scoreRaw = parseInt(c.score) || 0;
+    const score = Math.max(0, Math.min(scoreMax, scoreRaw));
+    const starUnit = scoreMax / 10;
+    const stars = '⭐'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
+    
     return '<tr>'
     + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br>'
     + '<small style="color:var(--text-muted)">' + c.email + '</small></td>'
