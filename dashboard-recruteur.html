@@ -1140,7 +1140,7 @@ function renderTable(data) {
       scoreTitle += `\n\n🔴 Éliminatoire: ${sb.bloc1_eliminatoire ? 'OUI ⚠️' : 'NON'}`;
       scoreTitle += `\n🟠 Cohérence: ${sb.bloc2_points} pt${sb.bloc2_points>1?'s':''} (${sb.bloc2_criteres_valides} critères)`;
       scoreTitle += `\n🟡 Signaux: ${sb.bloc3_points} pts (${sb.bloc3_signaux_detectes} signaux ×2)`;
-      scoreTitle += `\n📊 Total brut: ${sb.total_raw_points} pts → Score: ${sb.score_final}/10`;
+      scoreTitle += `\n📊 Total brut: ${sb.total_raw_points} pts → Score: ${sb.score_final}/${scoreMax}`;
       if (sb.note) scoreTitle += `\n\nℹ️ ${sb.note}`;
     }
     
@@ -1244,6 +1244,9 @@ function renderAnalyseResume(c) {
   const sb = c.score_breakdown_parsed;
   const details = c.analyse_details_parsed || {};
   
+  // Récupérer le scoreMax selon le poste
+  const scoreMax = getScoreMax(c.poste);
+  
   let html = '';
   
   if (sb.bloc1_eliminatoire) {
@@ -1289,7 +1292,7 @@ function renderAnalyseResume(c) {
     + '<div class="sb-row"><span class="sb-label">Points cohérence (🟠 ×1)</span><span class="sb-val">' + sb.bloc2_points + '</span></div>'
     + '<div class="sb-row"><span class="sb-label">Points signaux (🟡 ×2)</span><span class="sb-val">' + sb.bloc3_points + '</span></div>'
     + '<div class="sb-row"><span class="sb-label">Total brut</span><span class="sb-val">' + sb.total_raw_points + '</span></div>'
-    + '<div class="sb-row"><span class="sb-label">Score final</span><span class="sb-val ' + (sb.bloc1_eliminatoire?'elim':'ok') + '">' + sb.score_final + '/10 ⭐</span></div>'
+    + '<div class="sb-row"><span class="sb-label">Score final</span><span class="sb-val ' + (sb.bloc1_eliminatoire?'elim':'ok') + '">' + sb.score_final + '/' + scoreMax + ' ⭐</span></div>'
     + '</div>';
   
   content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail d\'analyse disponible.</p>';
@@ -1313,19 +1316,27 @@ function closeModal() {
 function renderStars(n, readonly = true) {
   const row = document.getElementById('stars-row');
   row.innerHTML = '';
-  const score = Math.max(0, Math.min(10, parseInt(n) || 0));
+  
+  // Récupérer le scoreMax selon le poste actuel
+  const poste = currentC?.poste || '';
+  const scoreMax = getScoreMax(poste);
+  
+  // Normaliser le score sur 10 pour l'affichage des étoiles
+  const normalizedScore = scoreMax === 100 ? Math.round(parseInt(n) / 10) : parseInt(n);
+  const score = Math.max(0, Math.min(10, normalizedScore));
   const starCount = Math.floor(score / 2);
+  
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement('button');
     btn.className   = 'star-btn';
     btn.textContent = i <= starCount ? '⭐' : '☆';
     btn.disabled = true;
-    btn.title = `Score: ${score}/10 (calculé automatiquement)`;
+    btn.title = `Score: ${n}/${scoreMax} (calculé automatiquement)`;
     row.appendChild(btn);
   }
   const scoreText = document.createElement('span');
   scoreText.style.cssText = 'margin-left:1rem;font-weight:700;color:var(--primary);font-size:1.1rem';
-  scoreText.textContent = `${score}/10`;
+  scoreText.textContent = `${n}/${scoreMax}`;
   row.appendChild(scoreText);
 }
 
@@ -2391,9 +2402,10 @@ function showEliminationAlert(checked) {
   });
 
   criteriaHtml += '</ul>';
+  const scoreMax = getScoreMax(poste);
   criteriaHtml += `<p style="font-size:.85rem;color:#7f1d1d;margin-top:.5rem;padding:.6rem;
     background:rgba(255,255,255,.5);border-radius:4px;font-weight:600">
-    → ${failedCount} critère(s) manquant(s) — candidat éliminé automatiquement (score : 0/10)
+    → ${failedCount} critère(s) manquant(s) — candidat éliminé automatiquement (score : 0/${scoreMax})
   </p>`;
 
   details.innerHTML = criteriaHtml;
