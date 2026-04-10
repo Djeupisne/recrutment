@@ -1136,8 +1136,9 @@ function renderTable(data) {
     const scoreMax = getScoreMax(c.poste);
     const scoreRaw = parseInt(c.score) || 0;
     const score = Math.max(0, Math.min(scoreMax, scoreRaw));
-    // Pour les étoiles, on normalise toujours sur 10 (5 étoiles = score/2)
-    const starUnit = scoreMax / 10;
+    // Pour les étoiles, on divise par 5 (chaque étoile = scoreMax/5 points)
+    // Exemple: 53/100 → 53/20 = 2.65 → 2 étoiles
+    const starUnit = scoreMax / 5;
     const stars  = '⭐'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
     
     let scoreTitle = `Score: ${score}/${scoreMax} (analyse automatique)`;
@@ -1179,7 +1180,9 @@ function renderRecent(data) {
     const scoreMax = getScoreMax(c.poste);
     const scoreRaw = parseInt(c.score) || 0;
     const score = Math.max(0, Math.min(scoreMax, scoreRaw));
-    const starUnit = scoreMax / 10;
+    // Pour les étoiles, on divise par 5 (chaque étoile = scoreMax/5 points)
+    // Exemple: 53/100 → 53/20 = 2.65 → 2 étoiles
+    const starUnit = scoreMax / 5;
     const stars = '⭐'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
     
     return '<tr>'
@@ -1419,22 +1422,26 @@ function renderStars(n, readonly = true) {
   const poste = currentC?.poste || '';
   const scoreMax = getScoreMax(poste);
   
-  // Normaliser le score sur 10 pour l'affichage des étoiles
-  const normalizedScore = scoreMax === 100 ? Math.round(parseInt(n) / 10) : parseInt(n);
-  const score = Math.max(0, Math.min(10, normalizedScore));
-  const starCount = Math.floor(score / 2);
+  // Utiliser la même logique que pour l'affichage dans les tableaux
+  // Pour avoir un affichage cohérent des étoiles partout
+  const scoreRaw = parseInt(n) || 0;
+  const score = Math.max(0, Math.min(scoreMax, scoreRaw));
+  // Pour les étoiles, on divise par 5 (chaque étoile = scoreMax/5 points)
+  // Exemple: 53/100 → 53/20 = 2.65 → 2 étoiles
+  const starUnit = scoreMax / 5;
+  const starCount = Math.floor(score / starUnit);
   
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement('button');
     btn.className   = 'star-btn';
     btn.textContent = i <= starCount ? '⭐' : '☆';
     btn.disabled = true;
-    btn.title = `Score: ${n}/${scoreMax} (calculé automatiquement)`;
+    btn.title = `Score: ${score}/${scoreMax} (calculé automatiquement)`;
     row.appendChild(btn);
   }
   const scoreText = document.createElement('span');
   scoreText.style.cssText = 'margin-left:1rem;font-weight:700;color:var(--primary);font-size:1.1rem';
-  scoreText.textContent = `${n}/${scoreMax}`;
+  scoreText.textContent = `${score}/${scoreMax}`;
   row.appendChild(scoreText);
 }
 
