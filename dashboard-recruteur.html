@@ -1500,9 +1500,10 @@ const GRILLE = {
       "Expérience en cabinet d'audit OU département audit bancaire",
       "Connaissance des normes d'audit et contrôle interne"
     ],
-    // Barèmes de scoring détaillés
+    // Barèmes de scoring détaillés - Total CV: 70pts (25+10+10+15+5+0+5)
     barèmes: {
-      CV_Exp: { // 20 points - Expérience pertinente (alignement avec poste)
+      CV_Exp: { // 25 points - Expérience pertinente (alignement avec poste) - RENFORCÉ
+        max: 25,
         rubriques: [
           "Missions d'audit réellement similaires",
           "Exposition aux problématiques d'audit bancaire",
@@ -1510,11 +1511,11 @@ const GRILLE = {
         ],
         echelle: [
           { note: 0, desc: "Aucun lien avec l'audit" },
-          { note: 4, desc: "Lien très indirect" },
-          { note: 8, desc: "Exposition partielle" },
-          { note: 12, desc: "Expérience correcte mais incomplète" },
-          { note: 16, desc: "Bonne expérience directement liée" },
-          { note: 20, desc: "Expérience solide et répétée en audit" }
+          { note: 5, desc: "Lien très indirect" },
+          { note: 10, desc: "Exposition partielle" },
+          { note: 15, desc: "Expérience correcte mais incomplète" },
+          { note: 20, desc: "Bonne expérience directement liée" },
+          { note: 25, desc: "Expérience solide et répétée en audit" }
         ]
       },
       CV_Niveau: { // 10 points - Volume + séniorité
@@ -1562,15 +1563,11 @@ const GRILLE = {
           { note: 5, desc: "Progression rapide et cohérente" }
         ]
       },
-      CV_Management: { // 5 points - Capacité managériale (si chef de service)
-        note: "Non applicable pour auditeur non-manager",
+      CV_Management: { // 0 points - NON APPLICABLE pour auditeur interne (pas de management requis)
+        max: 0,
+        note: "Non applicable pour auditeur interne - aucun point attribué",
         echelle: [
-          { note: 0, desc: "Aucun management" },
-          { note: 1, desc: "Coordination ponctuelle" },
-          { note: 2, desc: "Supervision informelle" },
-          { note: 3, desc: "Encadrement d'équipe réduit" },
-          { note: 4, desc: "Management structuré" },
-          { note: 5, desc: "Management confirmé avec résultats" }
+          { note: 0, desc: "Non applicable - critère non évalué pour ce poste" }
         ]
       },
       CV_Stabilité: { // 5 points - Stabilité / cohérence
@@ -1662,7 +1659,8 @@ const GRILLE = {
           { note: 10, desc: "Carrière majoritairement bancaire" }
         ]
       },
-      CV_Tech: { // 15 points
+      CV_Tech: { // 20 points - Compétences techniques (analyse financière, crédit) - RENFORCÉ
+        max: 20,
         rubriques: [
           "Analyse financière et crédit",
           "Procédures de déblocage",
@@ -1670,11 +1668,11 @@ const GRILLE = {
         ],
         echelle: [
           { note: 0, desc: "Aucune compétence clé" },
-          { note: 3, desc: "Notions basiques" },
-          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
-          { note: 10, desc: "Compétences opérationnelles" },
-          { note: 12, desc: "Maîtrise solide" },
-          { note: 15, desc: "Expertise reconnue" }
+          { note: 4, desc: "Notions basiques" },
+          { note: 8, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 12, desc: "Compétences opérationnelles" },
+          { note: 16, desc: "Maîtrise solide" },
+          { note: 20, desc: "Expertise reconnue en contrôle des engagements" }
         ]
       },
       CV_Progression: { // 5 points
@@ -1755,7 +1753,8 @@ const GRILLE = {
       "Background technique solide (réseau, systèmes, bases de données)"
     ],
     barèmes: {
-      CV_Exp: { // 20 points
+      CV_Exp: { // 15 points - Expérience pertinente (alignement avec poste)
+        max: 15,
         rubriques: [
           "Support/maintenance IT en environnement critique",
           "Gestion d'infrastructure",
@@ -1763,11 +1762,11 @@ const GRILLE = {
         ],
         echelle: [
           { note: 0, desc: "Aucun lien avec l'IT" },
-          { note: 4, desc: "Lien très indirect" },
-          { note: 8, desc: "Exposition partielle" },
-          { note: 12, desc: "Expérience correcte mais incomplète" },
-          { note: 16, desc: "Bonne expérience directement liée" },
-          { note: 20, desc: "Expérience solide en maintenance/support" }
+          { note: 3, desc: "Lien très indirect" },
+          { note: 6, desc: "Exposition partielle" },
+          { note: 9, desc: "Expérience correcte mais incomplète" },
+          { note: 12, desc: "Bonne expérience directement liée" },
+          { note: 15, desc: "Expérience solide en maintenance/support" }
         ]
       },
       CV_Niveau: { // 10 points
@@ -1926,7 +1925,8 @@ const GRILLE = {
           { note: 10, desc: "Carrière majoritairement bancaire" }
         ]
       },
-      CV_Tech: { // 15 points
+      CV_Tech: { // 5 points - Compétences techniques (IFRS, reporting)
+        max: 5,
         rubriques: [
           "IFRS / normes comptables internationales",
           "Consolidation financière",
@@ -1936,11 +1936,11 @@ const GRILLE = {
         ],
         echelle: [
           { note: 0, desc: "Aucune compétence clé" },
-          { note: 3, desc: "Notions basiques" },
-          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
-          { note: 10, desc: "Compétences opérationnelles" },
-          { note: 12, desc: "Maîtrise solide" },
-          { note: 15, desc: "Expertise reconnue" }
+          { note: 1, desc: "Notions basiques" },
+          { note: 2, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 3, desc: "Compétences opérationnelles" },
+          { note: 4, desc: "Maîtrise solide" },
+          { note: 5, desc: "Expertise reconnue" }
         ]
       },
       CV_Progression: { // 5 points
@@ -1953,7 +1953,8 @@ const GRILLE = {
           { note: 5, desc: "Progression rapide et cohérente" }
         ]
       },
-      CV_Management: { // 5 points → RENFORCÉ
+      CV_Management: { // 10 points - RENFORCÉ pour Chef service finance (management critique)
+        max: 10,
         rubriques: [
           "Taille d'équipe finance encadrée",
           "Responsabilité hiérarchique réelle",
@@ -1961,11 +1962,11 @@ const GRILLE = {
         ],
         echelle: [
           { note: 0, desc: "Aucun management" },
-          { note: 1, desc: "Coordination ponctuelle" },
-          { note: 2, desc: "Supervision informelle" },
-          { note: 3, desc: "Encadrement d'équipe réduit" },
-          { note: 4, desc: "Management structuré" },
-          { note: 5, desc: "Management confirmé avec résultats" }
+          { note: 2, desc: "Coordination ponctuelle" },
+          { note: 4, desc: "Supervision informelle" },
+          { note: 6, desc: "Encadrement d'équipe réduit" },
+          { note: 8, desc: "Management structuré" },
+          { note: 10, desc: "Management confirmé avec résultats significatifs" }
         ]
       },
       CV_Stabilité: { // 5 points
@@ -2023,7 +2024,8 @@ const GRILLE = {
       "Encadrement d'équipe risques"
     ],
     barèmes: {
-      CV_Exp: { // 20 points - CRITIQUE
+      CV_Exp: { // 20 points - Expérience pertinente (alignement avec poste)
+        max: 20,
         rubriques: [
           "Risques de marché (FX, taux, liquidité)",
           "Développement de modèles de VaR",
@@ -2059,7 +2061,8 @@ const GRILLE = {
           { note: 10, desc: "Carrière majoritairement bancaire" }
         ]
       },
-      CV_Tech: { // 15 points - COMPÉTENCES ANALYTIQUES ÉLEVÉES
+      CV_Tech: { // 20 points - Compétences techniques (modélisation, produits dérivés) - RENFORCÉ
+        max: 20,
         rubriques: [
           "Modélisation financière (VaR, stress tests)",
           "Produits dérivés / couverture",
@@ -2069,11 +2072,11 @@ const GRILLE = {
         ],
         echelle: [
           { note: 0, desc: "Aucune compétence clé" },
-          { note: 3, desc: "Notions basiques" },
-          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
-          { note: 10, desc: "Compétences opérationnelles" },
-          { note: 12, desc: "Maîtrise solide" },
-          { note: 15, desc: "Expertise reconnue" }
+          { note: 4, desc: "Notions basiques" },
+          { note: 8, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 12, desc: "Compétences opérationnelles" },
+          { note: 16, desc: "Maîtrise solide" },
+          { note: 20, desc: "Expertise reconnue en risques de marché" }
         ]
       },
       CV_Progression: { // 5 points
@@ -2192,7 +2195,8 @@ const GRILLE = {
           { note: 10, desc: "Carrière majoritairement bancaire" }
         ]
       },
-      CV_Tech: { // 15 points
+      CV_Tech: { // 20 points - Compétences techniques (normes COBAC, reporting) - RENFORCÉ
+        max: 20,
         rubriques: [
           "Normes COBAC / BCEAO / Bâle",
           "Ratios prudentiels (LCR, NSFR, etc.)",
@@ -2202,11 +2206,11 @@ const GRILLE = {
         ],
         echelle: [
           { note: 0, desc: "Aucune compétence clé" },
-          { note: 3, desc: "Notions basiques" },
-          { note: 6, desc: "Compétences déclarées mais peu prouvées" },
-          { note: 10, desc: "Compétences opérationnelles" },
-          { note: 12, desc: "Maîtrise solide" },
-          { note: 15, desc: "Expertise reconnue" }
+          { note: 4, desc: "Notions basiques" },
+          { note: 8, desc: "Compétences déclarées mais peu prouvées" },
+          { note: 12, desc: "Compétences opérationnelles" },
+          { note: 16, desc: "Maîtrise solide" },
+          { note: 20, desc: "Expertise reconnue en reporting réglementaire" }
         ]
       },
       CV_Progression: { // 5 points
