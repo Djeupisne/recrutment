@@ -1127,11 +1127,14 @@ function renderTable(data) {
       ? '<a href="' + API + '/recruteur/uploads/' + c.attestation_filename + '" target="_blank" style="color:var(--primary);font-size:.78rem;margin-left:.4rem">🎓 Certif</a>'
       : '';
     
+    const scoreMax = getScoreMax(c.poste);
     const scoreRaw = parseInt(c.score) || 0;
-    const score = Math.max(0, Math.min(10, scoreRaw));
-    const stars  = '⭐'.repeat(Math.floor(score/2)) + '☆'.repeat(5 - Math.floor(score/2));
+    const score = Math.max(0, Math.min(scoreMax, scoreRaw));
+    // Pour les étoiles, on normalise toujours sur 10 (5 étoiles = score/2)
+    const starUnit = scoreMax / 10;
+    const stars  = '⭐'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
     
-    let scoreTitle = `Score: ${score}/10 (analyse automatique)`;
+    let scoreTitle = `Score: ${score}/${scoreMax} (analyse automatique)`;
     if (c.score_breakdown_parsed) {
       const sb = c.score_breakdown_parsed;
       scoreTitle += `\n\n🔴 Éliminatoire: ${sb.bloc1_eliminatoire ? 'OUI ⚠️' : 'NON'}`;
@@ -1149,7 +1152,7 @@ function renderTable(data) {
       + '<td style="font-size:.82rem">' + c.poste + '</td>'
       + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
       + '<td>' + badgePill(c.statut) + '</td>'
-      + '<td style="font-size:.85rem;letter-spacing:-1px" title="' + escAttr(scoreTitle) + '">' + stars + ` (${score}/10)` + '</td>'
+      + '<td style="font-size:.85rem;letter-spacing:-1px" title="' + escAttr(scoreTitle) + '">' + stars + ` (${score}/${scoreMax})` + '</td>'
       + '<td>' + cvLink + lmLink + attLink + '</td>'
       + '<td class="td-actions">'
       + '<button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">📋 Dossier</button>'
@@ -1166,16 +1169,13 @@ function renderRecent(data) {
     return;
   }
   const rows = slice.map(c => {
-    const scoreRaw = parseInt(c.score) || 0;
-    const score = Math.max(0, Math.min(10, scoreRaw));
-    const stars = '⭐'.repeat(Math.floor(score/2)) + '☆'.repeat(5 - Math.floor(score/2));
     return '<tr>'
     + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br>'
     + '<small style="color:var(--text-muted)">' + c.email + '</small></td>'
     + '<td style="font-size:.82rem">' + c.poste + '</td>'
     + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
     + '<td>' + badgePill(c.statut) + '</td>'
-    + '<td style="font-size:.9rem">' + stars + ` (${score}/10)` + '</td>'
+    + '<td style="font-size:.9rem">' + stars + ` (${score}/${scoreMax})` + '</td>'
     + '<td><button class="btn btn-blue btn-sm" onclick="openModal(\'' + c.id + '\')">Voir →</button></td>'
     + '</tr>';
   }).join('');
@@ -2255,6 +2255,34 @@ const GRILLE = {
     ]
   }
 };
+
+/* ══════════════════════════════════════════════════════════
+   🎯 LISTE DES POSTES AVEC SCORE SUR 100 POINTS
+   Ces 6 nouveaux postes utilisent le nouveau système de scoring
+   Structure : CV (70pts) + Lettre (20pts) + Diplôme (10pts) = 100pts
+══════════════════════════════════════════════════════════ */
+const NOUVEAUX_POSTES_100PTS = [
+  "Auditeur interne",
+  "Chef service contrôle des engagements",
+  "Chef service IT (maintenance/support)",
+  "Chef service finance",
+  "Chef service risques de marché",
+  "Chef service reporting réglementaire"
+];
+
+/* ── Fonction utilitaire pour obtenir le score max selon le poste ── */
+function getScoreMax(poste) {
+  if (!poste) return 10;
+  return NOUVEAUX_POSTES_100PTS.includes(poste) ? 100 : 10;
+}
+
+/* ── Fonction utilitaire pour normaliser le score ── */
+function normalizeScore(score, scoreMax) {
+  const s = parseInt(score) || 0;
+  // Pour les anciens postes (scoreMax=10), on garde tel quel
+  // Pour les nouveaux postes (scoreMax=100), on garde tel quel
+  return Math.max(0, Math.min(scoreMax, s));
+}
 
 /* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables */
 function renderGrille(poste, checklistJson, scoreBreakdown) {
