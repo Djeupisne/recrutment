@@ -732,6 +732,12 @@
       <div class="form-group">
         <label>Type de message</label>
         <select class="form-control" id="email-type" onchange="buildEmail()">
+          <!-- Options pour les 6 nouveaux postes (scoring 100pts) -->
+          <option value="Shortlist">✅ Shortlist - Prioritaire</option>
+          <option value="À considérer">📋 À considérer</option>
+          <option value="Faible">⚠️ Faible</option>
+          <option value="Rejet">❌ Rejet</option>
+          <!-- Options classiques pour les autres postes -->
           <option value="retenu">✅ Candidature retenue</option>
           <option value="entretien">📅 Convocation entretien</option>
           <option value="rejete">❌ Email de refus</option>
@@ -2302,6 +2308,15 @@ function normalizeScore(score, scoreMax) {
   return Math.max(0, Math.min(scoreMax, s));
 }
 
+/* ── Fonction pour obtenir la décision basée sur le score (pour les 6 nouveaux postes) ── */
+function getDecisionFromScore(score) {
+  const s = parseInt(score) || 0;
+  if (s >= 80) return "Shortlist";
+  if (s >= 70) return "À considérer";
+  if (s >= 60) return "Faible";
+  return "Rejet";
+}
+
 /* 🔒 GRILLE EN LECTURE SEULE — résultats EXACTS, non modifiables */
 function renderGrille(poste, checklistJson, scoreBreakdown) {
   const g  = GRILLE[poste];
@@ -2455,7 +2470,9 @@ async function updateStatut(statut) {
 function openEmailModal() {
   if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
   const sel = document.getElementById('email-type');
-  sel.value = ['retenu','entretien','rejete'].includes(currentC.statut) ? currentC.statut : 'retenu';
+  // Support des nouveaux statuts pour les 6 postes + anciens statuts
+  const allStatuses = ['Shortlist', 'À considérer', 'Faible', 'Rejet', 'retenu', 'entretien', 'rejete'];
+  sel.value = allStatuses.includes(currentC.statut) ? currentC.statut : 'retenu';
   buildEmail();
   document.getElementById('modal-email').classList.add('open');
 }
@@ -2465,7 +2482,9 @@ function quickEmail(id) {
   if (!c) return;
   currentC = c;
   const sel = document.getElementById('email-type');
-  sel.value = ['retenu','entretien','rejete'].includes(c.statut) ? currentC.statut : 'retenu';
+  // Support des nouveaux statuts pour les 6 postes + anciens statuts
+  const allStatuses = ['Shortlist', 'À considérer', 'Faible', 'Rejet', 'retenu', 'entretien', 'rejete'];
+  sel.value = allStatuses.includes(c.statut) ? currentC.statut : 'retenu';
   buildEmail();
   document.getElementById('modal-email').classList.add('open');
 }
@@ -2481,19 +2500,39 @@ function buildEmail() {
 }
 
 function emailSubject(type, poste) {
-  return { 
+  const subjects = {
     retenu: 'Félicitations – Candidature retenue – ' + poste,
     entretien: 'Invitation à un entretien – ' + poste,
-    rejete: 'Réponse à votre candidature – ' + poste 
-  }[type] || '';
+    rejete: 'Réponse à votre candidature – ' + poste,
+    // Nouveaux sujets pour les 6 postes avec scoring 100pts
+    Shortlist: 'Présélection prioritaire (Shortlist) – ' + poste,
+    'À considérer': 'Votre candidature à considérer – ' + poste,
+    Faible: 'Réponse à votre candidature – ' + poste,
+    Rejet: 'Réponse à votre candidature – ' + poste
+  };
+  return subjects[type] || '';
 }
 
 function emailBody(type, nom, poste) {
   const sign = '\n\nCordialement,\nL\'équipe Ressources Humaines\nRecrutBank';
+  
+  // Emails pour les 6 nouveaux postes (scoring 100pts)
+  if (type === 'Shortlist')
+    return 'Madame, Monsieur ' + nom + ',\n\nNous avons le plaisir de vous informer que votre candidature pour le poste de ' + poste + ' a été retenue en tant que profil PRIORITAIRE (Shortlist) à l\'issue de notre processus de présélection automatisée.\n\nVotre profil correspond particulièrement bien aux exigences du poste et nous souhaitons vous rencontrer rapidement.\n\nNous vous contacterons dans les plus brefs délais pour convenir d\'un entretien.\n\nDans l\'attente, nous restons disponibles pour toute question.' + sign;
+  
+  if (type === 'À considérer')
+    return 'Madame, Monsieur ' + nom + ',\n\nSuite à l\'examen de votre candidature pour le poste de ' + poste + ', nous avons le plaisir de vous informer que votre profil présente un intérêt certain.\n\nVotre dossier sera étudié attentivement par notre équipe et nous reviendrons vers vous prochainement pour la suite du processus.\n\nNous restons à votre disposition pour toute information complémentaire.' + sign;
+  
+  if (type === 'Faible')
+    return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions de l\'intérêt que vous portez à notre institution et du temps consacré à votre candidature pour le poste de ' + poste + '.\n\nAprès examen de votre dossier, votre profil ne correspond pas entièrement aux exigences principales du poste. Toutefois, nous conservons vos coordonnées et pourrions vous recontacter si une opportunité plus adaptée se présente.\n\nNous vous souhaitons plein succès dans votre recherche.' + sign;
+  
+  // Anciens emails pour les autres postes
   if (type === 'retenu')
     return 'Madame, Monsieur ' + nom + ',\n\nNous avons le plaisir de vous informer que votre candidature pour le poste de ' + poste + ' a été retenue à l\'issue de notre processus de présélection.\n\nNous vous contacterons très prochainement pour vous communiquer les modalités de la prochaine étape du processus de recrutement.\n\nDans l\'attente, nous restons disponibles pour toute question.' + sign;
   if (type === 'entretien')
     return 'Madame, Monsieur ' + nom + ',\n\nSuite à l\'examen de votre candidature pour le poste de ' + poste + ', nous avons le plaisir de vous inviter à un entretien avec notre équipe.\n\nNous prendrons contact avec vous dans les meilleurs délais pour convenir d\'une date et d\'un horaire.' + sign;
+  
+  // Rejet (commun ancien + nouveau)
   return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions sincèrement de l\'intérêt que vous portez à notre institution et du temps consacré à votre candidature pour le poste de ' + poste + '.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour la suite du processus de sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil, et vous souhaitons plein succès dans votre recherche.' + sign;
 }
 
@@ -2518,6 +2557,24 @@ function openMailClient() {
    HELPERS
 ══════════════════════════════════════════════════════════ */
 function badgePill(s) {
+  // Pour les 6 nouveaux postes avec scoring 100pts, utiliser les nouveaux statuts de présélection
+  const newStatuses = ['Shortlist', 'À considérer', 'Faible', 'Rejet'];
+  if (newStatuses.includes(s)) {
+    const clsMap = {
+      'Shortlist': 'badge-retained',
+      'À considérer': 'badge-interview',
+      'Faible': 'badge-pending',
+      'Rejet': 'badge-rejected'
+    };
+    const lblMap = {
+      'Shortlist': '✅ Shortlist',
+      'À considérer': '📋 À considérer',
+      'Faible': '⚠️ Faible',
+      'Rejet': '❌ Rejet'
+    };
+    return '<span class="badge ' + (clsMap[s] || 'badge-pending') + '">' + (lblMap[s] || s) + '</span>';
+  }
+  // Anciens statuts pour les autres postes
   const cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
   const lbl = { en_attente:'⏳ En attente', retenu:'✅ Retenu', rejete:'❌ Non retenu', entretien:'📅 Entretien' };
   return '<span class="badge ' + (cls[s]||'badge-pending') + '">' + (lbl[s]||s) + '</span>';

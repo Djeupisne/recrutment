@@ -1,71 +1,38 @@
-# Web artifacts
-*.css.map
-*.js.map
+# Examples 1:
+(empty)
+
+# Example 2 (Project with artifacts):
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
 dist/
 build/
-public/dist/
-public/build/
-
+target/
 # Dependencies
+.venv/
+venv/
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment variables
+.mypy_cache/
+.pytest_cache/
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+# Environment
 .env
 .env.local
-.env.*
-!.env.example
-
-# IDE files
+*.env.*
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-*.tmp
-
-# OS files
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-logs/
-*.log.*
-
-# Coverage reports
+# Coverage
 coverage/
 htmlcov/
 .coverage
-*.coverage
-
-# Python specific (if applicable)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-.Python
-*.egg-info/
-.eggs/
-.pytest_cache/
-.mypy_cache/
-.tox/
-
-# Build outputs
-target/
-.gradle/
-build/
-*.class
-*.jar
-*.war
-*.ear
-*.dll
-*.so
-*.dylib
-
 # Compressed files
 *.zip
 *.gz
@@ -75,12 +42,6 @@ build/
 *.xz
 *.7z
 *.rar
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
 *.zst
 *.lz4
 *.lzh
@@ -88,18 +49,10 @@ build/
 *.arj
 *.rpm
 *.deb
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-*~
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Icon?
-._*
-.Spotlight-V100
-.Trashes
-*.un~
-Folders.db
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
