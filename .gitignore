@@ -1,65 +1,46 @@
-# Web artifacts
-*.css.map
-*.js.map
-dist/
-build/
-coverage/
-.nyc_output/
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
 
 # Dependencies
 node_modules/
-bower_components/
-
-# Environment variables
+venv/
+.venv/
 .env
 .env.local
 .env.*
 
-# IDE files
-.vscode/
-.idea/
+# Logs and temp files
+*.log
+*.tmp
 *.swp
 *.swo
-*.tmp
 
-# OS generated files
+# Editors
+.vscode/
+.idea/
+
+# System files
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
-# Python (if applicable)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
+# Coverage
+coverage/
+htmlcov/
 .coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git/
+
+# Build directories
+dist/
+build/
+target/
+.gradle/
 .mypy_cache/
 .pytest_cache/
-.hypothesis/
-
-# Build results
-*.min.js
-*.min.css
-public/dist/
-publish/
-
-# Local configuration
-config/local.json
-.settings/
-.autotools/

@@ -33,7 +33,7 @@
 <section class="section" id="postes">
   <div class="container">
     <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:.5rem">Postes Ouverts</h2>
-    <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">12 opportunités dans nos pôles Finance, Crédit, IT, Audit, Risques et Conformité</p>
+    <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">6 opportunités dans nos pôles Finance, Crédit, IT, Audit, Risques et Conformité</p>
     <div class="postes-grid" id="postes-list">
       <div class="empty-state"><div class="empty-icon">⏳</div><p>Chargement des postes...</p></div>
     </div>
@@ -200,20 +200,20 @@
 const API = 'https://backend1-fiq5.onrender.com/api';
 
 const POSTES_INFO = {
-  // ── 6 POSTES EXISTANTS ─────────────────────────────────────
-  "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS", category:"credit" },
-  "Analyste Crédit CCB":                  { icon:"📊", desc:"Analyse financière, montage et suivi de crédits", category:"credit" },
-  "Archiviste (Administration Crédit)":   { icon:"🗂️", desc:"Gestion documentaire et archivage des dossiers", category:"credit" },
-  "Senior Finance Officer":               { icon:"💰", desc:"Pilotage financier et reporting senior", category:"finance" },
-  "Market Risk Officer":                  { icon:"📈", desc:"Gestion et modélisation des risques de marché", category:"risque" },
-  "IT Réseau & Infrastructure":           { icon:"🖥️", desc:"Administration réseau, sécurité et infrastructure", category:"it" },
-  // ── 6 NOUVEAUX POSTES ─────────────────────────────────────
-  "Auditeur interne":                     { icon:"🔍", desc:"Audit interne et contrôle des processus", category:"audit", highlight:"certifications" },
-  "Chef service contrôle des engagements":{ icon:"📋", desc:"Contrôle des engagements et garanties", category:"risque", senior:true },
-  "Chef service IT (maintenance/support)":{ icon:"🛠️", desc:"Maintenance et support informatique", category:"it", badge:"technique", reduceLetter:true },
-  "Chef service finance":                 { icon:"💵", desc:"Management de la fonction finance", category:"finance", senior:true },
-  "Chef service risques de marché":       { icon:"📉", desc:"Gestion des risques financiers et de marché", category:"risque", senior:true },
-  "Chef service reporting réglementaire": { icon:"📑", desc:"Reporting prudentiel et réglementaire", category:"conformite", senior:true }
+  // ── 6 POSTES EXISTANTS (MASQUÉS POUR LE CANDIDAT) ───────────────────────
+  "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS", category:"credit", visible:false },
+  "Analyste Crédit CCB":                  { icon:"📊", desc:"Analyse financière, montage et suivi de crédits", category:"credit", visible:false },
+  "Archiviste (Administration Crédit)":   { icon:"🗂️", desc:"Gestion documentaire et archivage des dossiers", category:"credit", visible:false },
+  "Senior Finance Officer":               { icon:"💰", desc:"Pilotage financier et reporting senior", category:"finance", visible:false },
+  "Market Risk Officer":                  { icon:"📈", desc:"Gestion et modélisation des risques de marché", category:"risque", visible:false },
+  "IT Réseau & Infrastructure":           { icon:"🖥️", desc:"Administration réseau, sécurité et infrastructure", category:"it", visible:false },
+  // ── 6 NOUVEAUX POSTES (AFFICHÉS AUX CANDIDATS) ──────────────────────────
+  "Auditeur interne":                     { icon:"🔍", desc:"Audit interne et contrôle des processus", category:"audit", highlight:"certifications", visible:true },
+  "Chef service contrôle des engagements":{ icon:"📋", desc:"Contrôle des engagements et garanties", category:"risque", senior:true, visible:true },
+  "Chef service IT (maintenance/support)":{ icon:"🛠️", desc:"Maintenance et support informatique", category:"it", badge:"technique", reduceLetter:true, visible:true },
+  "Chef service finance":                 { icon:"💵", desc:"Management de la fonction finance", category:"finance", senior:true, visible:true },
+  "Chef service risques de marché":       { icon:"📉", desc:"Gestion des risques financiers et de marché", category:"risque", senior:true, visible:true },
+  "Chef service reporting réglementaire": { icon:"📑", desc:"Reporting prudentiel et réglementaire", category:"conformite", senior:true, visible:true }
 };
 
 // ── Charger les postes ────────────────────────────────────────────────────
@@ -224,7 +224,9 @@ fetch(`${API}/postes`)
     const sel  = document.getElementById("poste-select");
     grid.innerHTML = "";
     postes.forEach(p => {
-      const info = POSTES_INFO[p] || { icon:"💼", desc:"" };
+      const info = POSTES_INFO[p] || { icon:"💼", desc:"", visible:true };
+      // Masquer les postes non visibles pour les candidats
+      if (info.visible === false) return;
       const catBadge = info.category ? `<span style="display:inline-block;font-size:.65rem;background:#e8f4fd;color:#1a3a5c;padding:2px 6px;border-radius:4px;margin-left:.4rem">${info.category}</span>` : "";
       const certHighlight = info.highlight === "certifications" ? `<div style="font-size:.75rem;color:#1e7e34;margin-top:.3rem">🎯 <strong>Certifications requises</strong></div>` : "";
       const techBadge = info.badge === "technique" ? `<span style="display:inline-block;font-size:.65rem;background:#d4edda;color:#155724;padding:2px 6px;border-radius:4px;margin-left:.4rem">Technique</span>` : "";
