@@ -256,9 +256,9 @@ fetch(`${API}/postes`)
     // Afficher le message informatif
     if (activePostes.length > 0 && infoBox) {
         if (activePostes.length === 1) {
-            infoBox.innerHTML = `✅ <strong>Un seul poste est actuellement ouvert au recrutement :</strong> ${activePostes[0]}. Les autres postes seront ouverts prochainement.`;
+            infoBox.innerHTML = `<strong>Un seul poste est actuellement ouvert au recrutement :</strong> ${activePostes[0]}. Les autres postes seront ouverts prochainement.`;
         } else {
-            infoBox.innerHTML = `✅ <strong>${activePostes.length} postes sont actuellement ouverts au recrutement :</strong> ${activePostes.join(', ')}.`;
+            infoBox.innerHTML = `<strong>${activePostes.length} postes sont actuellement ouverts au recrutement :</strong> ${activePostes.join(', ')}.`;
         }
         infoBox.style.display = 'block';
     }
@@ -309,7 +309,7 @@ fetch(`${API}/postes`)
     if (input && label) {
         input.addEventListener('change', function() {
             if (this.files[0]) {
-                label.textContent = '✅ ' + this.files[0].name;
+                label.textContent = ' ' + this.files[0].name;
                 label.classList.add('has-file');
             } else {
                 const defaults = { cv: '📎 Choisir mon CV', lettre: '📎 Choisir ma lettre' };
@@ -332,7 +332,7 @@ if (attestationInput && attestationLabel && attestationList) {
             attestationList.innerHTML = '';
             return;
         }
-        attestationLabel.textContent = `✅ ${files.length} fichier${files.length>1?'s':''} sélectionné${files.length>1?'s':''}`;
+        attestationLabel.textContent = ` ${files.length} fichier${files.length>1?'s':''} sélectionné${files.length>1?'s':''}`;
         attestationLabel.classList.add('has-file');
         attestationList.innerHTML = files.map(f =>
             `<div style="padding:.2rem 0;border-bottom:1px dashed #e2e8f0">📄 ${escHtml(f.name)} (${formatFileSize(f.size)})</div>`
