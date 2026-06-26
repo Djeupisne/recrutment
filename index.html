@@ -85,6 +85,8 @@ select option:disabled {
 <div class="container">
 <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:.5rem">Déposer une Candidature</h2>
 <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">Formats acceptés : PDF, DOC, DOCX (max 10 Mo par fichier)</p>
+<div id="info-postes-actifs" style="max-width:700px;margin:0 auto 1.5rem auto;padding:.75rem 1rem;background:#d4edda;border-left:4px solid #27ae60;border-radius:6px;font-size:.85rem;color:#155724;display:none">
+</div>
 <div style="max-width:700px;margin:0 auto 1.5rem auto;padding:.75rem 1rem;background:#EBF5FB;border-left:4px solid #2980B9;border-radius:6px;font-size:.85rem;color:#1a3a5c">
 💡 <strong>Bon à savoir :</strong> Vous pouvez postuler à plusieurs postes distincts avec le même email. Une candidature distincte sera créée pour chaque poste.
 </div>
@@ -129,7 +131,7 @@ select option:disabled {
 <label>CV *</label>
 <div class="file-input-wrapper">
 <label class="file-label" id="cv-label" for="cv-input">📎 Choisir mon CV</label>
-<input type="file" id="cv-input" name="cv" accept=".pdf,.doc,.docx" required placeholder="Collez le CV ici (Français ou Anglais accepté)">
+<input type="file" id="cv-input" name="cv" accept=".pdf,.doc,.docx" required>
 </div>
 <p style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem;display:flex;align-items:center;gap:.4rem">
 <span>🌐</span> Français ou Anglais accepté
@@ -204,8 +206,9 @@ Utilisez le numéro de suivi dans la section <strong>Suivi de dossier</strong> c
 const API = 'https://backend1-fiq5.onrender.com/api';
 
 // ══════════════════════════════════════════════════════════════
-// ✅ SEUL "Chef de Section Compensation" EST ACTIF
-// Les autres postes sont visibles mais grisés et non sélectionnables
+// ✅ CONFIGURATION DES POSTES
+// Seul "Chef de Section Compensation" est ACTIF (active: true)
+// Les autres sont visibles mais grisés et non sélectionnables
 // ══════════════════════════════════════════════════════════════
 const POSTES_INFO = {
     "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS", category:"credit", active:false },
@@ -220,7 +223,9 @@ const POSTES_INFO = {
     "Chef service finance":                 { icon:"💵", desc:"Management de la fonction finance", category:"finance", active:false },
     "Chef service risques de marché":       { icon:"📉", desc:"Gestion des risques financiers et de marché", category:"risque", active:false },
     "Chef service reporting réglementaire": { icon:"📑", desc:"Reporting prudentiel et réglementaire", category:"conformite", active:false },
-    // ✅ SEUL POSTE ACTIF
+    // ══════════════════════════════════════════════════════════════
+    // ✅ SEUL POSTE ACTIF — OUVERT AU RECRUTEMENT
+    // ══════════════════════════════════════════════════════════════
     "Chef de Section Compensation":         {
         icon: "💳",
         desc: "Supervision des opérations de compensation interbancaire (BEAC/GIMAC)",
@@ -236,21 +241,32 @@ fetch(`${API}/postes`)
 .then(postes => {
     const grid = document.getElementById("postes-list");
     const sel  = document.getElementById("poste-select");
+    const infoBox = document.getElementById("info-postes-actifs");
     grid.innerHTML = "";
     
     // Compter les postes actifs
-    const activeCount = postes.filter(p => {
-        const info = POSTES_INFO[p] || { active: false };
-        return info.active === true;
-    }).length;
+    const activePostes = [];
+    postes.forEach(p => {
+        const info = POSTES_INFO[p] || { icon:"💼", desc:"", active:false };
+        if (info.active === true) {
+            activePostes.push(p);
+        }
+    });
+    
+    // Afficher le message informatif
+    if (activePostes.length > 0 && infoBox) {
+        if (activePostes.length === 1) {
+            infoBox.innerHTML = `✅ <strong>Un seul poste est actuellement ouvert au recrutement :</strong> ${activePostes[0]}. Les autres postes seront ouverts prochainement.`;
+        } else {
+            infoBox.innerHTML = `✅ <strong>${activePostes.length} postes sont actuellement ouverts au recrutement :</strong> ${activePostes.join(', ')}.`;
+        }
+        infoBox.style.display = 'block';
+    }
     
     postes.forEach(p => {
         const info = POSTES_INFO[p] || { icon:"💼", desc:"", active:false };
         const isActive = info.active === true;
         
-        // ══════════════════════════════════════════════════════════════
-        // CARTE DU POSTE
-        // ══════════════════════════════════════════════════════════════
         const catBadge = info.category ? `<span style="display:inline-block;font-size:.65rem;background:#e8f4fd;color:#1a3a5c;padding:2px 6px;border-radius:4px;margin-left:.4rem">${info.category}</span>` : "";
         const certHighlight = info.highlight === "certifications" ? `<div style="font-size:.75rem;color:#1e7e34;margin-top:.3rem">🎯 <strong>Certifications requises</strong></div>` : "";
         const beacHighlight = info.highlight === "beac-gimac" ? `<div style="font-size:.75rem;color:#1a3a5c;margin-top:.3rem">🏦 <strong>Expertise BEAC/GIMAC requise</strong></div>` : "";
@@ -263,29 +279,17 @@ fetch(`${API}/postes`)
 <div class="${cardClass}">
     <div style="font-size:1.8rem;margin-bottom:.6rem;display:flex;align-items:center">${info.icon}${techBadge}</div>
     <h3>${p}${catBadge}</h3>
-    <p>${info.desc}</p>
+    <p>${info.desc || 'Poste à pourvoir prochainement.'}</p>
     ${certHighlight}
     ${beacHighlight}
     ${seniorIndicator}
     ${isActive ? `<a href="#postuler" style="display:inline-block;margin-top:.8rem;font-size:.82rem;font-weight:600;color:var(--accent)">Postuler →</a>` : ''}
 </div>`;
         
-        // ══════════════════════════════════════════════════════════════
-        // OPTION DU SELECT (désactivée si non active)
-        // ══════════════════════════════════════════════════════════════
         const optionDisabled = isActive ? "" : "disabled";
         const optionLabel = isActive ? p : `🔒 ${p} (bientôt)`;
         sel.innerHTML += `<option value="${p}" ${optionDisabled} data-category="${info.category||""}" data-senior="${info.senior||false}" data-reduce-letter="${info.reduceLetter||false}" data-active="${isActive}">${optionLabel}</option>`;
     });
-    
-    // Message informatif si un seul poste actif
-    if (activeCount === 1) {
-        const infoBox = document.createElement('div');
-        infoBox.style.cssText = 'max-width:700px;margin:0 auto 1rem auto;padding:.75rem 1rem;background:#d4edda;border-left:4px solid #27ae60;border-radius:6px;font-size:.85rem;color:#155724';
-        infoBox.innerHTML = '✅ <strong>Un seul poste est actuellement ouvert au recrutement :</strong> Chef de Section Compensation. Les autres postes seront ouverts prochainement.';
-        const formSection = document.getElementById('postuler');
-        formSection.insertBefore(infoBox, formSection.querySelector('.card'));
-    }
     
     sel.addEventListener("change", function() {
         const selectedOpt = this.options[this.selectedIndex];
