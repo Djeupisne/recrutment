@@ -85,69 +85,6 @@ font-size: 0.85rem;
 transition: color 0.2s;
 }
 .nav-links a:hover { color: white; }
-.reanalyze-global-banner {
-position: sticky;
-top: 60px;
-z-index: 90;
-background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-color: white;
-padding: 0.65rem 1.5rem;
-display: none;
-align-items: center;
-gap: 1rem;
-box-shadow: var(--shadow);
-flex-wrap: wrap;
-}
-.reanalyze-global-banner.done {
-background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
-}
-.rgb-icon { font-size: 1.3rem; flex-shrink: 0; }
-.rgb-text { flex-shrink: 0; min-width: 200px; }
-.rgb-title { font-weight: 700; font-size: 0.85rem; }
-.rgb-detail { font-size: 0.75rem; opacity: 0.9; margin-top: 1px; }
-.rgb-progress { flex: 1; display: flex; align-items: center; gap: 0.6rem; min-width: 200px; max-width: 420px; }
-.rgb-progress .progress-bar-bg { flex: 1; background: rgba(255,255,255,.25); height: 8px; border-radius: 4px; overflow: hidden; }
-.rgb-progress .progress-bar-fill { background: white; height: 100%; width: 0%; transition: width 0.5s; border-radius: 4px; }
-#rgb-percent { font-weight: 700; font-size: 0.8rem; min-width: 38px; text-align: right; flex-shrink: 0; }
-.rgb-close {
-background: rgba(255,255,255,.2);
-border: none;
-color: white;
-width: 26px;
-height: 26px;
-border-radius: 50%;
-cursor: pointer;
-font-size: 1rem;
-flex-shrink: 0;
-margin-left: auto;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-.rgb-close:hover { background: rgba(255,255,255,.35); }
-.analyse-spinner {
-display: inline-flex;
-align-items: center;
-gap: 0.35rem;
-font-size: 0.72rem;
-font-weight: 600;
-color: var(--warning);
-background: var(--warning-light);
-padding: 0.2rem 0.55rem;
-border-radius: 10px;
-white-space: nowrap;
-}
-.analyse-spinner.err { color: var(--danger); background: var(--danger-light); }
-.analyse-spinner .dot {
-width: 6px;
-height: 6px;
-border-radius: 50%;
-background: var(--warning);
-animation: blink 1.1s infinite;
-flex-shrink: 0;
-}
-.analyse-spinner.err .dot { background: var(--danger); animation: none; }
-@keyframes blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 .dash-layout {
 display: grid;
 grid-template-columns: 240px 1fr;
@@ -472,7 +409,6 @@ color: var(--text-secondary);
 border: none;
 }
 .btn-ghost:hover { background: var(--bg-light); color: var(--text); }
-.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 .form-control {
 padding: 0.5rem 0.75rem;
 border: 1px solid var(--border);
@@ -1054,6 +990,85 @@ font-size: 0.88rem;
 from { opacity: 0; transform: translateX(20px); }
 to { opacity: 1; transform: translateX(0); }
 }
+
+/* =========================================
+   WIDGET DE PROGRESSION FLOTTANT (AJOUT)
+   ========================================= */
+.floating-progress {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 340px;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.08);
+    padding: 1.25rem;
+    z-index: 1500;
+    display: none;
+    animation: slideUp 0.3s ease-out;
+    border-left: 4px solid var(--warning);
+    transition: all 0.3s ease;
+}
+.floating-progress.active { display: block; }
+.floating-progress.completed { border-left-color: var(--success); }
+.floating-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+.floating-progress-header .icon { 
+    margin-right: 0.5rem; 
+    display: inline-block;
+    animation: spin 2s linear infinite;
+}
+.floating-progress.completed .floating-progress-header .icon {
+    animation: none;
+}
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+.floating-progress .progress-bar-bg {
+    background: #e5e7eb;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+.floating-progress .progress-bar-fill {
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 4px;
+}
+.floating-progress.completed .progress-bar-fill {
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+.floating-progress .progress-detail {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.progress-bar-fill.indeterminate {
+    width: 30% !important;
+    animation: indeterminate 1.5s infinite linear;
+    background: linear-gradient(90deg, #d97706, #f59e0b, #d97706);
+    background-size: 200% 100%;
+}
+@keyframes indeterminate {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 @media (max-width: 992px) {
 .dash-layout { grid-template-columns: 1fr; }
 .sidebar { display: none; }
@@ -1062,8 +1077,7 @@ to { opacity: 1; transform: translateX(0); }
 .export-controls, .reanalyze-controls { justify-content: flex-start; width: 100%; }
 .export-buttons { width: 100%; }
 .export-btn { flex: 1; }
-.reanalyze-global-banner { padding: 0.65rem 1rem; }
-.rgb-progress { width: 100%; max-width: none; order: 3; }
+.floating-progress { width: calc(100% - 2rem); left: 1rem; right: 1rem; bottom: 1rem; }
 }
 @media (max-width: 576px) {
 .export-buttons { flex-direction: column; }
@@ -1089,20 +1103,6 @@ to { opacity: 1; transform: translateX(0); }
 <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.2);" onclick="logout()">Déconnexion</button>
 </div>
 </nav>
-<div id="reanalyze-global-banner" class="reanalyze-global-banner">
-<div class="rgb-icon" id="rgb-icon">⏳</div>
-<div class="rgb-text">
-<div class="rgb-title" id="rgb-title">Réanalyse en cours…</div>
-<div class="rgb-detail" id="rgb-detail">0 / 0 candidatures traitées</div>
-</div>
-<div class="rgb-progress">
-<div class="progress-bar-bg">
-<div id="rgb-progress-bar" class="progress-bar-fill"></div>
-</div>
-<span id="rgb-percent">0%</span>
-</div>
-<button class="rgb-close" onclick="hideGlobalBanner()" title="Masquer (l'analyse continue en arrière-plan)">×</button>
-</div>
 <div class="dash-layout">
 <aside class="sidebar">
 <div class="sidebar-user">
@@ -1428,6 +1428,18 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 </div>
 </div>
 
+<!-- WIDGET DE PROGRESSION FLOTTANT -->
+<div id="floating-progress" class="floating-progress">
+    <div class="floating-progress-header">
+        <span><span class="icon">🔄</span> <span id="floating-progress-title">Réanalyse en cours...</span></span>
+        <span id="floating-progress-count">0/0</span>
+    </div>
+    <div class="progress-bar-bg">
+        <div id="floating-progress-bar" class="progress-bar-fill"></div>
+    </div>
+    <div id="floating-progress-detail" class="progress-detail">Préparation...</div>
+</div>
+
 <div class="toast-container" id="toast-container"></div>
 <script src="script.js"></script>
 <script>
@@ -1438,37 +1450,17 @@ let currentC = null;
 let currentScore = 0;
 let currentReanalyzeScope = null;
 let reanalyzePollingInterval = null;
-const REANALYZE_LS_KEY = 'rb_reanalyze_active';
-const REANALYZE_LS_TTL_MS = 30 * 60 * 1000;
-const REANALYZE_POLL_MAX_MS = 30 * 60 * 1000;
+
 if (!jwtToken) { window.location.href = 'login.html'; }
+
 const nomRH = localStorage.getItem('rh_nom') || 'Recruteur';
 document.getElementById('nav-nom').textContent = nomRH;
 document.getElementById('sidebar-nom').textContent = nomRH;
 document.getElementById('sidebar-avatar').textContent = nomRH.charAt(0).toUpperCase();
+
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 function authH() { return { 'Authorization': 'Bearer ' + jwtToken, 'Content-Type': 'application/json' }; }
-function saveReanalyzeState(scope) {
-try { localStorage.setItem(REANALYZE_LS_KEY, JSON.stringify({ scope: scope || '', ts: Date.now() })); } catch (e) {}
-}
-function clearReanalyzeState() {
-try { localStorage.removeItem(REANALYZE_LS_KEY); } catch (e) {}
-}
-function loadReanalyzeState() {
-try {
-const raw = localStorage.getItem(REANALYZE_LS_KEY);
-if (!raw) return null;
-const data = JSON.parse(raw);
-if (Date.now() - data.ts > REANALYZE_LS_TTL_MS) { clearReanalyzeState(); return null; }
-return data;
-} catch (e) { return null; }
-}
-function showGlobalBanner() {
-document.getElementById('reanalyze-global-banner').style.display = 'flex';
-}
-function hideGlobalBanner() {
-document.getElementById('reanalyze-global-banner').style.display = 'none';
-}
+
 function parseJSONField(raw, fieldName, candidatId, poste) {
 if (!raw) return null;
 try {
@@ -1483,6 +1475,7 @@ console.warn(`⚠️ Échec parsing ${fieldName} pour candidat ${candidatId} (po
 return null;
 }
 }
+
 function populateExportPosteSelect(data) {
 const sel = document.getElementById('export-poste-select');
 if (!sel) return;
@@ -1497,6 +1490,7 @@ sel.appendChild(opt);
 populateDossierPosteSelect(postes);
 populateReanalyzePosteSelect(postes);
 }
+
 function populateDossierPosteSelect(postes) {
 const sel = document.getElementById('dossier-poste-select');
 if (!sel) return;
@@ -1508,6 +1502,7 @@ opt.textContent = p;
 sel.appendChild(opt);
 });
 }
+
 function populateReanalyzePosteSelect(postes) {
 const sel = document.getElementById('reanalyze-poste-select');
 if (!sel) return;
@@ -1519,6 +1514,7 @@ opt.textContent = p;
 sel.appendChild(opt);
 });
 }
+
 async function exportReport(format) {
 try {
 const posteSelect = document.getElementById('export-poste-select');
@@ -1549,6 +1545,7 @@ console.error('Erreur export:', error);
 showToast(`Erreur: ${error.message}`, 'error');
 }
 }
+
 async function downloadAllDossiers() {
 try {
 const posteSelect = document.getElementById('dossier-poste-select');
@@ -1585,6 +1582,7 @@ console.error('Erreur téléchargement ZIP:', error);
 showToast(`Erreur: ${error.message}`, 'error');
 }
 }
+
 function openReanalyzeModal() {
 const posteSelect = document.getElementById('reanalyze-poste-select');
 const posteValue = posteSelect ? posteSelect.value : '';
@@ -1599,26 +1597,28 @@ title.textContent = 'Réanalyser tous les dossiers';
 message.textContent = "Relancer l'analyse de toutes les candidatures avec les règles actuelles ? Cette opération peut prendre plusieurs minutes.";
 }
 document.getElementById('reanalyze-progress-modal').style.display = 'none';
-const btnConfirm = document.getElementById('btn-confirm-reanalyze');
-const btnCancel = document.getElementById('btn-cancel-reanalyze');
-btnConfirm.disabled = false;
-btnConfirm.textContent = 'Confirmer';
-btnConfirm.onclick = confirmReanalyze;
-btnCancel.disabled = false;
-btnCancel.style.display = 'inline-block';
+document.getElementById('btn-confirm-reanalyze').disabled = false;
+document.getElementById('btn-cancel-reanalyze').disabled = false;
 document.getElementById('modal-reanalyze').classList.add('open');
 }
+
 function closeReanalyzeModal() {
 document.getElementById('modal-reanalyze').classList.remove('open');
 }
+
 async function confirmReanalyze() {
 const btnConfirm = document.getElementById('btn-confirm-reanalyze');
 const btnCancel = document.getElementById('btn-cancel-reanalyze');
 btnConfirm.disabled = true;
 btnCancel.disabled = true;
+
 document.getElementById('reanalyze-progress-modal').style.display = 'block';
 document.getElementById('reanalyze-progress-text-modal').textContent = 'Lancement de la réanalyse...';
 document.getElementById('reanalyze-progress-inline').style.display = 'block';
+
+// Afficher le widget flottant immédiatement
+showFloatingProgress('Lancement de la réanalyse...', true);
+
 try {
 let url;
 if (currentReanalyzeScope) {
@@ -1629,49 +1629,53 @@ url = `${API}/recruteur/reanalyze-all`;
 const response = await fetch(url, { method: 'POST', headers: authH() });
 const data = await response.json();
 if (!response.ok) throw new Error(data.error || 'Erreur serveur');
-document.getElementById('reanalyze-progress-text-modal').textContent = `Réanalyse lancée : ${data.reanalyzed_count} dossier(s)`;
+
+document.getElementById('reanalyze-progress-text-modal').textContent = `Réanalyse lancée : ${data.reanalyzed_count || 0} dossier(s)`;
 const statusEl = document.getElementById('reanalyze-status');
 statusEl.style.display = 'inline-block';
-statusEl.style.background = 'rgba(255,255,255,0.2)';
-statusEl.textContent = `${data.reanalyzed_count} dossier(s) en cours`;
-showToast(`${data.message}`, 'success');
-saveReanalyzeState(currentReanalyzeScope);
-showGlobalBanner();
-document.getElementById('reanalyze-global-banner').classList.remove('done');
-btnCancel.style.display = 'none';
-btnConfirm.textContent = 'Fermer (continue en arrière-plan)';
-btnConfirm.disabled = false;
-btnConfirm.onclick = closeReanalyzeModal;
+statusEl.textContent = `Réanalyse en cours...`;
+
+showToast(`${data.message || 'Réanalyse lancée avec succès'}`, 'success');
+
+// Fermer le modal de confirmation et lancer le polling
+closeReanalyzeModal();
 startReanalyzePolling();
+
 } catch (error) {
 console.error('Erreur réanalyse:', error);
 document.getElementById('reanalyze-progress-text-modal').innerHTML = `<span style="color:var(--danger)">Erreur : ${error.message}</span>`;
 btnConfirm.disabled = false;
 btnCancel.disabled = false;
+hideFloatingProgress();
 showToast(`Erreur: ${error.message}`, 'error');
 }
 }
+
 function startReanalyzePolling() {
 if (reanalyzePollingInterval) clearInterval(reanalyzePollingInterval);
 checkReanalyzeStatus();
 reanalyzePollingInterval = setInterval(checkReanalyzeStatus, 3000);
+// Sécurité : arrêter le polling après 10 minutes
 setTimeout(() => {
 if (reanalyzePollingInterval) {
 clearInterval(reanalyzePollingInterval);
 reanalyzePollingInterval = null;
 }
-}, REANALYZE_POLL_MAX_MS);
+}, 600000);
 }
+
 async function checkReanalyzeStatus() {
 try {
-const savedState = loadReanalyzeState();
-const scope = (currentReanalyzeScope !== null && currentReanalyzeScope !== undefined && currentReanalyzeScope !== '')
-? currentReanalyzeScope
-: (savedState ? savedState.scope : '');
-let url = `${API}/recruteur/reanalyze-status`;
-if (scope) url += `?poste=${encodeURIComponent(scope)}`;
-const response = await fetch(url, { headers: authH() });
-if (!response.ok) return;
+const response = await fetch(`${API}/recruteur/reanalyze-status`, { headers: authH() });
+
+// Si l'endpoint n'existe pas (404), on maintient la progression indéterminée
+if (!response.ok) {
+if (response.status === 404) {
+updateFloatingProgress(-1, -1, 0, "Analyse en cours (suivi détaillé indisponible)...");
+}
+return;
+}
+
 const data = await response.json();
 const total = data.total_candidatures || 0;
 const counts = data.status_counts || {};
@@ -1679,75 +1683,44 @@ const completed = counts.completed || 0;
 const reanalyzing = counts.reanalyzing || 0;
 const pending = counts.pending || 0;
 const errors = counts.error || 0;
-const isActive = reanalyzing > 0 || pending > 0;
+
+// Mettre à jour le widget flottant
+updateFloatingProgress(completed, total, errors, "");
+
+// Mettre à jour la progression inline si visible
 const statusEl = document.getElementById('reanalyze-status');
 const progressInline = document.getElementById('reanalyze-progress-inline');
 const progressBar = document.getElementById('reanalyze-progress-bar');
 const progressText = document.getElementById('reanalyze-progress-text');
 const progressCount = document.getElementById('reanalyze-progress-count');
 const progressDetail = document.getElementById('reanalyze-status-detail');
-const progressBarModal = document.getElementById('reanalyze-progress-bar-modal');
-const progressTextModal = document.getElementById('reanalyze-progress-text-modal');
-const progressCountModal = document.getElementById('reanalyze-progress-count-modal');
-const progressDetailModal = document.getElementById('reanalyze-status-detail-modal');
-const banner = document.getElementById('reanalyze-global-banner');
-const rgbIcon = document.getElementById('rgb-icon');
-const rgbTitle = document.getElementById('rgb-title');
-const rgbDetail = document.getElementById('rgb-detail');
-const rgbPercent = document.getElementById('rgb-percent');
-const rgbBar = document.getElementById('rgb-progress-bar');
-const modalOpen = document.getElementById('modal-reanalyze').classList.contains('open');
-if (isActive) {
+
+if (reanalyzing > 0 || pending > 0) {
 const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-banner.style.display = 'flex';
-banner.classList.remove('done');
-rgbIcon.textContent = '⏳';
-rgbTitle.textContent = scope ? `Réanalyse en cours — ${scope}` : 'Réanalyse en cours — tous les postes';
-rgbDetail.textContent = `${completed} / ${total} traités${errors > 0 ? ` · ${errors} erreur(s)` : ''}`;
-rgbPercent.textContent = progress + '%';
-rgbBar.style.width = progress + '%';
+if(statusEl) {
 statusEl.style.display = 'inline-block';
-statusEl.textContent = `${completed}/${total} (${progress}%)${errors > 0 ? ` · ${errors} erreur(s)` : ''}`;
-progressInline.style.display = 'block';
-progressBar.style.width = progress + '%';
-progressText.textContent = 'Analyse en cours...';
-progressCount.textContent = `${completed}/${total}`;
-const detail = `Terminés : ${completed} · En cours : ${reanalyzing} · En attente : ${pending}${errors > 0 ? ` · Erreurs : ${errors}` : ''}`;
-progressDetail.textContent = detail;
-if (modalOpen) {
-progressBarModal.style.width = progress + '%';
-progressTextModal.textContent = 'Analyse en cours...';
-progressCountModal.textContent = `${completed}/${total}`;
-progressDetailModal.textContent = detail;
+statusEl.textContent = `${completed}/${total} (${progress}%)`;
 }
-fetchCandidats();
-} else if (total > 0) {
-const wasActive = banner.style.display === 'flex' && !banner.classList.contains('done');
+if(progressInline) progressInline.style.display = 'block';
+if(progressBar) progressBar.style.width = progress + '%';
+if(progressText) progressText.textContent = 'Analyse en cours...';
+if(progressCount) progressCount.textContent = `${completed}/${total}`;
+if(progressDetail) progressDetail.textContent = `Terminés : ${completed} · En cours : ${reanalyzing} · En attente : ${pending}${errors > 0 ? ` · Erreurs : ${errors}` : ''}`;
+} else if (reanalyzing === 0 && pending === 0) {
+// Tâche terminée
+if(statusEl) {
 statusEl.style.display = 'inline-block';
-statusEl.textContent = 'Analyses à jour';
+statusEl.textContent = '✅ Analyses à jour';
 statusEl.style.background = 'rgba(22, 163, 74, 0.3)';
-progressInline.style.display = 'none';
-if (wasActive) {
-banner.classList.add('done');
-rgbIcon.textContent = '✅';
-rgbTitle.textContent = 'Réanalyse terminée';
-rgbDetail.textContent = `${completed} candidature(s) traitée(s)${errors > 0 ? ` · ${errors} erreur(s)` : ''}`;
-rgbPercent.textContent = '100%';
-rgbBar.style.width = '100%';
-setTimeout(hideGlobalBanner, 6000);
-if (modalOpen) {
-progressTextModal.textContent = '✅ Réanalyse terminée';
-progressBarModal.style.width = '100%';
-progressCountModal.textContent = `${completed}/${total}`;
 }
-showToast('Réanalyse terminée', 'success');
-}
+if(progressInline) progressInline.style.display = 'none';
+
+completeFloatingProgress(completed || total, errors);
+
 if (reanalyzePollingInterval) {
 clearInterval(reanalyzePollingInterval);
 reanalyzePollingInterval = null;
 }
-clearReanalyzeState();
-currentReanalyzeScope = null;
 fetchCandidats();
 fetchStats();
 }
@@ -1755,6 +1728,73 @@ fetchStats();
 console.error('Erreur checkReanalyzeStatus:', error);
 }
 }
+
+// --- GESTION DU WIDGET FLOTTANT ---
+function showFloatingProgress(title, isIndeterminate = false) {
+const widget = document.getElementById('floating-progress');
+if (!widget) return;
+widget.classList.add('active');
+widget.classList.remove('completed');
+document.getElementById('floating-progress-title').textContent = title || 'Réanalyse en cours...';
+document.getElementById('floating-progress-count').textContent = '';
+document.getElementById('floating-progress-detail').textContent = 'Préparation des dossiers...';
+
+const bar = document.getElementById('floating-progress-bar');
+if (isIndeterminate) {
+bar.classList.add('indeterminate');
+bar.style.width = '30%';
+} else {
+bar.classList.remove('indeterminate');
+bar.style.width = '0%';
+}
+}
+
+function updateFloatingProgress(completed, total, errors, customMessage) {
+const widget = document.getElementById('floating-progress');
+if (!widget) return;
+widget.classList.add('active');
+widget.classList.remove('completed');
+
+const bar = document.getElementById('floating-progress-bar');
+bar.classList.remove('indeterminate');
+
+if (total > 0) {
+const progress = Math.round((completed / total) * 100);
+bar.style.width = progress + '%';
+document.getElementById('floating-progress-count').textContent = `${completed}/${total} (${progress}%)`;
+document.getElementById('floating-progress-detail').textContent = customMessage || `Terminés : ${completed} · En cours...${errors > 0 ? ` · Erreurs : ${errors}` : ''}`;
+} else {
+bar.classList.add('indeterminate');
+document.getElementById('floating-progress-count').textContent = '';
+document.getElementById('floating-progress-detail').textContent = customMessage || 'Analyse en cours...';
+}
+}
+
+function completeFloatingProgress(completed, errors) {
+const widget = document.getElementById('floating-progress');
+if (!widget) return;
+widget.classList.add('completed');
+document.getElementById('floating-progress-title').textContent = '✅ Réanalyse terminée';
+document.getElementById('floating-progress-count').textContent = `${completed} dossier(s)`;
+document.getElementById('floating-progress-detail').textContent = errors > 0 ? `Terminé avec ${errors} erreur(s)` : 'Tous les dossiers ont été mis à jour.';
+
+const bar = document.getElementById('floating-progress-bar');
+bar.classList.remove('indeterminate');
+bar.style.width = '100%';
+
+showToast('Réanalyse terminée avec succès !', 'success');
+
+// Masquer automatiquement après 8 secondes
+setTimeout(() => {
+widget.classList.remove('active');
+}, 8000);
+}
+
+function hideFloatingProgress() {
+const widget = document.getElementById('floating-progress');
+if (widget) widget.classList.remove('active');
+}
+
 async function reanalyzeOne() {
 if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
 if (!confirm('Relancer l\'analyse de cette candidature avec les règles actuelles ?')) return;
@@ -1762,14 +1802,15 @@ try {
 const res = await fetch(`${API}/recruteur/candidats/${currentC.id}/analyze`, { method: 'POST', headers: authH() });
 if (res.ok) {
 showToast('Analyse relancée. Résultats disponibles dans quelques instants.', 'success');
-const id = currentC.id;
 setTimeout(() => {
 fetchCandidats();
-const updated = allCandidats.find(x => x.id === id);
+if (currentC) {
+const updated = allCandidats.find(x => x.id === currentC.id);
 if (updated) {
 currentC = updated;
 renderAnalyseResume(updated);
 renderGrille(updated.poste, updated.checklist || '', updated.score_breakdown_parsed);
+}
 }
 }, 3000);
 } else {
@@ -1780,6 +1821,7 @@ showToast(data.error || 'Erreur serveur', 'error');
 showToast('Erreur: ' + e.message, 'error');
 }
 }
+
 function showSection(name, el) {
 document.getElementById('section-overview').style.display = name === 'overview' ? 'block' : 'none';
 document.getElementById('section-candidats').style.display = name === 'candidats' ? 'block' : 'none';
@@ -1787,13 +1829,16 @@ document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('act
 if (el) el.classList.add('active');
 if (name === 'candidats') renderTable(allCandidats);
 }
+
 function switchTab(name, btn) {
 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 btn.classList.add('active');
 document.getElementById('tab-' + name).classList.add('active');
 }
+
 function refreshAll() { fetchStats(); fetchCandidats(); checkReanalyzeStatus(); }
+
 async function fetchStats() {
 try {
 const res = await fetch(API + '/recruteur/stats', { headers: authH() });
@@ -1810,6 +1855,7 @@ renderDonut(d);
 renderBarChart(d.by_poste || []);
 } catch (e) { console.error('fetchStats:', e); }
 }
+
 function renderDonut(d) {
 const total = d.total || 1;
 const segs = [
@@ -1828,6 +1874,7 @@ el.setAttribute('stroke-dashoffset', String(-(offset - 25)));
 offset += pct;
 });
 }
+
 function renderBarChart(byPoste) {
 const el = document.getElementById('bar-chart');
 if (!byPoste.length) {
@@ -1845,6 +1892,7 @@ return '<div class="bar-row">'
 + '</div>';
 }).join('');
 }
+
 async function fetchCandidats() {
 try {
 const res = await fetch(API + '/recruteur/candidats', { headers: authH() });
@@ -1877,6 +1925,7 @@ renderTable(allCandidats);
 renderRecent(allCandidats);
 } catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
 }
+
 function populatePosteFilter(data) {
 const sel = document.getElementById('f-poste');
 const postes = [...new Set(data.map(c => c.poste))].sort();
@@ -1886,6 +1935,7 @@ const opt = document.createElement('option');
 opt.value = p; opt.textContent = p; sel.appendChild(opt);
 });
 }
+
 function applyFilters() {
 const search = document.getElementById('f-search').value.toLowerCase().trim();
 const poste = document.getElementById('f-poste').value;
@@ -1898,6 +1948,7 @@ return (!search || hay.includes(search))
 });
 renderTable(result);
 }
+
 const NOUVEAUX_POSTES_100PTS = [
 "Auditeur interne",
 "Chef service contrôle des engagements",
@@ -1907,12 +1958,14 @@ const NOUVEAUX_POSTES_100PTS = [
 "Chef service reporting réglementaire"
 ];
 const POSTES_AVEC_SCORING_12 = ["Chef de Section Compensation"];
+
 function getScoreMax(poste) {
 if (!poste) return 10;
 if (POSTES_AVEC_SCORING_12.includes(poste)) return 12;
 if (NOUVEAUX_POSTES_100PTS.includes(poste)) return 100;
 return 10;
 }
+
 function getDecisionFromScore(score, poste) {
 const s = parseInt(score) || 0;
 if (poste && POSTES_AVEC_SCORING_12.includes(poste)) {
@@ -1930,16 +1983,7 @@ if (s >= 8) return "Entretien prioritaire";
 if (s >= 6) return "Entretien si besoin";
 return "Rejet";
 }
-function analyseStatusBadge(c) {
-const s = c.analyse_status;
-if (s === 'pending' || s === 'reanalyzing') {
-return '<span class="analyse-spinner"><span class="dot"></span>Analyse en cours…</span>';
-}
-if (s === 'error') {
-return '<span class="analyse-spinner err">⚠ Erreur d\'analyse</span>';
-}
-return '';
-}
+
 function renderTable(data) {
 const tbody = document.getElementById('candidats-tbody');
 if (!data.length) {
@@ -1989,10 +2033,6 @@ scoreTitle += `\nTotal: ${sb.score_final || 0}/10`;
 }
 if (sb.note) scoreTitle += `\n${sb.note}`;
 }
-const statusBadge = analyseStatusBadge(c);
-const scoreCell = statusBadge
-? statusBadge
-: stars + ` <span style="color:var(--text-secondary);font-family:inherit">(${score}/${scoreMax})</span>`;
 return '<tr>'
 + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong>'
 + '<br><span class="td-small">' + c.email + '</span>'
@@ -2001,7 +2041,7 @@ return '<tr>'
 + '<td style="font-size:.82rem">' + c.poste + '</td>'
 + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
 + '<td>' + badgePill(c.statut || c.score_breakdown_parsed?.decision || '') + '</td>'
-+ '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace" title="' + escAttr(scoreTitle) + '">' + scoreCell + '</td>'
++ '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace" title="' + escAttr(scoreTitle) + '">' + stars + ` <span style="color:var(--text-secondary);font-family:inherit">(${score}/${scoreMax})</span>` + '</td>'
 + '<td style="display:flex;gap:0.25rem;flex-wrap:wrap">' + cvLink + lmLink + attLink + '</td>'
 + '<td class="td-actions">'
 + '<button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">Dossier</button>'
@@ -2010,6 +2050,7 @@ return '<tr>'
 + '</td></tr>';
 }).join('');
 }
+
 function renderRecent(data) {
 const container = document.getElementById('recent-table');
 const slice = data.slice(0, 8);
@@ -2023,17 +2064,13 @@ const scoreRaw = parseInt(c.score) || 0;
 const score = Math.max(0, Math.min(scoreMax, scoreRaw));
 const starUnit = scoreMax / 5;
 const stars = '★'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
-const statusBadge = analyseStatusBadge(c);
-const scoreCell = statusBadge
-? statusBadge
-: stars + ` <span style="color:var(--text-secondary);font-family:inherit">(${score}/${scoreMax})</span>`;
 return '<tr>'
 + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br>'
 + '<small style="color:var(--text-muted)">' + c.email + '</small></td>'
 + '<td style="font-size:.82rem">' + c.poste + '</td>'
 + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
 + '<td>' + badgePill(c.statut || c.score_breakdown_parsed?.decision || '') + '</td>'
-+ '<td style="font-size:.9rem;font-family:monospace">' + scoreCell + '</td>'
++ '<td style="font-size:.9rem;font-family:monospace">' + stars + ` <span style="color:var(--text-secondary);font-family:inherit">(${score}/${scoreMax})</span>` + '</td>'
 + '<td><button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">Voir →</button></td>'
 + '</tr>';
 }).join('');
@@ -2042,6 +2079,7 @@ container.innerHTML =
 + '<thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th>Score</th><th></th></tr></thead>'
 + '<tbody>' + rows + '</tbody></table></div>';
 }
+
 function openModal(id) {
 const c = allCandidats.find(x => x.id === id);
 if (!c) { showToast('Actualisez la liste d\'abord', 'error'); return; }
@@ -2070,18 +2108,11 @@ document.querySelector('.tab-btn').classList.add('active');
 document.getElementById('tab-eval').classList.add('active');
 document.getElementById('modal-candidat').classList.add('open');
 }
+
 function renderAnalyseResume(c) {
 const container = document.getElementById('analyse-resume');
 const content = document.getElementById('analyse-content');
-if (c.analyse_status === 'pending' || c.analyse_status === 'reanalyzing') {
-container.style.display = 'block';
-content.innerHTML = '<div class="bloc-alert attn"><strong>Analyse en cours…</strong>'
-+ '<div style="margin-top:.4rem">Les résultats ci-dessous peuvent correspondre à une analyse précédente et seront mis à jour automatiquement dès que la réanalyse de ce candidat sera terminée.</div></div>';
-}
-if (!c.score_breakdown_parsed) {
-if (c.analyse_status !== 'pending' && c.analyse_status !== 'reanalyzing') container.style.display = 'none';
-return;
-}
+if (!c.score_breakdown_parsed) { container.style.display = 'none'; return; }
 container.style.display = 'block';
 const sb = c.score_breakdown_parsed;
 const details = c.analyse_details_parsed || {};
@@ -2247,6 +2278,7 @@ html += '<div class="score-breakdown">'
 + '</div>';
 content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail disponible.</p>';
 }
+
 function info(label, val, raw) {
 return '<div>'
 + '<div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">' + label + '</div>'
@@ -2255,10 +2287,12 @@ return '<div>'
 }
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(s) { return String(s).replace(/"/g,'&quot;').replace(/\n/g,'\n'); }
+
 function closeModal() {
 document.getElementById('modal-candidat').classList.remove('open');
 currentC = null;
 }
+
 function renderStars(n, readonly = true) {
 const row = document.getElementById('stars-row');
 row.innerHTML = '';
@@ -2281,6 +2315,7 @@ scoreText.style.cssText = 'margin-left:1rem;font-weight:700;color:var(--primary)
 scoreText.textContent = `${score}/${scoreMax}`;
 row.appendChild(scoreText);
 }
+
 const GRILLE = {
 "Responsable Administration de Crédit": {
 eliminatoire: ["Expérience bancaire", "3 ans ou plus en crédit / risque", "Exposition aux garanties ou conformité"],
@@ -2395,6 +2430,7 @@ points_attention: [
 ]
 }
 };
+
 function renderGrille(poste, checklistJson, scoreBreakdown) {
 const g = GRILLE[poste];
 const el = document.getElementById('grille-content');
@@ -2432,6 +2468,7 @@ mkSection('Signaux forts — prioritaire', '#16a34a', g.signaux_forts, 'signal')
 mkSection("Points d'attention", '#64748b', g.points_attention, 'attn');
 if (hasEliminatoire) { showEliminationAlert(checked); }
 }
+
 function showEliminationAlert(checked) {
 const overlay = document.getElementById('elimination-alert-overlay');
 const alert = document.getElementById('elimination-alert');
@@ -2482,10 +2519,12 @@ details.innerHTML = criteriaHtml;
 overlay.style.display = 'block';
 alert.style.display = 'block';
 }
+
 function closeEliminationAlert() {
 document.getElementById('elimination-alert-overlay').style.display = 'none';
 document.getElementById('elimination-alert').style.display = 'none';
 }
+
 async function updateStatut(statut) {
 if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
 const note = document.getElementById('modal-note').value;
@@ -2510,6 +2549,7 @@ showToast(d.error || 'Erreur lors de la mise à jour', 'error');
 }
 } catch (e) { showToast('Erreur de connexion', 'error'); console.error(e); }
 }
+
 function openEmailModal() {
 if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
 const sel = document.getElementById('email-type');
@@ -2527,6 +2567,7 @@ sel.value = allStatuses.includes(statut) ? statut : 'retenu';
 buildEmail();
 document.getElementById('modal-email').classList.add('open');
 }
+
 function quickEmail(id) {
 const c = allCandidats.find(x => x.id === id);
 if (!c) return;
@@ -2546,6 +2587,7 @@ sel.value = allStatuses.includes(statut) ? statut : 'retenu';
 buildEmail();
 document.getElementById('modal-email').classList.add('open');
 }
+
 async function quickReanalyze(id) {
 const c = allCandidats.find(x => x.id === id);
 if (!c) return;
@@ -2554,10 +2596,6 @@ try {
 const res = await fetch(`${API}/recruteur/candidats/${id}/analyze`, { method: 'POST', headers: authH() });
 if (res.ok) {
 showToast('Analyse relancée. Résultats dans quelques instants.', 'success');
-const idx = allCandidats.findIndex(x => x.id === id);
-if (idx !== -1) allCandidats[idx].analyse_status = 'pending';
-renderTable(allCandidats);
-renderRecent(allCandidats);
 setTimeout(fetchCandidats, 3000);
 } else {
 const data = await res.json().catch(() => ({}));
@@ -2567,6 +2605,7 @@ showToast(data.error || 'Erreur serveur', 'error');
 showToast('Erreur: ' + e.message, 'error');
 }
 }
+
 function buildEmail() {
 if (!currentC) return;
 const type = document.getElementById('email-type').value;
@@ -2576,6 +2615,7 @@ document.getElementById('ep-to').textContent = nom + ' <' + currentC.email + '>'
 document.getElementById('ep-subject').textContent = emailSubject(type, pos);
 document.getElementById('ep-body').value = emailBody(type, nom, pos);
 }
+
 function emailSubject(type, poste) {
 const subjects = {
 retenu: 'Candidature retenue – ' + poste,
@@ -2591,6 +2631,7 @@ Rejet: 'Réponse à votre candidature – ' + poste,
 };
 return subjects[type] || '';
 }
+
 function emailBody(type, nom, poste) {
 const sign = '\n\nCordialement,\nL\'équipe Ressources Humaines\nRecrutBank';
 if (POSTES_AVEC_SCORING_12.includes(poste)) {
@@ -2613,6 +2654,7 @@ if (type === 'entretien')
 return 'Madame, Monsieur ' + nom + ',\n\nSuite à l\'examen de votre candidature pour le poste de ' + poste + ', nous avons le plaisir de vous inviter à un entretien avec notre équipe.\n\nNous prendrons contact avec vous dans les meilleurs délais pour convenir d\'une date et d\'un horaire.' + sign;
 return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions sincèrement de l\'intérêt que vous portez à notre institution et du temps consacré à votre candidature pour le poste de ' + poste + '.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour la suite du processus de sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil, et vous souhaitons plein succès dans votre recherche.' + sign;
 }
+
 function copyEmail() {
 const to = currentC ? currentC.email : '';
 const sub = document.getElementById('ep-subject').textContent;
@@ -2621,6 +2663,7 @@ navigator.clipboard.writeText('À: ' + to + '\nObjet: ' + sub + '\n' + bdy)
 .then(() => showToast('Email copié dans le presse-papiers', 'success'))
 .catch(() => { document.getElementById('ep-body').select(); showToast('Sélectionnez le texte et Ctrl+C', 'info'); });
 }
+
 function openMailClient() {
 if (!currentC) return;
 const to = encodeURIComponent(currentC.email);
@@ -2628,6 +2671,7 @@ const sub = encodeURIComponent(document.getElementById('ep-subject').textContent
 const bdy = encodeURIComponent(document.getElementById('ep-body').value);
 window.open('mailto:' + to + '?subject=' + sub + '&body=' + bdy);
 }
+
 function badgePill(s) {
 const statuses12 = ['🥇 Entretien prioritaire', '🥈 Entretien si besoin (vivier de réserve)', '🥈 Entretien si besoin (vivier)', '❌ Rejet', '❌ Rejet (éliminatoire)'];
 if (statuses12.includes(s)) {
@@ -2650,8 +2694,10 @@ const cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge
 const lbl = { en_attente:'En attente', retenu:'Retenu', rejete:'Non retenu', entretien:'Entretien' };
 return '<span class="badge ' + (cls[s]||'badge-pending') + '">' + (lbl[s]||s) + '</span>';
 }
+
 function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR') : '–'; }
 function fmtDateLong(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) : '–'; }
+
 window.debugEliminationAlert = function(candidatId) {
 const c = allCandidats.find(x => x.id === candidatId);
 if (!c) { console.log(`❌ Candidat ${candidatId} non trouvé`); return; }
@@ -2664,16 +2710,10 @@ try { checked = JSON.parse(c.checklist || '{}'); } catch {}
 showEliminationAlert(checked);
 console.log(`✅ Alert triggered (si éliminé)`);
 };
+
 fetchStats();
 fetchCandidats();
-const savedReanalyzeState = loadReanalyzeState();
-if (savedReanalyzeState) {
-currentReanalyzeScope = savedReanalyzeState.scope || null;
-showGlobalBanner();
-startReanalyzePolling();
-} else {
 checkReanalyzeStatus();
-}
 </script>
 </body>
 </html>
