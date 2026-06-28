@@ -287,7 +287,7 @@ fetch(`${API}/postes`)
 </div>`;
         
         const optionDisabled = isActive ? "" : "disabled";
-        const optionLabel = isActive ? p : `🔒 ${p} (bientôt)`;
+        const optionLabel = isActive ? p : `🔒 ${p} (clôturé)`;
         sel.innerHTML += `<option value="${p}" ${optionDisabled} data-category="${info.category||""}" data-senior="${info.senior||false}" data-reduce-letter="${info.reduceLetter||false}" data-active="${isActive}">${optionLabel}</option>`;
     });
     
