@@ -85,6 +85,69 @@ font-size: 0.85rem;
 transition: color 0.2s;
 }
 .nav-links a:hover { color: white; }
+.reanalyze-global-banner {
+position: sticky;
+top: 60px;
+z-index: 90;
+background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+color: white;
+padding: 0.65rem 1.5rem;
+display: none;
+align-items: center;
+gap: 1rem;
+box-shadow: var(--shadow);
+flex-wrap: wrap;
+}
+.reanalyze-global-banner.done {
+background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+}
+.rgb-icon { font-size: 1.3rem; flex-shrink: 0; }
+.rgb-text { flex-shrink: 0; min-width: 200px; }
+.rgb-title { font-weight: 700; font-size: 0.85rem; }
+.rgb-detail { font-size: 0.75rem; opacity: 0.9; margin-top: 1px; }
+.rgb-progress { flex: 1; display: flex; align-items: center; gap: 0.6rem; min-width: 200px; max-width: 420px; }
+.rgb-progress .progress-bar-bg { flex: 1; background: rgba(255,255,255,.25); height: 8px; border-radius: 4px; overflow: hidden; }
+.rgb-progress .progress-bar-fill { background: white; height: 100%; width: 0%; transition: width 0.5s; border-radius: 4px; }
+#rgb-percent { font-weight: 700; font-size: 0.8rem; min-width: 38px; text-align: right; flex-shrink: 0; }
+.rgb-close {
+background: rgba(255,255,255,.2);
+border: none;
+color: white;
+width: 26px;
+height: 26px;
+border-radius: 50%;
+cursor: pointer;
+font-size: 1rem;
+flex-shrink: 0;
+margin-left: auto;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.rgb-close:hover { background: rgba(255,255,255,.35); }
+.analyse-spinner {
+display: inline-flex;
+align-items: center;
+gap: 0.35rem;
+font-size: 0.72rem;
+font-weight: 600;
+color: var(--warning);
+background: var(--warning-light);
+padding: 0.2rem 0.55rem;
+border-radius: 10px;
+white-space: nowrap;
+}
+.analyse-spinner.err { color: var(--danger); background: var(--danger-light); }
+.analyse-spinner .dot {
+width: 6px;
+height: 6px;
+border-radius: 50%;
+background: var(--warning);
+animation: blink 1.1s infinite;
+flex-shrink: 0;
+}
+.analyse-spinner.err .dot { background: var(--danger); animation: none; }
+@keyframes blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 .dash-layout {
 display: grid;
 grid-template-columns: 240px 1fr;
@@ -409,6 +472,7 @@ color: var(--text-secondary);
 border: none;
 }
 .btn-ghost:hover { background: var(--bg-light); color: var(--text); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 .form-control {
 padding: 0.5rem 0.75rem;
 border: 1px solid var(--border);
@@ -998,6 +1062,8 @@ to { opacity: 1; transform: translateX(0); }
 .export-controls, .reanalyze-controls { justify-content: flex-start; width: 100%; }
 .export-buttons { width: 100%; }
 .export-btn { flex: 1; }
+.reanalyze-global-banner { padding: 0.65rem 1rem; }
+.rgb-progress { width: 100%; max-width: none; order: 3; }
 }
 @media (max-width: 576px) {
 .export-buttons { flex-direction: column; }
@@ -1023,6 +1089,20 @@ to { opacity: 1; transform: translateX(0); }
 <button class="btn btn-sm" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.2);" onclick="logout()">Déconnexion</button>
 </div>
 </nav>
+<div id="reanalyze-global-banner" class="reanalyze-global-banner">
+<div class="rgb-icon" id="rgb-icon">⏳</div>
+<div class="rgb-text">
+<div class="rgb-title" id="rgb-title">Réanalyse en cours…</div>
+<div class="rgb-detail" id="rgb-detail">0 / 0 candidatures traitées</div>
+</div>
+<div class="rgb-progress">
+<div class="progress-bar-bg">
+<div id="rgb-progress-bar" class="progress-bar-fill"></div>
+</div>
+<span id="rgb-percent">0%</span>
+</div>
+<button class="rgb-close" onclick="hideGlobalBanner()" title="Masquer (l'analyse continue en arrière-plan)">×</button>
+</div>
 <div class="dash-layout">
 <aside class="sidebar">
 <div class="sidebar-user">
@@ -1358,6 +1438,9 @@ let currentC = null;
 let currentScore = 0;
 let currentReanalyzeScope = null;
 let reanalyzePollingInterval = null;
+const REANALYZE_LS_KEY = 'rb_reanalyze_active';
+const REANALYZE_LS_TTL_MS = 30 * 60 * 1000;
+const REANALYZE_POLL_MAX_MS = 30 * 60 * 1000;
 if (!jwtToken) { window.location.href = 'login.html'; }
 const nomRH = localStorage.getItem('rh_nom') || 'Recruteur';
 document.getElementById('nav-nom').textContent = nomRH;
@@ -1365,6 +1448,27 @@ document.getElementById('sidebar-nom').textContent = nomRH;
 document.getElementById('sidebar-avatar').textContent = nomRH.charAt(0).toUpperCase();
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 function authH() { return { 'Authorization': 'Bearer ' + jwtToken, 'Content-Type': 'application/json' }; }
+function saveReanalyzeState(scope) {
+try { localStorage.setItem(REANALYZE_LS_KEY, JSON.stringify({ scope: scope || '', ts: Date.now() })); } catch (e) {}
+}
+function clearReanalyzeState() {
+try { localStorage.removeItem(REANALYZE_LS_KEY); } catch (e) {}
+}
+function loadReanalyzeState() {
+try {
+const raw = localStorage.getItem(REANALYZE_LS_KEY);
+if (!raw) return null;
+const data = JSON.parse(raw);
+if (Date.now() - data.ts > REANALYZE_LS_TTL_MS) { clearReanalyzeState(); return null; }
+return data;
+} catch (e) { return null; }
+}
+function showGlobalBanner() {
+document.getElementById('reanalyze-global-banner').style.display = 'flex';
+}
+function hideGlobalBanner() {
+document.getElementById('reanalyze-global-banner').style.display = 'none';
+}
 function parseJSONField(raw, fieldName, candidatId, poste) {
 if (!raw) return null;
 try {
@@ -1495,8 +1599,13 @@ title.textContent = 'Réanalyser tous les dossiers';
 message.textContent = "Relancer l'analyse de toutes les candidatures avec les règles actuelles ? Cette opération peut prendre plusieurs minutes.";
 }
 document.getElementById('reanalyze-progress-modal').style.display = 'none';
-document.getElementById('btn-confirm-reanalyze').disabled = false;
-document.getElementById('btn-cancel-reanalyze').disabled = false;
+const btnConfirm = document.getElementById('btn-confirm-reanalyze');
+const btnCancel = document.getElementById('btn-cancel-reanalyze');
+btnConfirm.disabled = false;
+btnConfirm.textContent = 'Confirmer';
+btnConfirm.onclick = confirmReanalyze;
+btnCancel.disabled = false;
+btnCancel.style.display = 'inline-block';
 document.getElementById('modal-reanalyze').classList.add('open');
 }
 function closeReanalyzeModal() {
@@ -1523,14 +1632,17 @@ if (!response.ok) throw new Error(data.error || 'Erreur serveur');
 document.getElementById('reanalyze-progress-text-modal').textContent = `Réanalyse lancée : ${data.reanalyzed_count} dossier(s)`;
 const statusEl = document.getElementById('reanalyze-status');
 statusEl.style.display = 'inline-block';
+statusEl.style.background = 'rgba(255,255,255,0.2)';
 statusEl.textContent = `${data.reanalyzed_count} dossier(s) en cours`;
 showToast(`${data.message}`, 'success');
+saveReanalyzeState(currentReanalyzeScope);
+showGlobalBanner();
+document.getElementById('reanalyze-global-banner').classList.remove('done');
+btnCancel.style.display = 'none';
+btnConfirm.textContent = 'Fermer (continue en arrière-plan)';
+btnConfirm.disabled = false;
+btnConfirm.onclick = closeReanalyzeModal;
 startReanalyzePolling();
-setTimeout(() => {
-closeReanalyzeModal();
-fetchCandidats();
-fetchStats();
-}, 2500);
 } catch (error) {
 console.error('Erreur réanalyse:', error);
 document.getElementById('reanalyze-progress-text-modal').innerHTML = `<span style="color:var(--danger)">Erreur : ${error.message}</span>`;
@@ -1548,11 +1660,17 @@ if (reanalyzePollingInterval) {
 clearInterval(reanalyzePollingInterval);
 reanalyzePollingInterval = null;
 }
-}, 600000);
+}, REANALYZE_POLL_MAX_MS);
 }
 async function checkReanalyzeStatus() {
 try {
-const response = await fetch(`${API}/recruteur/reanalyze-status`, { headers: authH() });
+const savedState = loadReanalyzeState();
+const scope = (currentReanalyzeScope !== null && currentReanalyzeScope !== undefined && currentReanalyzeScope !== '')
+? currentReanalyzeScope
+: (savedState ? savedState.scope : '');
+let url = `${API}/recruteur/reanalyze-status`;
+if (scope) url += `?poste=${encodeURIComponent(scope)}`;
+const response = await fetch(url, { headers: authH() });
 if (!response.ok) return;
 const data = await response.json();
 const total = data.total_candidatures || 0;
@@ -1561,6 +1679,7 @@ const completed = counts.completed || 0;
 const reanalyzing = counts.reanalyzing || 0;
 const pending = counts.pending || 0;
 const errors = counts.error || 0;
+const isActive = reanalyzing > 0 || pending > 0;
 const statusEl = document.getElementById('reanalyze-status');
 const progressInline = document.getElementById('reanalyze-progress-inline');
 const progressBar = document.getElementById('reanalyze-progress-bar');
@@ -1571,29 +1690,64 @@ const progressBarModal = document.getElementById('reanalyze-progress-bar-modal')
 const progressTextModal = document.getElementById('reanalyze-progress-text-modal');
 const progressCountModal = document.getElementById('reanalyze-progress-count-modal');
 const progressDetailModal = document.getElementById('reanalyze-status-detail-modal');
-if (reanalyzing > 0 || pending > 0) {
+const banner = document.getElementById('reanalyze-global-banner');
+const rgbIcon = document.getElementById('rgb-icon');
+const rgbTitle = document.getElementById('rgb-title');
+const rgbDetail = document.getElementById('rgb-detail');
+const rgbPercent = document.getElementById('rgb-percent');
+const rgbBar = document.getElementById('rgb-progress-bar');
+const modalOpen = document.getElementById('modal-reanalyze').classList.contains('open');
+if (isActive) {
 const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+banner.style.display = 'flex';
+banner.classList.remove('done');
+rgbIcon.textContent = '⏳';
+rgbTitle.textContent = scope ? `Réanalyse en cours — ${scope}` : 'Réanalyse en cours — tous les postes';
+rgbDetail.textContent = `${completed} / ${total} traités${errors > 0 ? ` · ${errors} erreur(s)` : ''}`;
+rgbPercent.textContent = progress + '%';
+rgbBar.style.width = progress + '%';
 statusEl.style.display = 'inline-block';
 statusEl.textContent = `${completed}/${total} (${progress}%)${errors > 0 ? ` · ${errors} erreur(s)` : ''}`;
 progressInline.style.display = 'block';
 progressBar.style.width = progress + '%';
-progressBarModal.style.width = progress + '%';
 progressText.textContent = 'Analyse en cours...';
-progressTextModal.textContent = 'Analyse en cours...';
 progressCount.textContent = `${completed}/${total}`;
-progressCountModal.textContent = `${completed}/${total}`;
 const detail = `Terminés : ${completed} · En cours : ${reanalyzing} · En attente : ${pending}${errors > 0 ? ` · Erreurs : ${errors}` : ''}`;
 progressDetail.textContent = detail;
+if (modalOpen) {
+progressBarModal.style.width = progress + '%';
+progressTextModal.textContent = 'Analyse en cours...';
+progressCountModal.textContent = `${completed}/${total}`;
 progressDetailModal.textContent = detail;
+}
+fetchCandidats();
 } else if (total > 0) {
+const wasActive = banner.style.display === 'flex' && !banner.classList.contains('done');
 statusEl.style.display = 'inline-block';
 statusEl.textContent = 'Analyses à jour';
 statusEl.style.background = 'rgba(22, 163, 74, 0.3)';
 progressInline.style.display = 'none';
+if (wasActive) {
+banner.classList.add('done');
+rgbIcon.textContent = '✅';
+rgbTitle.textContent = 'Réanalyse terminée';
+rgbDetail.textContent = `${completed} candidature(s) traitée(s)${errors > 0 ? ` · ${errors} erreur(s)` : ''}`;
+rgbPercent.textContent = '100%';
+rgbBar.style.width = '100%';
+setTimeout(hideGlobalBanner, 6000);
+if (modalOpen) {
+progressTextModal.textContent = '✅ Réanalyse terminée';
+progressBarModal.style.width = '100%';
+progressCountModal.textContent = `${completed}/${total}`;
+}
+showToast('Réanalyse terminée', 'success');
+}
 if (reanalyzePollingInterval) {
 clearInterval(reanalyzePollingInterval);
 reanalyzePollingInterval = null;
 }
+clearReanalyzeState();
+currentReanalyzeScope = null;
 fetchCandidats();
 fetchStats();
 }
@@ -1608,15 +1762,14 @@ try {
 const res = await fetch(`${API}/recruteur/candidats/${currentC.id}/analyze`, { method: 'POST', headers: authH() });
 if (res.ok) {
 showToast('Analyse relancée. Résultats disponibles dans quelques instants.', 'success');
+const id = currentC.id;
 setTimeout(() => {
 fetchCandidats();
-if (currentC) {
-const updated = allCandidats.find(x => x.id === currentC.id);
+const updated = allCandidats.find(x => x.id === id);
 if (updated) {
 currentC = updated;
 renderAnalyseResume(updated);
 renderGrille(updated.poste, updated.checklist || '', updated.score_breakdown_parsed);
-}
 }
 }, 3000);
 } else {
@@ -1777,6 +1930,16 @@ if (s >= 8) return "Entretien prioritaire";
 if (s >= 6) return "Entretien si besoin";
 return "Rejet";
 }
+function analyseStatusBadge(c) {
+const s = c.analyse_status;
+if (s === 'pending' || s === 'reanalyzing') {
+return '<span class="analyse-spinner"><span class="dot"></span>Analyse en cours…</span>';
+}
+if (s === 'error') {
+return '<span class="analyse-spinner err">⚠ Erreur d\'analyse</span>';
+}
+return '';
+}
 function renderTable(data) {
 const tbody = document.getElementById('candidats-tbody');
 if (!data.length) {
@@ -1826,6 +1989,10 @@ scoreTitle += `\nTotal: ${sb.score_final || 0}/10`;
 }
 if (sb.note) scoreTitle += `\n${sb.note}`;
 }
+const statusBadge = analyseStatusBadge(c);
+const scoreCell = statusBadge
+? statusBadge
+: stars + ` <span style="color:var(--text-secondary);font-family:inherit">(${score}/${scoreMax})</span>`;
 return '<tr>'
 + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong>'
 + '<br><span class="td-small">' + c.email + '</span>'
@@ -1834,7 +2001,7 @@ return '<tr>'
 + '<td style="font-size:.82rem">' + c.poste + '</td>'
 + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
 + '<td>' + badgePill(c.statut || c.score_breakdown_parsed?.decision || '') + '</td>'
-+ '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace" title="' + escAttr(scoreTitle) + '">' + stars + ` <span style="color:var(--text-secondary);font-family:inherit">(${score}/${scoreMax})</span>` + '</td>'
++ '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace" title="' + escAttr(scoreTitle) + '">' + scoreCell + '</td>'
 + '<td style="display:flex;gap:0.25rem;flex-wrap:wrap">' + cvLink + lmLink + attLink + '</td>'
 + '<td class="td-actions">'
 + '<button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">Dossier</button>'
@@ -1856,13 +2023,17 @@ const scoreRaw = parseInt(c.score) || 0;
 const score = Math.max(0, Math.min(scoreMax, scoreRaw));
 const starUnit = scoreMax / 5;
 const stars = '★'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
+const statusBadge = analyseStatusBadge(c);
+const scoreCell = statusBadge
+? statusBadge
+: stars + ` <span style="color:var(--text-secondary);font-family:inherit">(${score}/${scoreMax})</span>`;
 return '<tr>'
 + '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br>'
 + '<small style="color:var(--text-muted)">' + c.email + '</small></td>'
 + '<td style="font-size:.82rem">' + c.poste + '</td>'
 + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
 + '<td>' + badgePill(c.statut || c.score_breakdown_parsed?.decision || '') + '</td>'
-+ '<td style="font-size:.9rem;font-family:monospace">' + stars + ` <span style="color:var(--text-secondary);font-family:inherit">(${score}/${scoreMax})</span>` + '</td>'
++ '<td style="font-size:.9rem;font-family:monospace">' + scoreCell + '</td>'
 + '<td><button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">Voir →</button></td>'
 + '</tr>';
 }).join('');
@@ -1902,7 +2073,15 @@ document.getElementById('modal-candidat').classList.add('open');
 function renderAnalyseResume(c) {
 const container = document.getElementById('analyse-resume');
 const content = document.getElementById('analyse-content');
-if (!c.score_breakdown_parsed) { container.style.display = 'none'; return; }
+if (c.analyse_status === 'pending' || c.analyse_status === 'reanalyzing') {
+container.style.display = 'block';
+content.innerHTML = '<div class="bloc-alert attn"><strong>Analyse en cours…</strong>'
++ '<div style="margin-top:.4rem">Les résultats ci-dessous peuvent correspondre à une analyse précédente et seront mis à jour automatiquement dès que la réanalyse de ce candidat sera terminée.</div></div>';
+}
+if (!c.score_breakdown_parsed) {
+if (c.analyse_status !== 'pending' && c.analyse_status !== 'reanalyzing') container.style.display = 'none';
+return;
+}
 container.style.display = 'block';
 const sb = c.score_breakdown_parsed;
 const details = c.analyse_details_parsed || {};
@@ -2375,6 +2554,10 @@ try {
 const res = await fetch(`${API}/recruteur/candidats/${id}/analyze`, { method: 'POST', headers: authH() });
 if (res.ok) {
 showToast('Analyse relancée. Résultats dans quelques instants.', 'success');
+const idx = allCandidats.findIndex(x => x.id === id);
+if (idx !== -1) allCandidats[idx].analyse_status = 'pending';
+renderTable(allCandidats);
+renderRecent(allCandidats);
 setTimeout(fetchCandidats, 3000);
 } else {
 const data = await res.json().catch(() => ({}));
@@ -2483,7 +2666,14 @@ console.log(`✅ Alert triggered (si éliminé)`);
 };
 fetchStats();
 fetchCandidats();
+const savedReanalyzeState = loadReanalyzeState();
+if (savedReanalyzeState) {
+currentReanalyzeScope = savedReanalyzeState.scope || null;
+showGlobalBanner();
+startReanalyzePolling();
+} else {
 checkReanalyzeStatus();
+}
 </script>
 </body>
 </html>
