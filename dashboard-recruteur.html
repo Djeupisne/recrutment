@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tableau de Bord – Recrutement | RecrutBank</title>
-<link rel="stylesheet" href="style.css">
 <style>
 :root {
 --primary: #1a3a5c;
@@ -1413,7 +1412,6 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 <div id="floating-progress-detail" class="progress-detail">Préparation...</div>
 </div>
 <div class="toast-container" id="toast-container"></div>
-<script src="script.js"></script>
 <script>
 const API = 'https://backend1-fiq5.onrender.com/api';
 let jwtToken = localStorage.getItem('rh_token');
@@ -1439,7 +1437,6 @@ parsed.bloc1_eliminatoire = (val === true || val === "true" || val === 1 || val 
 }
 return parsed;
 } catch (e) {
-console.warn(`⚠️ Échec parsing ${fieldName} pour candidat ${candidatId} (poste: ${poste}):`, e.message);
 return null;
 }
 }
@@ -1505,7 +1502,6 @@ a.click();
 setTimeout(() => { window.URL.revokeObjectURL(urlBlob); document.body.removeChild(a); }, 100);
 showToast(`Rapport ${format.toUpperCase()} ${scope} téléchargé`, 'success');
 } catch (error) {
-console.error('Erreur export:', error);
 showToast(`Erreur: ${error.message}`, 'error');
 }
 }
@@ -1541,7 +1537,6 @@ a.click();
 setTimeout(() => { window.URL.revokeObjectURL(urlBlob); document.body.removeChild(a); }, 100);
 showToast(`Dossiers candidats téléchargés`, 'success');
 } catch (error) {
-console.error('Erreur téléchargement ZIP:', error);
 showToast(`Erreur: ${error.message}`, 'error');
 }
 }
@@ -1593,7 +1588,6 @@ showToast(`${data.message || 'Réanalyse lancée avec succès'}`, 'success');
 closeReanalyzeModal();
 startReanalyzePolling();
 } catch (error) {
-console.error('Erreur réanalyse:', error);
 document.getElementById('reanalyze-progress-text-modal').innerHTML = `<span style="color:var(--danger)">Erreur : ${error.message}</span>`;
 btnConfirm.disabled = false;
 btnCancel.disabled = false;
@@ -1661,9 +1655,7 @@ reanalyzePollingInterval = null;
 fetchCandidats();
 fetchStats();
 }
-} catch (error) {
-console.error('Erreur checkReanalyzeStatus:', error);
-}
+} catch (error) {}
 }
 function showFloatingProgress(title, isIndeterminate = false) {
 const widget = document.getElementById('floating-progress');
@@ -1763,7 +1755,7 @@ async function fetchStats() {
 try {
 const res = await fetch(API + '/recruteur/stats', { headers: authH() });
 if (res.status === 401) { logout(); return; }
-if (!res.ok) { console.error('Stats HTTP', res.status); return; }
+if (!res.ok) { return; }
 const d = await res.json();
 document.getElementById('s-total').textContent = d.total;
 document.getElementById('s-attente').textContent = d.en_attente;
@@ -1773,7 +1765,7 @@ document.getElementById('s-entretien').textContent = d.entretien;
 document.getElementById('donut-total').textContent = d.total;
 renderDonut(d);
 renderBarChart(d.by_poste || []);
-} catch (e) { console.error('fetchStats:', e); }
+} catch (e) {}
 }
 function renderDonut(d) {
 const total = d.total || 1;
@@ -1840,7 +1832,7 @@ populatePosteFilter(allCandidats);
 populateExportPosteSelect(allCandidats);
 renderTable(allCandidats);
 renderRecent(allCandidats);
-} catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
+} catch (e) { showToast('Erreur connexion serveur', 'error'); }
 }
 function populatePosteFilter(data) {
 const sel = document.getElementById('f-poste');
@@ -2378,8 +2370,6 @@ const details = document.getElementById('elimination-alert-details');
 const poste = currentC?.poste;
 const g = GRILLE[poste];
 if (!g) {
-console.error(`❌ ALERTE ÉLIMINATOIRE : Poste non trouvé dans GRILLE frontend`);
-console.error(`   Poste reçu : "${poste}"`);
 const sb = currentC?.score_breakdown_parsed;
 if (sb?.bloc1_eliminatoire) {
 details.innerHTML = `
@@ -2447,7 +2437,7 @@ fetchStats();
 const d = await res.json().catch(() => ({}));
 showToast(d.error || 'Erreur lors de la mise à jour', 'error');
 }
-} catch (e) { showToast('Erreur de connexion', 'error'); console.error(e); }
+} catch (e) { showToast('Erreur de connexion', 'error'); }
 }
 function openEmailModal() {
 if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
@@ -2587,18 +2577,17 @@ return '<span class="badge ' + (cls[s]||'badge-pending') + '">' + (lbl[s]||s) + 
 }
 function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR') : '–'; }
 function fmtDateLong(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) : '–'; }
-window.debugEliminationAlert = function(candidatId) {
-const c = allCandidats.find(x => x.id === candidatId);
-if (!c) { console.log(`❌ Candidat ${candidatId} non trouvé`); return; }
-console.log(`🔍 Debug candidat : ${c.prenom} ${c.nom} – ${c.poste}`);
-console.log(`   Score breakdown :`, c.score_breakdown_parsed);
-console.log(`   Bloc1 éliminatoire :`, c.score_breakdown_parsed?.bloc1_eliminatoire);
-currentC = c;
-let checked = {};
-try { checked = JSON.parse(c.checklist || '{}'); } catch {}
-showEliminationAlert(checked);
-console.log(`✅ Alert triggered (si éliminé)`);
-};
+function showToast(msg, type = 'info') {
+const container = document.getElementById('toast-container');
+const toast = document.createElement('div');
+toast.className = 'toast ' + type;
+toast.textContent = msg;
+container.appendChild(toast);
+setTimeout(() => {
+toast.style.opacity = '0';
+setTimeout(() => toast.remove(), 300);
+}, 4000);
+}
 fetchStats();
 fetchCandidats();
 checkReanalyzeStatus();
