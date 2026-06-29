@@ -5,6 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Suivi Candidature – RecrutBank</title>
 <link rel="stylesheet" href="style.css">
+<style>
+.confirmation-banner {
+background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+color: white;
+padding: 1.5rem 2rem;
+border-radius: 12px;
+margin-bottom: 1.5rem;
+text-align: center;
+box-shadow: 0 4px 16px rgba(22, 163, 74, 0.25);
+animation: slideDown 0.5s ease-out;
+}
+.confirmation-banner .icon {
+font-size: 2.5rem;
+margin-bottom: 0.5rem;
+display: block;
+}
+.confirmation-banner h2 {
+margin: 0 0 0.5rem 0;
+font-size: 1.3rem;
+font-weight: 700;
+}
+.confirmation-banner p {
+margin: 0;
+font-size: 0.95rem;
+opacity: 0.95;
+line-height: 1.5;
+}
+.confirmation-banner .email-hint {
+margin-top: 0.8rem;
+font-size: 0.85rem;
+opacity: 0.85;
+font-style: italic;
+}
+@keyframes slideDown {
+from { opacity: 0; transform: translateY(-20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+</style>
 </head>
 <body>
 <nav class="navbar">
@@ -18,6 +56,9 @@
 <div style="max-width:640px;margin:0 auto">
 <h1 style="font-size:1.8rem;font-weight:800;color:var(--primary);text-align:center;margin-bottom:.5rem">Suivi de Candidature</h1>
 <p style="text-align:center;color:var(--text-muted);margin-bottom:2rem">Entrez votre numéro de suivi pour consulter l'état de votre dossier</p>
+
+<div id="confirmation-area"></div>
+
 <div class="card">
 <div style="display:flex;gap:.8rem;margin-bottom:1.2rem">
 <input class="form-control" id="token-input" placeholder="Votre numéro de suivi...">
@@ -41,13 +82,30 @@
 <script>
 const API = 'https://backend1-fiq5.onrender.com/api';
 const urlToken = new URLSearchParams(window.location.search).get('token');
+
 if(urlToken) {
 document.getElementById('token-input').value = urlToken;
+showConfirmationMessage();
 checkStatut();
 }
+
+function showConfirmationMessage() {
+const area = document.getElementById('confirmation-area');
+area.innerHTML = `
+<div class="confirmation-banner">
+<span class="icon"></span>
+<h2>Candidature soumise avec succès !</h2>
+<p>Votre dossier a bien été reçu et est en cours de traitement.<br>
+<strong>Un email de confirmation</strong> vous a été envoyé à l'adresse que vous avez renseignée.</p>
+<p class="email-hint">📧 Vérifiez votre boîte de réception (et vos spams) dans les prochaines minutes.</p>
+</div>
+`;
+}
+
 document.getElementById('token-input').addEventListener('keypress', e => {
 if(e.key === 'Enter') checkStatut();
 });
+
 async function checkStatut() {
 const token = document.getElementById('token-input').value.trim();
 if(!token) return;
@@ -68,9 +126,9 @@ entretien:'badge-interview'
 };
 const labels = {
 en_attente:'⏳ En attente d\'examen',
-retenu:'✅ Candidature retenue',
-rejete:'❌ Candidature non retenue',
-entretien:'📅 Convoqué(e) en entretien'
+retenu:'Candidature retenue',
+rejete:'Candidature non retenue',
+entretien:'Convoqué(e) en entretien'
 };
 const messages = {
 en_attente: 'Votre dossier est en cours d\'examen par notre équipe RH. Nous vous contacterons dès que possible.',
@@ -78,7 +136,7 @@ retenu: 'Félicitations ! Votre candidature a été retenue. Notre équipe vous 
 rejete: 'Après examen attentif de votre dossier, votre candidature n\'a pas été retenue pour cette sélection. Nous vous remercions de votre intérêt.',
 entretien: 'Votre profil nous a intéressé. Vous allez être contacté(e) pour un entretien. Préparez-vous !'
 };
-const icons = { en_attente:'⏳', retenu:'🎉', rejete:'😔', entretien:'🤝' };
+const icons = { en_attente:'', retenu:'', rejete:'', entretien:'' };
 area.innerHTML = `
 <div style="text-align:center;padding:1.5rem 0">
 <div style="font-size:3rem;margin-bottom:.8rem">${icons[d.statut]||'📋'}</div>
