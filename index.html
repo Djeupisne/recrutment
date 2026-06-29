@@ -424,9 +424,6 @@ Utilisez le numéro de suivi dans la section <strong>Suivi de dossier</strong> c
 <script>
 const API = 'https://backend1-fiq5.onrender.com/api';
 
-// ══════════════════════════════════════════════════════════════
-// ✅ CONFIGURATION DES POSTES
-// ══════════════════════════════════════════════════════════════
 const POSTES_INFO = {
     "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS", category:"credit", active:false },
     "Analyste Crédit CCB":                  { icon:"📊", desc:"Analyse financière, montage et suivi de crédits", category:"credit", active:false },
@@ -434,7 +431,7 @@ const POSTES_INFO = {
     "Senior Finance Officer":               { icon:"💰", desc:"Pilotage financier et reporting senior", category:"finance", active:false },
     "Market Risk Officer":                  { icon:"📈", desc:"Gestion et modélisation des risques de marché", category:"risque", active:false },
     "IT Réseau & Infrastructure":           { icon:"🖥️", desc:"Administration réseau, sécurité et infrastructure", category:"it", active:false },
-    "Auditeur interne":                     { icon:"🔍", desc:"Audit interne et contrôle des processus", category:"audit", active:false },
+    "Auditeur interne":                     { icon:"", desc:"Audit interne et contrôle des processus", category:"audit", active:false },
     "Chef service contrôle des engagements":{ icon:"📋", desc:"Contrôle des engagements et garanties", category:"risque", active:false },
     "Chef service IT (maintenance/support)":{ icon:"🛠️", desc:"Maintenance et support informatique", category:"it", active:false },
     "Chef service finance":                 { icon:"💵", desc:"Management de la fonction finance", category:"finance", active:false },
@@ -461,9 +458,7 @@ fetch(`${API}/postes`)
     const activePostes = [];
     postes.forEach(p => {
         const info = POSTES_INFO[p] || { icon:"💼", desc:"", active:false };
-        if (info.active === true) {
-            activePostes.push(p);
-        }
+        if (info.active === true) { activePostes.push(p); }
     });
     
     if (activePostes.length > 0 && infoBox) {
@@ -521,11 +516,11 @@ fetch(`${API}/postes`)
     if (input && label) {
         input.addEventListener('change', function() {
             if (this.files[0]) {
-                label.textContent = '' + this.files[0].name;
+                label.textContent = '✅ ' + this.files[0].name;
                 label.classList.add('has-file');
             } else {
                 const defaults = { cv: '📎 Choisir mon CV', lettre: '📎 Choisir ma lettre' };
-                label.textContent = defaults[name] || '📎 Choisir un fichier';
+                label.textContent = defaults[name] || ' Choisir un fichier';
                 label.classList.remove('has-file');
             }
         });
@@ -544,10 +539,10 @@ if (attestationInput && attestationLabel && attestationList) {
             attestationList.innerHTML = '';
             return;
         }
-        attestationLabel.textContent = `${files.length} fichier${files.length>1?'s':''} sélectionné${files.length>1?'s':''}`;
+        attestationLabel.textContent = `✅ ${files.length} fichier${files.length>1?'s':''} sélectionné${files.length>1?'s':''}`;
         attestationLabel.classList.add('has-file');
         attestationList.innerHTML = files.map(f =>
-            `<div style="padding:.2rem 0;border-bottom:1px dashed #e2e8f0">${escHtml(f.name)} (${formatFileSize(f.size)})</div>`
+            `<div style="padding:.2rem 0;border-bottom:1px dashed #e2e8f0">📄 ${escHtml(f.name)} (${formatFileSize(f.size)})</div>`
         ).join('');
     });
 }
@@ -564,9 +559,20 @@ function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ══════════════════════════════════════════════════════════════
-// ✅ GESTION DU MESSAGE DE CONFIRMATION CENTRÉ
-// ══════════════════════════════════════════════════════════════
+function clearFormFields() {
+    document.getElementById('candidature-form').reset();
+    ['cv','lettre'].forEach(n => {
+        const lbl = document.getElementById(`${n}-label`);
+        const defaults = { cv: '📎 Choisir mon CV', lettre: '📎 Choisir ma lettre' };
+        if (lbl) { lbl.textContent = defaults[n] || '📎 Choisir un fichier'; lbl.classList.remove('has-file'); }
+    });
+    if (attestationLabel && attestationList) {
+        attestationLabel.textContent = ' Ajouter des certificats';
+        attestationLabel.classList.remove('has-file');
+        attestationList.innerHTML = '';
+    }
+}
+
 function showConfirmationModal(data) {
     const overlay = document.getElementById('confirmation-overlay');
     document.getElementById('conf-dossier').textContent = data.numero_dossier || '–';
@@ -593,7 +599,6 @@ function closeConfirmationAndScrollToSuivi() {
 
 function closeConfirmationAndReset() {
     closeConfirmationModal();
-    resetForm();
 }
 
 function copyToken() {
@@ -602,10 +607,10 @@ function copyToken() {
     if (!token || token === '–') return;
     
     navigator.clipboard.writeText(token).then(() => {
-        btn.textContent = 'Copié !';
+        btn.textContent = '✅ Copié !';
         btn.classList.add('copied');
         setTimeout(() => {
-            btn.textContent = 'Copier';
+            btn.textContent = '📋 Copier';
             btn.classList.remove('copied');
         }, 2000);
     }).catch(() => {
@@ -615,29 +620,23 @@ function copyToken() {
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        btn.textContent = 'Copié !';
+        btn.textContent = '✅ Copié !';
         btn.classList.add('copied');
         setTimeout(() => {
-            btn.textContent = 'Copier';
+            btn.textContent = ' Copier';
             btn.classList.remove('copied');
         }, 2000);
     });
 }
 
-// Fermer la modal en cliquant en dehors
 document.getElementById('confirmation-overlay').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeConfirmationModal();
-    }
+    if (e.target === this) { closeConfirmationModal(); }
 });
 
-// Fermer avec la touche Échap
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         const overlay = document.getElementById('confirmation-overlay');
-        if (overlay.classList.contains('show')) {
-            closeConfirmationModal();
-        }
+        if (overlay.classList.contains('show')) { closeConfirmationModal(); }
     }
 });
 
@@ -655,11 +654,14 @@ document.getElementById('candidature-form').addEventListener('submit', async fun
         const res = await fetch(`${API}/candidats/postuler`, { method: 'POST', body: fd });
         const data = await res.json();
         if (res.ok) {
-            // Remplir les champs de l'ancien affichage (pour compatibilité)
-            document.getElementById('dossier-display').textContent = data.numero_dossier || '–';
-            document.getElementById('token-display').textContent = data.token;
+            // ✅ NETTOYAGE IMMÉDIAT DES CHAMPS
+            clearFormFields();
             
-            // Afficher la modal de confirmation centrée
+            // Cacher l'ancien bloc de succès s'il existe
+            const oldSuccess = document.getElementById('candidature-success');
+            if (oldSuccess) oldSuccess.style.display = 'none';
+            
+            // Afficher la modal de confirmation
             showConfirmationModal({
                 numero_dossier: data.numero_dossier || '–',
                 token: data.token,
@@ -668,58 +670,40 @@ document.getElementById('candidature-form').addEventListener('submit', async fun
             
             showToast('Candidature soumise avec succès ! Analyse automatique en cours...', 'success');
         } else {
-            alertDiv.innerHTML = `<div class="alert alert-error">⚠️ ${data.error}</div>`;
+            alertDiv.innerHTML = `<div class="alert alert-error">️ ${data.error}</div>`;
         }
     } catch (err) {
         console.error(err);
         alertDiv.innerHTML = `<div class="alert alert-error">⚠️ Impossible de contacter le serveur. Vérifiez votre connexion.</div>`;
     }
-    btn.innerHTML = 'Soumettre ma candidature';
+    btn.innerHTML = '🚀 Soumettre ma candidature';
     btn.disabled  = false;
 });
-
-function resetForm() {
-    document.getElementById('candidature-form').reset();
-    ['cv','lettre'].forEach(n => {
-        const lbl = document.getElementById(`${n}-label`);
-        const defaults = { cv: '📎 Choisir mon CV', lettre: '📎 Choisir ma lettre' };
-        if (lbl) { lbl.textContent = defaults[n] || '📎 Choisir un fichier'; lbl.classList.remove('has-file'); }
-    });
-    if (attestationLabel && attestationList) {
-        attestationLabel.textContent = '🎓 Ajouter des certificats';
-        attestationLabel.classList.remove('has-file');
-        attestationList.innerHTML = '';
-    }
-    document.getElementById('form-card').style.display              = 'block';
-    document.getElementById('candidature-success').style.display    = 'none';
-    document.getElementById('form-alert').innerHTML                  = '';
-    document.getElementById('postuler').scrollIntoView({ behavior:'smooth' });
-}
 
 async function checkSuivi() {
     const token = document.getElementById('suivi-token').value.trim();
     if (!token) return;
     const area = document.getElementById('suivi-result');
-    area.innerHTML = '<p style="color:var(--text-muted);text-align:center">🔍 Recherche...</p>';
+    area.innerHTML = '<p style="color:var(--text-muted);text-align:center"> Recherche...</p>';
     try {
         const r = await fetch(`${API}/candidats/statut/${token}`);
         const d = await r.json();
-        if (!r.ok) { area.innerHTML = `<div class="alert alert-error">⚠️ ${d.error}</div>`; return; }
+        if (!r.ok) { area.innerHTML = `<div class="alert alert-error">️ ${d.error}</div>`; return; }
         const badges   = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
-        const labels   = { en_attente:'En attente', retenu:'Retenu(e)', rejete:'Non retenu(e)', entretien:'Convoqué(e) en entretien' };
+        const labels   = { en_attente:'⏳ En attente', retenu:'✅ Retenu(e)', rejete:'❌ Non retenu(e)', entretien:'📅 Convoqué(e) en entretien' };
         const messages = {
             en_attente: "Votre dossier est en cours d'examen. Nous vous contacterons dès que possible.",
             retenu:     "Félicitations ! Votre candidature a été retenue. Nous vous contacterons très prochainement.",
             rejete:     "Votre candidature n'a pas été retenue pour cette sélection. Merci de votre intérêt.",
             entretien:  "Votre profil nous a intéressé. Vous serez contacté(e) pour un entretien."
         };
-        const icons = { en_attente:'', retenu:'', rejete:'', entretien:'' };
+        const icons = { en_attente:'⏳', retenu:'🎉', rejete:'😔', entretien:'🤝' };
         const numDossierBlock = d.numero_dossier
             ? `<div style="margin:.6rem auto;max-width:240px;padding:.4rem .8rem;background:#EBF5FB;border-radius:6px;font-family:monospace;font-size:.85rem;font-weight:700;color:#1a3a5c">🗂️ Dossier : ${escHtml(d.numero_dossier)}</div>`
             : '';
         area.innerHTML = `
 <div style="text-align:center;padding:1rem 0">
-<div style="font-size:2.5rem;margin-bottom:.6rem">${icons[d.statut]||''}</div>
+<div style="font-size:2.5rem;margin-bottom:.6rem">${icons[d.statut]||'📋'}</div>
 <div style="font-weight:700;font-size:1.05rem">${escHtml(d.prenom)} ${escHtml(d.nom)}</div>
 <div style="color:var(--text-muted);font-size:.85rem;margin-bottom:.5rem">${escHtml(d.poste)}</div>
 ${numDossierBlock}
