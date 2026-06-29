@@ -730,17 +730,8 @@ margin-bottom: 0.25rem;
 }
 .grille-item.checked { background: var(--success-light); border-color: #bbf7d0; }
 .grille-item.not-checked { background: var(--danger-light); border-color: #fecaca; }
-.grille-item.eliminatoire-triggered {
-background: #fee2e2 !important;
-border-color: var(--danger) !important;
-animation: pulse-red 2s infinite;
-}
-@keyframes pulse-red {
-0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.3); }
-50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
-}
 .grille-item input { margin: 0; cursor: not-allowed; opacity: 0.5; width: 16px; height: 16px; }
-.grille-item .status-icon { margin-left: auto; font-weight: 700; font-size: 1rem; }
+.grille-item .status-icon { margin-left: auto; font-weight: 700; font-size: 1.1rem; }
 .grille-item.checked .status-icon { color: var(--success); }
 .grille-item.not-checked .status-icon { color: var(--danger); }
 .score-breakdown {
@@ -2012,7 +2003,10 @@ document.getElementById('modal-candidat').classList.add('open');
 function renderAnalyseResume(c) {
 const container = document.getElementById('analyse-resume');
 const content = document.getElementById('analyse-content');
-if (!c.score_breakdown_parsed) { container.style.display = 'none'; return; }
+if (!c.score_breakdown_parsed) { 
+container.style.display = 'none'; 
+return; 
+}
 container.style.display = 'block';
 const sb = c.score_breakdown_parsed;
 const details = c.analyse_details_parsed || {};
@@ -2020,8 +2014,8 @@ const scoreMax = getScoreMax(c.poste);
 let html = '';
 if (POSTES_AVEC_SCORING_12.includes(c.poste)) {
 const sousScores = sb.sous_scores || {};
-const scoreFinal = sb.score_final || 0;
-const decision = sb.decision || getDecisionFromScore(scoreFinal, c.poste);
+const scoreFinal = sb.bloc1_eliminatoire ? 0 : (sb.score_final || 0);
+const decision = sb.bloc1_eliminatoire ? '❌ Rejet (éliminatoire)' : (sb.decision || getDecisionFromScore(scoreFinal, c.poste));
 const decisionColor = {
 '🥇 Entretien prioritaire': '#166534',
 '🥈 Entretien si besoin (vivier de réserve)': '#3B6D11',
@@ -2051,11 +2045,11 @@ const max12 = {
 "Lettre de motivation": 1
 };
 Object.entries(labels12).forEach(([key, label]) => {
-const val = sousScores[key] || 0;
+const val = sb.bloc1_eliminatoire ? 0 : (sousScores[key] || 0);
 const max = max12[key] || 0;
-html += `<div class="sb-row"><span class="sb-label">${label}</span><span class="sb-val ok">${val} / ${max}</span></div>`;
+html += `<div class="sb-row"><span class="sb-label">${label}</span><span class="sb-val ${sb.bloc1_eliminatoire ? 'elim' : 'ok'}">${val} / ${max}</span></div>`;
 });
-html += `<div class="sb-row"><span class="sb-label">Score total</span><span class="sb-val ok" style="color:${decisionColor}">${scoreFinal} / 12</span></div>`;
+html += `<div class="sb-row"><span class="sb-label">Score total</span><span class="sb-val ${sb.bloc1_eliminatoire ? 'elim' : 'ok'}" style="color:${decisionColor}">${scoreFinal} / 12</span></div>`;
 html += '</div>';
 if (details.synthese_recruteur) {
 html += `<div class="bloc-alert signal" style="margin-top:.8rem">
@@ -2335,12 +2329,6 @@ return;
 }
 let checked = {};
 try { checked = JSON.parse(checklistJson || '{}'); } catch {}
-const hasEliminatoire = scoreBreakdown && (
-scoreBreakdown.bloc1_eliminatoire === true ||
-scoreBreakdown.bloc1_eliminatoire === "true" ||
-scoreBreakdown.bloc1_eliminatoire === 1 ||
-scoreBreakdown.bloc1_eliminatoire === "1"
-);
 const mkSection = (title, color, items, pfx) =>
 '<div class="grille-section">'
 + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">'
@@ -2348,8 +2336,7 @@ const mkSection = (title, color, items, pfx) =>
 + items.map((item, i) => {
 const key = pfx + '_' + i;
 const isValidated = checked[key] === true;
-const eliminatoireClass = (pfx === 'elim' && !isValidated) ? 'eliminatoire-triggered' : '';
-return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + ' ' + eliminatoireClass + '">'
+return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + '">'
 + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
 + '<span>' + escHtml(item) + '</span>'
 + '<span class="status-icon">' + (isValidated ? '✓' : '✕') + '</span>'
@@ -2361,6 +2348,12 @@ mkSection('Critères éliminatoires', '#dc2626', g.eliminatoire, 'elim') +
 mkSection('À vérifier dans le CV', '#d97706', g.a_verifier, 'verif') +
 mkSection('Signaux forts — prioritaire', '#16a34a', g.signaux_forts, 'signal') +
 mkSection("Points d'attention", '#64748b', g.points_attention, 'attn');
+const hasEliminatoire = scoreBreakdown && (
+scoreBreakdown.bloc1_eliminatoire === true ||
+scoreBreakdown.bloc1_eliminatoire === "true" ||
+scoreBreakdown.bloc1_eliminatoire === 1 ||
+scoreBreakdown.bloc1_eliminatoire === "1"
+);
 if (hasEliminatoire) { showEliminationAlert(checked); }
 }
 function showEliminationAlert(checked) {
