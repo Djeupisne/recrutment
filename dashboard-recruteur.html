@@ -1207,11 +1207,11 @@ background-size: 200% 100%;
 <div class="reanalyze-section">
 <div style="flex:1;min-width:250px">
 <h3>Réanalyse des candidatures</h3>
-<p>Relance l'analyse automatique avec les règles de sélection actuelles. Les fichiers des candidats sont conservés.</p>
+<p>Relance l'analyse automatique avec les règles actuelles (uniquement pour les postes ouverts).</p>
 </div>
 <div class="reanalyze-controls">
 <select id="reanalyze-poste-select" class="form-control" style="background:rgba(255,255,255,0.95);max-width:260px;">
-<option value="">Tous les postes</option>
+<option value="">Tous les postes actifs</option>
 </select>
 <button class="export-btn solid" style="color:#d97706;" onclick="openReanalyzeModal()">Lancer la réanalyse</button>
 <span id="reanalyze-status" class="reanalyze-status" style="display:none;"></span>
@@ -1351,7 +1351,7 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 <div class="form-group">
 <label>Type de message</label>
 <select class="form-control" id="email-type" onchange="buildEmail()" style="width:100%">
-<optgroup label="Chef de Section Compensation (barème /12)">
+<optgroup label="Postes scoring /12 (Compensation & Admin Crédit)">
 <option value="🥇 Entretien prioritaire">Entretien prioritaire (10-12/12)</option>
 <option value="🥈 Entretien si besoin (vivier de réserve)">Vivier de réserve (7-9/12)</option>
 <option value="❌ Rejet">Rejet (&lt;7/12)</option>
@@ -1422,13 +1422,17 @@ let currentC = null;
 let currentScore = 0;
 let currentReanalyzeScope = null;
 let reanalyzePollingInterval = null;
+let postesActifs = [];
+
 if (!jwtToken) { window.location.href = 'login.html'; }
 const nomRH = localStorage.getItem('rh_nom') || 'Recruteur';
 document.getElementById('nav-nom').textContent = nomRH;
 document.getElementById('sidebar-nom').textContent = nomRH;
 document.getElementById('sidebar-avatar').textContent = nomRH.charAt(0).toUpperCase();
+
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 function authH() { return { 'Authorization': 'Bearer ' + jwtToken, 'Content-Type': 'application/json' }; }
+
 function parseJSONField(raw, fieldName, candidatId, poste) {
 if (!raw) return null;
 try {
@@ -1443,6 +1447,17 @@ console.warn(`⚠️ Échec parsing ${fieldName} pour candidat ${candidatId} (po
 return null;
 }
 }
+
+async function fetchPostesStatus() {
+    try {
+        const res = await fetch(API + '/postes');
+        if (res.ok) {
+            const data = await res.json();
+            postesActifs = data.postes_actifs || [];
+        }
+    } catch(e) { console.error(e); }
+}
+
 function populateExportPosteSelect(data) {
 const sel = document.getElementById('export-poste-select');
 if (!sel) return;
@@ -1457,6 +1472,7 @@ sel.appendChild(opt);
 populateDossierPosteSelect(postes);
 populateReanalyzePosteSelect(postes);
 }
+
 function populateDossierPosteSelect(postes) {
 const sel = document.getElementById('dossier-poste-select');
 if (!sel) return;
@@ -1468,17 +1484,23 @@ opt.textContent = p;
 sel.appendChild(opt);
 });
 }
+
 function populateReanalyzePosteSelect(postes) {
 const sel = document.getElementById('reanalyze-poste-select');
 if (!sel) return;
 while (sel.options.length > 1) sel.remove(1);
-postes.forEach(p => {
+
+// ★ Filtrer pour n'afficher que les postes actifs dans le menu de réanalyse ★
+const activePostesToRender = postes.filter(p => postesActifs.length === 0 || postesActifs.includes(p));
+activePostesToRender.forEach(p => {
 const opt = document.createElement('option');
 opt.value = p;
 opt.textContent = p;
 sel.appendChild(opt);
 });
+sel.options[0].textContent = postesActifs.length > 0 ? "Tous les postes actifs" : "Tous les postes";
 }
+
 async function exportReport(format) {
 try {
 const posteSelect = document.getElementById('export-poste-select');
@@ -1509,6 +1531,7 @@ console.error('Erreur export:', error);
 showToast(`Erreur: ${error.message}`, 'error');
 }
 }
+
 async function downloadAllDossiers() {
 try {
 const posteSelect = document.getElementById('dossier-poste-select');
@@ -1545,6 +1568,7 @@ console.error('Erreur téléchargement ZIP:', error);
 showToast(`Erreur: ${error.message}`, 'error');
 }
 }
+
 function openReanalyzeModal() {
 const posteSelect = document.getElementById('reanalyze-poste-select');
 const posteValue = posteSelect ? posteSelect.value : '';
@@ -1555,17 +1579,19 @@ if (posteValue) {
 title.textContent = `Réanalyser : ${posteValue}`;
 message.textContent = `Relancer l'analyse de toutes les candidatures pour le poste "${posteValue}" avec les règles actuelles ?`;
 } else {
-title.textContent = 'Réanalyser tous les dossiers';
-message.textContent = "Relancer l'analyse de toutes les candidatures avec les règles actuelles ? Cette opération peut prendre plusieurs minutes.";
+title.textContent = 'Réanalyser tous les dossiers actifs';
+message.textContent = "Relancer l'analyse de toutes les candidatures des postes ouverts avec les règles actuelles ? Cette opération peut prendre plusieurs minutes.";
 }
 document.getElementById('reanalyze-progress-modal').style.display = 'none';
 document.getElementById('btn-confirm-reanalyze').disabled = false;
 document.getElementById('btn-cancel-reanalyze').disabled = false;
 document.getElementById('modal-reanalyze').classList.add('open');
 }
+
 function closeReanalyzeModal() {
 document.getElementById('modal-reanalyze').classList.remove('open');
 }
+
 async function confirmReanalyze() {
 const btnConfirm = document.getElementById('btn-confirm-reanalyze');
 const btnCancel = document.getElementById('btn-cancel-reanalyze');
@@ -1601,6 +1627,7 @@ hideFloatingProgress();
 showToast(`Erreur: ${error.message}`, 'error');
 }
 }
+
 function startReanalyzePolling() {
 if (reanalyzePollingInterval) clearInterval(reanalyzePollingInterval);
 checkReanalyzeStatus();
@@ -1612,6 +1639,7 @@ reanalyzePollingInterval = null;
 }
 }, 600000);
 }
+
 async function checkReanalyzeStatus() {
 try {
 const response = await fetch(`${API}/recruteur/reanalyze-status`, { headers: authH() });
@@ -1665,6 +1693,7 @@ fetchStats();
 console.error('Erreur checkReanalyzeStatus:', error);
 }
 }
+
 function showFloatingProgress(title, isIndeterminate = false) {
 const widget = document.getElementById('floating-progress');
 if (!widget) return;
@@ -1682,6 +1711,7 @@ bar.classList.remove('indeterminate');
 bar.style.width = '0%';
 }
 }
+
 function updateFloatingProgress(completed, total, errors, customMessage) {
 const widget = document.getElementById('floating-progress');
 if (!widget) return;
@@ -1700,6 +1730,7 @@ document.getElementById('floating-progress-count').textContent = '';
 document.getElementById('floating-progress-detail').textContent = customMessage || 'Analyse en cours...';
 }
 }
+
 function completeFloatingProgress(completed, errors) {
 const widget = document.getElementById('floating-progress');
 if (!widget) return;
@@ -1715,10 +1746,12 @@ setTimeout(() => {
 widget.classList.remove('active');
 }, 8000);
 }
+
 function hideFloatingProgress() {
 const widget = document.getElementById('floating-progress');
 if (widget) widget.classList.remove('active');
 }
+
 async function reanalyzeOne() {
 if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
 if (!confirm('Relancer l\'analyse de cette candidature avec les règles actuelles ?')) return;
@@ -1745,6 +1778,7 @@ showToast(data.error || 'Erreur serveur', 'error');
 showToast('Erreur: ' + e.message, 'error');
 }
 }
+
 function showSection(name, el) {
 document.getElementById('section-overview').style.display = name === 'overview' ? 'block' : 'none';
 document.getElementById('section-candidats').style.display = name === 'candidats' ? 'block' : 'none';
@@ -1752,13 +1786,16 @@ document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('act
 if (el) el.classList.add('active');
 if (name === 'candidats') renderTable(allCandidats);
 }
+
 function switchTab(name, btn) {
 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 btn.classList.add('active');
 document.getElementById('tab-' + name).classList.add('active');
 }
+
 function refreshAll() { fetchStats(); fetchCandidats(); checkReanalyzeStatus(); }
+
 async function fetchStats() {
 try {
 const res = await fetch(API + '/recruteur/stats', { headers: authH() });
@@ -1775,6 +1812,7 @@ renderDonut(d);
 renderBarChart(d.by_poste || []);
 } catch (e) { console.error('fetchStats:', e); }
 }
+
 function renderDonut(d) {
 const total = d.total || 1;
 const segs = [
@@ -1793,6 +1831,7 @@ el.setAttribute('stroke-dashoffset', String(-(offset - 25)));
 offset += pct;
 });
 }
+
 function renderBarChart(byPoste) {
 const el = document.getElementById('bar-chart');
 if (!byPoste.length) {
@@ -1810,6 +1849,7 @@ return '<div class="bar-row">'
 + '</div>';
 }).join('');
 }
+
 async function fetchCandidats() {
 try {
 const res = await fetch(API + '/recruteur/candidats', { headers: authH() });
@@ -1842,6 +1882,7 @@ renderTable(allCandidats);
 renderRecent(allCandidats);
 } catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
 }
+
 function populatePosteFilter(data) {
 const sel = document.getElementById('f-poste');
 const postes = [...new Set(data.map(c => c.poste))].sort();
@@ -1851,6 +1892,7 @@ const opt = document.createElement('option');
 opt.value = p; opt.textContent = p; sel.appendChild(opt);
 });
 }
+
 function applyFilters() {
 const search = document.getElementById('f-search').value.toLowerCase().trim();
 const poste = document.getElementById('f-poste').value;
@@ -1863,6 +1905,7 @@ return (!search || hay.includes(search))
 });
 renderTable(result);
 }
+
 const NOUVEAUX_POSTES_100PTS = [
 "Auditeur interne",
 "Chef service contrôle des engagements",
@@ -1871,13 +1914,15 @@ const NOUVEAUX_POSTES_100PTS = [
 "Chef service risques de marché",
 "Chef service reporting réglementaire"
 ];
-const POSTES_AVEC_SCORING_12 = ["Chef de Section Compensation"];
+const POSTES_AVEC_SCORING_12 = ["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"];
+
 function getScoreMax(poste) {
 if (!poste) return 10;
 if (POSTES_AVEC_SCORING_12.includes(poste)) return 12;
 if (NOUVEAUX_POSTES_100PTS.includes(poste)) return 100;
 return 10;
 }
+
 function getDecisionFromScore(score, poste) {
 const s = parseInt(score) || 0;
 if (poste && POSTES_AVEC_SCORING_12.includes(poste)) {
@@ -1895,6 +1940,26 @@ if (s >= 8) return "Entretien prioritaire";
 if (s >= 6) return "Entretien si besoin";
 return "Rejet";
 }
+
+const LABELS_12 = {
+    "Chef de Section Compensation": {
+        "Adéquation de l'expérience (compensation interbancaire, back-office bancaire)": "Adéquation expérience",
+        "Exposition aux règles BEAC / GIMAC et aux systèmes de compensation (SYSTAC, SYGMA, SWIFT)": "Exposition BEAC/GIMAC",
+        "Capacité d'encadrement et de management d'équipe opérationnelle": "Encadrement équipe",
+        "Cohérence et progression du parcours professionnel": "Cohérence parcours",
+        "Qualité et clarté du CV (missions précises, livrables, résultats)": "Qualité CV",
+        "Lettre de motivation": "Lettre motivation"
+    },
+    "Chargé(e) d'Administration de Crédit": {
+        "Adéquation de l'expérience (administration de crédit, gestion des risques, analyse crédit)": "Adéquation expérience",
+        "Exposition aux normes IFRS 9 et à la gestion du portefeuille de crédit": "IFRS 9 / Portefeuille",
+        "Rigueur opérationnelle et maîtrise des outils (Excel, système bancaire, classement)": "Rigueur & Outils",
+        "Cohérence et progression du parcours professionnel": "Cohérence parcours",
+        "Qualité et clarté du CV (missions précises, livrables, résultats)": "Qualité CV",
+        "Lettre de motivation": "Lettre motivation"
+    }
+};
+
 function renderTable(data) {
 const tbody = document.getElementById('candidats-tbody');
 if (!data.length) {
@@ -1922,15 +1987,9 @@ const sb = c.score_breakdown_parsed;
 scoreTitle += `\nÉliminatoire: ${sb.bloc1_eliminatoire ? 'OUI' : 'NON'}`;
 if (POSTES_AVEC_SCORING_12.includes(c.poste)) {
 const sousScores = sb.sous_scores || {};
+const currentLabels = LABELS_12[c.poste] || {};
 Object.entries(sousScores).forEach(([k, v]) => {
-const label = {
-"Adéquation de l'expérience (compensation interbancaire, back-office bancaire)": "Adéquation",
-"Exposition aux règles BEAC / GIMAC et aux systèmes de compensation (SYSTAC, SYGMA, SWIFT)": "BEAC/GIMAC",
-"Capacité d'encadrement et de management d'équipe opérationnelle": "Encadrement",
-"Cohérence et progression du parcours professionnel": "Cohérence",
-"Qualité et clarté du CV (missions précises, livrables, résultats)": "Qualité CV",
-"Lettre de motivation": "Lettre"
-}[k] || k;
+const label = currentLabels[k] || k;
 scoreTitle += `\n${label}: ${v}`;
 });
 } else if (sb.scoring_type === '100_points') {
@@ -1961,6 +2020,7 @@ return '<tr>'
 + '</td></tr>';
 }).join('');
 }
+
 function renderRecent(data) {
 const container = document.getElementById('recent-table');
 const slice = data.slice(0, 8);
@@ -1989,6 +2049,7 @@ container.innerHTML =
 + '<thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th>Score</th><th></th></tr></thead>'
 + '<tbody>' + rows + '</tbody></table></div>';
 }
+
 function openModal(id) {
 const c = allCandidats.find(x => x.id === id);
 if (!c) { showToast('Actualisez la liste d\'abord', 'error'); return; }
@@ -2017,6 +2078,7 @@ document.querySelector('.tab-btn').classList.add('active');
 document.getElementById('tab-eval').classList.add('active');
 document.getElementById('modal-candidat').classList.add('open');
 }
+
 function renderAnalyseResume(c) {
 const container = document.getElementById('analyse-resume');
 const content = document.getElementById('analyse-content');
@@ -2042,23 +2104,21 @@ html += `<div style="text-align:center;margin-bottom:.8rem">
 <span style="margin-left:.6rem;font-size:.9rem;font-weight:700;color:${decisionColor};background:${decisionColor}18;padding:.2rem .6rem;border-radius:4px">${decision}</span>
 </div>`;
 html += '<div class="score-breakdown">';
-const labels12 = {
-"Adéquation de l'expérience (compensation interbancaire, back-office bancaire)": "Adéquation expérience",
-"Exposition aux règles BEAC / GIMAC et aux systèmes de compensation (SYSTAC, SYGMA, SWIFT)": "Exposition BEAC/GIMAC",
-"Capacité d'encadrement et de management d'équipe opérationnelle": "Encadrement équipe",
-"Cohérence et progression du parcours professionnel": "Cohérence parcours",
-"Qualité et clarté du CV (missions précises, livrables, résultats)": "Qualité CV",
-"Lettre de motivation": "Lettre motivation"
-};
+
+const currentLabels = LABELS_12[c.poste] || LABELS_12["Chef de Section Compensation"];
 const max12 = {
 "Adéquation de l'expérience (compensation interbancaire, back-office bancaire)": 3,
 "Exposition aux règles BEAC / GIMAC et aux systèmes de compensation (SYSTAC, SYGMA, SWIFT)": 3,
 "Capacité d'encadrement et de management d'équipe opérationnelle": 2,
 "Cohérence et progression du parcours professionnel": 2,
 "Qualité et clarté du CV (missions précises, livrables, résultats)": 1,
-"Lettre de motivation": 1
+"Lettre de motivation": 1,
+"Adéquation de l'expérience (administration de crédit, gestion des risques, analyse crédit)": 3,
+"Exposition aux normes IFRS 9 et à la gestion du portefeuille de crédit": 3,
+"Rigueur opérationnelle et maîtrise des outils (Excel, système bancaire, classement)": 2
 };
-Object.entries(labels12).forEach(([key, label]) => {
+
+Object.entries(currentLabels).forEach(([key, label]) => {
 const val = sb.bloc1_eliminatoire ? 0 : (sousScores[key] || 0);
 const max = max12[key] || 0;
 html += `<div class="sb-row"><span class="sb-label">${label}</span><span class="sb-val ${sb.bloc1_eliminatoire ? 'elim' : 'ok'}">${val} / ${max}</span></div>`;
@@ -2186,18 +2246,22 @@ html += '<div class="score-breakdown">'
 + '</div>';
 content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail disponible.</p>';
 }
+
 function info(label, val, raw) {
 return '<div>'
 + '<div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">' + label + '</div>'
 + '<div>' + (raw ? val : escHtml(String(val))) + '</div>'
 + '</div>';
 }
+
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(s) { return String(s).replace(/"/g,'&quot;').replace(/\n/g,'\n'); }
+
 function closeModal() {
 document.getElementById('modal-candidat').classList.remove('open');
 currentC = null;
 }
+
 function renderStars(n, readonly = true) {
 const row = document.getElementById('stars-row');
 row.innerHTML = '';
@@ -2220,6 +2284,7 @@ scoreText.style.cssText = 'margin-left:1rem;font-weight:700;color:var(--primary)
 scoreText.textContent = `${score}/${scoreMax}`;
 row.appendChild(scoreText);
 }
+
 const GRILLE = {
 "Responsable Administration de Crédit": {
 eliminatoire: ["Expérience bancaire", "3 ans ou plus en crédit / risque", "Exposition aux garanties ou conformité"],
@@ -2332,8 +2397,50 @@ points_attention: [
 "Maîtrise des outils non mentionnée (SWIFT, compensation, ERP bancaire)",
 "Trous inexpliqués dans le parcours professionnel"
 ]
+},
+"Chargé(e) d'Administration de Crédit": {
+eliminatoire: [
+"Expérience dans une banque ou un établissement financier réglementé",
+"Niveau de diplôme minimum Bac +3 (école de commerce, gestion, comptabilité ou équivalent)",
+"Minimum 1 an d'expérience dans une fonction bancaire (administration de crédit, back-office, risques ou analyse crédit)",
+"Exposition au cycle de vie du crédit bancaire (mise en place, suivi, garanties, échéances)",
+"Connaissance des normes comptables bancaires ou de la réglementation COBAC",
+"Expérience de production de reportings ou tableaux de bord de portefeuille",
+"Maîtrise des outils bureautiques courants (Excel, traitement de texte, messagerie)"
+],
+a_verifier: [
+"Gestion du cycle complet d'un crédit (conditions d'approbation, documentation, mise en place, déblocage)",
+"Suivi et sécurisation des garanties (enregistrement, valorisation, renouvellement des assurances)",
+"Supervision des échéances et production d'alertes ou rappels aux gestionnaires de portefeuille",
+"Détection et remontée des impayés, dépassements ou incidents dans un portefeuille de crédit",
+"Production de reportings de portefeuille (tableaux de bord, rapports IFRS 9, déclarations COBAC/BEAC)",
+"Participation à des comités de risque, audits internes ou inspections réglementaires",
+"Classement physique et numérique des dossiers de crédit et originaux de garanties",
+"Maîtrise d'un système bancaire de gestion du crédit (Finacle, T24, Amplitude ou équivalent)"
+],
+signaux_forts: [
+"Mention explicite de la gestion administrative du cycle de crédit (mise en place, suivi, clôture)",
+"Exposition à la norme IFRS 9 : staging du portefeuille (Stage 1, 2, 3), ECL, provisions",
+"Suivi et sécurisation des garanties (enregistrement, valorisation, coffre, coordination juridique)",
+"Production de reportings portefeuille (encours, impayés, dépassements, couverture par garanties)",
+"Participation aux comités de risque et traitement des anomalies (COBAC, audit interne)",
+"Maîtrise des Produits de Portefeuille (PP) et de la politique de crédit (GCPPM ou équivalent)",
+"Expérience dans une banque de la zone CEMAC / UEMOA avec exposition réglementaire COBAC",
+"Audits ou contrôles internes réussis sans réserve majeure",
+"Rigueur documentaire : dossiers complets, traçabilité des actes, zéro anomalie détectée en contrôle interne"
+],
+points_attention: [
+"Parcours purement commercial ou front-office sans exposition à l'administration des crédits",
+"Profil uniquement comptable (SYSCOHADA) sans gestion du cycle de crédit bancaire",
+"Profil exclusivement théorique (stage ou formation seule) sans expérience opérationnelle en banque",
+"CV aux missions trop génériques, sans livrables précis ni résultats quantifiés",
+"Expériences très courtes (< 1 an par poste) sans progression visible dans la fonction",
+"Absence totale de mention des outils bancaires (système de gestion du crédit, Excel avancé, reporting)",
+"Trous inexpliqués dans le parcours professionnel"
+]
 }
 };
+
 function renderGrille(poste, checklistJson, scoreBreakdown) {
 const g = GRILLE[poste];
 const el = document.getElementById('grille-content');
@@ -2371,6 +2478,7 @@ mkSection('Signaux forts — prioritaire', '#16a34a', g.signaux_forts, 'signal')
 mkSection("Points d'attention", '#64748b', g.points_attention, 'attn');
 if (hasEliminatoire) { showEliminationAlert(checked); }
 }
+
 function showEliminationAlert(checked) {
 const overlay = document.getElementById('elimination-alert-overlay');
 const alert = document.getElementById('elimination-alert');
@@ -2421,10 +2529,12 @@ details.innerHTML = criteriaHtml;
 overlay.style.display = 'block';
 alert.style.display = 'block';
 }
+
 function closeEliminationAlert() {
 document.getElementById('elimination-alert-overlay').style.display = 'none';
 document.getElementById('elimination-alert').style.display = 'none';
 }
+
 async function updateStatut(statut) {
 if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
 const note = document.getElementById('modal-note').value;
@@ -2449,6 +2559,7 @@ showToast(d.error || 'Erreur lors de la mise à jour', 'error');
 }
 } catch (e) { showToast('Erreur de connexion', 'error'); console.error(e); }
 }
+
 function openEmailModal() {
 if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
 const sel = document.getElementById('email-type');
@@ -2466,6 +2577,7 @@ sel.value = allStatuses.includes(statut) ? statut : 'retenu';
 buildEmail();
 document.getElementById('modal-email').classList.add('open');
 }
+
 function quickEmail(id) {
 const c = allCandidats.find(x => x.id === id);
 if (!c) return;
@@ -2485,6 +2597,7 @@ sel.value = allStatuses.includes(statut) ? statut : 'retenu';
 buildEmail();
 document.getElementById('modal-email').classList.add('open');
 }
+
 async function quickReanalyze(id) {
 const c = allCandidats.find(x => x.id === id);
 if (!c) return;
@@ -2502,6 +2615,7 @@ showToast(data.error || 'Erreur serveur', 'error');
 showToast('Erreur: ' + e.message, 'error');
 }
 }
+
 function buildEmail() {
 if (!currentC) return;
 const type = document.getElementById('email-type').value;
@@ -2511,6 +2625,7 @@ document.getElementById('ep-to').textContent = nom + ' <' + currentC.email + '>'
 document.getElementById('ep-subject').textContent = emailSubject(type, pos);
 document.getElementById('ep-body').value = emailBody(type, nom, pos);
 }
+
 function emailSubject(type, poste) {
 const subjects = {
 retenu: 'Candidature retenue – ' + poste,
@@ -2526,15 +2641,16 @@ Rejet: 'Réponse à votre candidature – ' + poste,
 };
 return subjects[type] || '';
 }
+
 function emailBody(type, nom, poste) {
 const sign = '\n\nCordialement,\nL\'équipe Ressources Humaines\nRecrutBank';
 if (POSTES_AVEC_SCORING_12.includes(poste)) {
 if (type === '🥇 Entretien prioritaire' || type === 'retenu')
-return 'Madame, Monsieur ' + nom + ',\n\nFélicitations ! Votre candidature pour le poste de Chef de Section Compensation a été retenue en priorité à l\'issue de notre processus de présélection.\n\nVotre profil présente une excellente adéquation avec les exigences du poste (compensation interbancaire, BEAC/GIMAC, encadrement d\'équipe).\n\nNous vous contacterons dans les plus brefs délais pour convenir d\'un entretien.\n\nCordialement,' + sign;
+return 'Madame, Monsieur ' + nom + ',\n\nFélicitations ! Votre candidature pour le poste de ' + poste + ' a été retenue en priorité à l\'issue de notre processus de présélection.\n\nVotre profil présente une excellente adéquation avec les exigences du poste.\n\nNous vous contacterons dans les plus brefs délais pour convenir d\'un entretien.\n\nCordialement,' + sign;
 if (type === '🥈 Entretien si besoin (vivier de réserve)' || type === 'entretien')
-return 'Madame, Monsieur ' + nom + ',\n\nVotre candidature pour le poste de Chef de Section Compensation a retenu notre attention.\n\nVotre profil présente des atouts intéressants pour ce poste et nous souhaitons vous rencontrer.\n\nNous prendrons contact avec vous prochainement pour convenir d\'un entretien.\n\nCordialement,' + sign;
+return 'Madame, Monsieur ' + nom + ',\n\nVotre candidature pour le poste de ' + poste + ' a retenu notre attention.\n\nVotre profil présente des atouts intéressants pour ce poste et nous souhaitons vous rencontrer.\n\nNous prendrons contact avec vous prochainement pour convenir d\'un entretien.\n\nCordialement,' + sign;
 if (type === '❌ Rejet' || type === 'rejete')
-return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions de l\'intérêt que vous portez à notre institution pour le poste de Chef de Section Compensation.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour cette sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil.\n\nCordialement,' + sign;
+return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions de l\'intérêt que vous portez à notre institution pour le poste de ' + poste + '.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour cette sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil.\n\nCordialement,' + sign;
 }
 if (type === 'Shortlist')
 return 'Madame, Monsieur ' + nom + ',\n\nNous avons le plaisir de vous informer que votre candidature pour le poste de ' + poste + ' a été retenue en tant que profil PRIORITAIRE (Shortlist) à l\'issue de notre processus de présélection automatisée.\n\nVotre profil correspond particulièrement bien aux exigences du poste et nous souhaitons vous rencontrer rapidement.\n\nNous vous contacterons dans les plus brefs délais pour convenir d\'un entretien.\n\nDans l\'attente, nous restons disponibles pour toute question.' + sign;
@@ -2548,6 +2664,7 @@ if (type === 'entretien')
 return 'Madame, Monsieur ' + nom + ',\n\nSuite à l\'examen de votre candidature pour le poste de ' + poste + ', nous avons le plaisir de vous inviter à un entretien avec notre équipe.\n\nNous prendrons contact avec vous dans les meilleurs délais pour convenir d\'une date et d\'un horaire.' + sign;
 return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions sincèrement de l\'intérêt que vous portez à notre institution et du temps consacré à votre candidature pour le poste de ' + poste + '.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour la suite du processus de sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil, et vous souhaitons plein succès dans votre recherche.' + sign;
 }
+
 function copyEmail() {
 const to = currentC ? currentC.email : '';
 const sub = document.getElementById('ep-subject').textContent;
@@ -2556,6 +2673,7 @@ navigator.clipboard.writeText('À: ' + to + '\nObjet: ' + sub + '\n' + bdy)
 .then(() => showToast('Email copié dans le presse-papiers', 'success'))
 .catch(() => { document.getElementById('ep-body').select(); showToast('Sélectionnez le texte et Ctrl+C', 'info'); });
 }
+
 function openMailClient() {
 if (!currentC) return;
 const to = encodeURIComponent(currentC.email);
@@ -2563,6 +2681,7 @@ const sub = encodeURIComponent(document.getElementById('ep-subject').textContent
 const bdy = encodeURIComponent(document.getElementById('ep-body').value);
 window.open('mailto:' + to + '?subject=' + sub + '&body=' + bdy);
 }
+
 function badgePill(s) {
 const statuses12 = ['🥇 Entretien prioritaire', '🥈 Entretien si besoin (vivier de réserve)', '🥈 Entretien si besoin (vivier)', '❌ Rejet', '❌ Rejet (éliminatoire)'];
 if (statuses12.includes(s)) {
@@ -2585,8 +2704,10 @@ const cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge
 const lbl = { en_attente:'En attente', retenu:'Retenu', rejete:'Non retenu', entretien:'Entretien' };
 return '<span class="badge ' + (cls[s]||'badge-pending') + '">' + (lbl[s]||s) + '</span>';
 }
+
 function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR') : '–'; }
 function fmtDateLong(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) : '–'; }
+
 window.debugEliminationAlert = function(candidatId) {
 const c = allCandidats.find(x => x.id === candidatId);
 if (!c) { console.log(`❌ Candidat ${candidatId} non trouvé`); return; }
@@ -2599,6 +2720,8 @@ try { checked = JSON.parse(c.checklist || '{}'); } catch {}
 showEliminationAlert(checked);
 console.log(`✅ Alert triggered (si éliminé)`);
 };
+
+fetchPostesStatus();
 fetchStats();
 fetchCandidats();
 checkReanalyzeStatus();
