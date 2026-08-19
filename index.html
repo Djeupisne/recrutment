@@ -229,6 +229,18 @@ select option:disabled {
     .info-item .value { font-size: 0.78rem; }
     .info-item .value.dossier { font-size: 0.9rem; }
 }
+
+/* Badge Management pour le poste Chef de Division Local Corporate */
+.badge-management {
+    display: inline-block;
+    font-size: 0.65rem;
+    background: #fff3cd;
+    color: #856404;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 0.4rem;
+    border: 1px solid #ffc107;
+}
 </style>
 </head>
 <body>
@@ -390,7 +402,7 @@ Utilisez le numéro de suivi dans la section <strong>Suivi de dossier</strong> c
 <span class="icon">📧</span>
 <div class="content">
 <strong>Email de confirmation envoyé</strong>
-<p>Un email de confirmation vient d'être envoyé à l'adresse que vous avez renseignée. Vérifiez votre boîte de réception (et vos spams) dans les prochaines minutes.</p>
+<p>Un email de confirmation vient d'être envoyé à l'adresse que vous avez renseignée. Vérifiez votre boîte de réception (et vos spams) dans les prochainnes minutes.</p>
 </div>
 </div>
 
@@ -449,6 +461,14 @@ const POSTES_INFO = {
         desc: "Gestion du cycle de crédit, garanties, reporting IFRS 9 et COBAC",
         category: "credit",
         senior: false
+    },
+    "Chef de Division Local Corporate": {
+        icon: "🏢",
+        desc: "Pilotage de la division Corporate, management d'équipe, développement du portefeuille entreprises et gestion du risque de crédit",
+        category: "corporate",
+        senior: true,
+        highlight: "corporate",
+        badge: "management"
     }
 };
 
@@ -485,18 +505,21 @@ fetch(`${API}/postes`)
         const catBadge = info.category ? `<span style="display:inline-block;font-size:.65rem;background:#e8f4fd;color:#1a3a5c;padding:2px 6px;border-radius:4px;margin-left:.4rem">${info.category}</span>` : "";
         const certHighlight = info.highlight === "certifications" ? `<div style="font-size:.75rem;color:#1e7e34;margin-top:.3rem">🎯 <strong>Certifications requises</strong></div>` : "";
         const beacHighlight = info.highlight === "beac-gimac" ? `<div style="font-size:.75rem;color:#1a3a5c;margin-top:.3rem">🏦 <strong>Expertise BEAC/GIMAC requise</strong></div>` : "";
+        const corporateHighlight = info.highlight === "corporate" ? `<div style="font-size:.75rem;color:#1a3a5c;margin-top:.3rem">🏢 <strong>Management Corporate & Développement Commercial</strong></div>` : "";
         const techBadge = info.badge === "technique" ? `<span style="display:inline-block;font-size:.65rem;background:#d4edda;color:#155724;padding:2px 6px;border-radius:4px;margin-left:.4rem">Technique</span>` : "";
-        const seniorIndicator = info.senior ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.3rem">⚠️ Niveau Senior Requis (> 7 ans)</div>` : "";
+        const managementBadge = info.badge === "management" ? `<span class="badge-management">Management</span>` : "";
+        const seniorIndicator = info.senior ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.3rem">⚠️ Niveau Senior Requis (> 5 ans)</div>` : "";
         
         const cardClass = isActive ? "poste-card active" : "poste-card inactive";
         
         grid.innerHTML += `
 <div class="${cardClass}">
-    <div style="font-size:1.8rem;margin-bottom:.6rem;display:flex;align-items:center">${info.icon}${techBadge}</div>
+    <div style="font-size:1.8rem;margin-bottom:.6rem;display:flex;align-items:center">${info.icon}${techBadge}${managementBadge}</div>
     <h3>${p}${catBadge}</h3>
     <p>${info.desc || 'Poste à pourvoir prochainement.'}</p>
     ${certHighlight}
     ${beacHighlight}
+    ${corporateHighlight}
     ${seniorIndicator}
     ${isActive ? `<a href="#postuler" style="display:inline-block;margin-top:.8rem;font-size:.82rem;font-weight:600;color:var(--accent)">Postuler →</a>` : ''}
 </div>`;
