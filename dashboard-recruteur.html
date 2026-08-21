@@ -2135,78 +2135,115 @@ let html = '';
 
 // ✅ CORRECTION : Gestion spécifique pour Chef de Division Local Corporate
 if (POSTES_AVEC_SCORING_14.includes(c.poste)) {
-    // ✅ FALLBACK : récupération des champs depuis analyse_details_parsed si non présents
-    if (!details.points_forts && c.analyse_details_parsed?.points_forts) {
-        details.points_forts = c.analyse_details_parsed.points_forts;
+    
+    // ✅ Récupération des sous-scores
+    const sousScores = sb.sous_scores || details.sous_scores || {};
+    
+    // ✅ Récupération des champs depuis details (structure du backend)
+    let pointsForts = details.points_forts || [];
+    let pointsVigilance = details.points_vigilance || [];
+    let synthese = details.synthese_recruteur || '';
+    
+    // ✅ FALLBACK : Si les champs sont dans un sous-objet 'details'
+    if (details.details) {
+        if (details.details.points_forts) pointsForts = details.details.points_forts;
+        if (details.details.points_vigilance) pointsVigilance = details.details.points_vigilance;
+        if (details.details.synthese_recruteur) synthese = details.details.synthese_recruteur;
     }
-    if (!details.points_vigilance && c.analyse_details_parsed?.points_vigilance) {
-        details.points_vigilance = c.analyse_details_parsed.points_vigilance;
+    
+    // ✅ FALLBACK : Si les champs sont dans score_breakdown
+    if (!pointsForts.length && sb.points_forts) pointsForts = sb.points_forts;
+    if (!pointsVigilance.length && sb.points_vigilance) pointsVigilance = sb.points_vigilance;
+    if (!synthese && sb.synthese_recruteur) synthese = sb.synthese_recruteur;
+
+    // ✅ LOG DE DÉBOGAGE
+    console.log(`🔍 Données Chef Division pour ${c.prenom} ${c.nom}:`, {
+        sousScores: sousScores,
+        pointsForts: pointsForts,
+        pointsVigilance: pointsVigilance,
+        synthese: synthese
+    });
+
+    const scoreFinal = sb.bloc1_eliminatoire ? 0 : (sb.score_final || 0);
+    const decision = sb.bloc1_eliminatoire ? '❌ Rejet (éliminatoire)' : (sb.decision || getDecisionFromScore(scoreFinal, c.poste));
+    
+    const decisionColor = {
+        '🥇 Entretien prioritaire': '#166534',
+        '🥈 Potentiel à évaluer en entretien': '#3B6D11',
+        '🥈 Entretien si besoin (vivier de réserve)': '#3B6D11',
+        '❌ Rejet': '#991b1b',
+        '❌ Rejet (éliminatoire)': '#991b1b'
+    }[decision] || '#1a2433';
+    
+    // Affichage du score
+    html += `<div style="text-align:center;margin-bottom:.8rem">
+        <span style="font-size:1.6rem;font-weight:800;color:${decisionColor}">${scoreFinal}/14</span>
+        <span style="margin-left:.6rem;font-size:.9rem;font-weight:700;color:${decisionColor};background:${decisionColor}18;padding:.2rem .6rem;border-radius:4px">${decision}</span>
+    </div>`;
+    
+    // Affichage des sous-scores
+    html += '<div class="score-breakdown">';
+    
+    const currentLabels = LABELS_14[c.poste] || LABELS_14["Chef de Division Local Corporate"];
+    const max14 = {
+        "Adéquation de l'expérience en local/corporate Banking avec gestion d'un portefeuille entreprises et objectifs atteints": 3,
+        "Capacité managériale démontrée avec encadrement, développement d'équipe et pilotage d'une P&L": 3,
+        "Maîtrise du risque de crédit et de la qualité du portefeuille avec gestion du NPL, du CIR et des provisions": 2,
+        "Exposition au cross-selling, au Cash Management ou aux solutions TSG / Trade Finance": 2,
+        "Cohérence et progression du parcours professionnel avec séniorité et responsabilités croissantes": 2,
+        "Qualité du CV avec résultats chiffrés et précision des missions, ainsi que qualité de la lettre de motivation": 1,
+        "Certification professionnelle (ITB, Moody's, Ecobank) ou connaissance du marché CEMAC / UEMOA": 1
+    };
+    
+    Object.entries(currentLabels).forEach(([key, label]) => {
+        const val = sb.bloc1_eliminatoire ? 0 : (sousScores[key] || 0);
+        const max = max14[key] || 0;
+        html += `<div class="sb-row">
+            <span class="sb-label">${label}</span>
+            <span class="sb-val ${sb.bloc1_eliminatoire ? 'elim' : 'ok'}">${val} / ${max}</span>
+        </div>`;
+    });
+    
+    html += `<div class="sb-row">
+        <span class="sb-label">Score total</span>
+        <span class="sb-val ${sb.bloc1_eliminatoire ? 'elim' : 'ok'}" style="color:${decisionColor}">${scoreFinal} / 14</span>
+    </div>`;
+    html += '</div>';
+    
+    // ✅ Affichage de la synthèse
+    if (synthese) {
+        html += `<div class="bloc-alert signal" style="margin-top:.8rem">
+            <strong>📝 Synthèse du recruteur</strong>
+            <div style="margin-top:.4rem;font-style:italic">${escHtml(synthese)}</div>
+        </div>`;
     }
-    if (!details.synthese_recruteur && c.analyse_details_parsed?.synthese_recruteur) {
-        details.synthese_recruteur = c.analyse_details_parsed.synthese_recruteur;
+    
+    // ✅ Affichage des points forts
+    if (pointsForts && pointsForts.length) {
+        html += '<div class="bloc-alert signal"><strong>✅ Points forts</strong><div style="margin-top:.4rem">'
+            + pointsForts.map(p => '• ' + escHtml(p)).join('<br>') + '</div></div>';
     }
-
-const sousScores = sb.sous_scores || {};
-const scoreFinal = sb.bloc1_eliminatoire ? 0 : (sb.score_final || 0);
-const decision = sb.bloc1_eliminatoire ? '❌ Rejet (éliminatoire)' : (sb.decision || getDecisionFromScore(scoreFinal, c.poste));
-const decisionColor = {
-'🥇 Entretien prioritaire': '#166534',
-'🥈 Potentiel à évaluer en entretien': '#3B6D11',
-'🥈 Entretien si besoin (vivier de réserve)': '#3B6D11',
-'❌ Rejet': '#991b1b',
-'❌ Rejet (éliminatoire)': '#991b1b'
-}[decision] || '#1a2433';
-html += `<div style="text-align:center;margin-bottom:.8rem">
-<span style="font-size:1.6rem;font-weight:800;color:${decisionColor}">${scoreFinal}/14</span>
-<span style="margin-left:.6rem;font-size:.9rem;font-weight:700;color:${decisionColor};background:${decisionColor}18;padding:.2rem .6rem;border-radius:4px">${decision}</span>
-</div>`;
-html += '<div class="score-breakdown">';
-
-const currentLabels = LABELS_14[c.poste] || LABELS_14["Chef de Division Local Corporate"];
-const max14 = {
-"Adéquation de l'expérience en local/corporate Banking avec gestion d'un portefeuille entreprises et objectifs atteints": 3,
-"Capacité managériale démontrée avec encadrement, développement d'équipe et pilotage d'une P&L": 3,
-"Maîtrise du risque de crédit et de la qualité du portefeuille avec gestion du NPL, du CIR et des provisions": 2,
-"Exposition au cross-selling, au Cash Management ou aux solutions TSG / Trade Finance": 2,
-"Cohérence et progression du parcours professionnel avec séniorité et responsabilités croissantes": 2,
-"Qualité du CV avec résultats chiffrés et précision des missions, ainsi que qualité de la lettre de motivation": 1,
-"Certification professionnelle (ITB, Moody's, Ecobank) ou connaissance du marché CEMAC / UEMOA": 1
-};
-
-Object.entries(currentLabels).forEach(([key, label]) => {
-const val = sb.bloc1_eliminatoire ? 0 : (sousScores[key] || 0);
-const max = max14[key] || 0;
-html += `<div class="sb-row"><span class="sb-label">${label}</span><span class="sb-val ${sb.bloc1_eliminatoire ? 'elim' : 'ok'}">${val} / ${max}</span></div>`;
-});
-html += `<div class="sb-row"><span class="sb-label">Score total</span><span class="sb-val ${sb.bloc1_eliminatoire ? 'elim' : 'ok'}" style="color:${decisionColor}">${scoreFinal} / 14</span></div>`;
-html += '</div>';
-
-if (details.synthese_recruteur) {
-html += `<div class="bloc-alert signal" style="margin-top:.8rem">
-<strong>📝 Synthèse du recruteur</strong>
-<div style="margin-top:.4rem;font-style:italic">${escHtml(details.synthese_recruteur)}</div>
-</div>`;
-}
-if (details.points_forts && details.points_forts.length) {
-html += '<div class="bloc-alert signal"><strong>✅ Points forts</strong><div style="margin-top:.4rem">'
-+ details.points_forts.map(p => '• ' + escHtml(p)).join('<br>') + '</div></div>';
-}
-if (details.points_vigilance && details.points_vigilance.length) {
-html += '<div class="bloc-alert attn"><strong>⚠️ Points de vigilance</strong><div style="margin-top:.4rem">'
-+ details.points_vigilance.map(p => '• ' + escHtml(p)).join('<br>') + '</div></div>';
-}
-if (sb.bloc1_eliminatoire) {
-html += '<div class="bloc-alert elim"><strong>⛔ Critères éliminatoires non satisfaits</strong>';
-const flags = c.flags_eliminatoires_parsed || [];
-if (flags.length) {
-html += '<div style="margin-top:.4rem">';
-flags.forEach(f => html += '• ' + escHtml(f) + '<br>');
-html += '</div>';
-}
-html += '</div>';
-}
-content.innerHTML = html;
-return;
+    
+    // ✅ Affichage des points de vigilance
+    if (pointsVigilance && pointsVigilance.length) {
+        html += '<div class="bloc-alert attn"><strong>⚠️ Points de vigilance</strong><div style="margin-top:.4rem">'
+            + pointsVigilance.map(p => '• ' + escHtml(p)).join('<br>') + '</div></div>';
+    }
+    
+    // ✅ Affichage des critères éliminatoires
+    if (sb.bloc1_eliminatoire) {
+        html += '<div class="bloc-alert elim"><strong>⛔ Critères éliminatoires non satisfaits</strong>';
+        const flags = c.flags_eliminatoires_parsed || [];
+        if (flags.length) {
+            html += '<div style="margin-top:.4rem">';
+            flags.forEach(f => html += '• ' + escHtml(f) + '<br>');
+            html += '</div>';
+        }
+        html += '</div>';
+    }
+    
+    content.innerHTML = html;
+    return;
 }
 
 // Gestion pour POSTES_AVEC_SCORING_12
