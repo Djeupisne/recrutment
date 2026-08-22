@@ -77,6 +77,7 @@ font-size: 1.1rem;
 display: flex;
 align-items: center;
 gap: 1rem;
+flex-wrap: wrap;
 }
 .nav-links a {
 color: rgba(255,255,255,0.8);
@@ -463,6 +464,42 @@ transform: translateY(-1px);
 }
 .export-btn.solid { background: white; color: var(--primary); }
 .export-btn.solid:hover { background: #f1f5f9; }
+.dossier-section {
+background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+color: white;
+padding: 1.25rem 1.5rem;
+border-radius: var(--radius-lg);
+margin-bottom: 1rem;
+box-shadow: var(--shadow);
+display: flex;
+align-items: center;
+justify-content: space-between;
+flex-wrap: wrap;
+gap: 1rem;
+}
+.dossier-section h3 {
+color: white;
+margin: 0;
+font-size: 1rem;
+font-weight: 600;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+}
+.dossier-section .dossier-subtitle {
+color: rgba(255,255,255,0.8);
+font-size: 0.8rem;
+margin: 0.25rem 0 0 0;
+font-weight: 400;
+}
+.dossier-controls {
+display: flex;
+align-items: center;
+gap: 0.75rem;
+flex-wrap: wrap;
+flex: 1;
+justify-content: flex-end;
+}
 .reanalyze-section {
 background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
 color: white;
@@ -545,7 +582,7 @@ border-bottom: 1px solid var(--border);
 flex-wrap: wrap;
 align-items: center;
 }
-.filter-bar .form-control { min-width: 160px; }
+.filter-bar .form-control { min-width: 140px; }
 .table-wrap { overflow-x: auto; }
 table {
 width: 100%;
@@ -614,6 +651,8 @@ overflow: hidden;
 display: flex;
 flex-direction: column;
 animation: modalSlideIn 0.2s ease-out;
+max-width: 820px;
+width: 100%;
 }
 @keyframes modalSlideIn {
 from { opacity: 0; transform: translateY(-20px); }
@@ -667,6 +706,7 @@ display: flex;
 gap: 0;
 border-bottom: 1px solid var(--border);
 margin-bottom: 1.25rem;
+flex-wrap: wrap;
 }
 .tab-btn {
 background: none;
@@ -945,8 +985,8 @@ to { opacity: 1; transform: translateX(0); }
 .dash-layout { grid-template-columns: 1fr; }
 .sidebar { display: none; }
 .dash-main { padding: 1rem; }
-.export-section, .reanalyze-section { flex-direction: column; align-items: stretch; }
-.export-controls, .reanalyze-controls { justify-content: flex-start; width: 100%; }
+.export-section, .dossier-section, .reanalyze-section { flex-direction: column; align-items: stretch; }
+.export-controls, .dossier-controls, .reanalyze-controls { justify-content: flex-start; width: 100%; }
 .export-buttons { width: 100%; }
 .export-btn { flex: 1; }
 .floating-progress { width: calc(100% - 2rem); left: 1rem; right: 1rem; bottom: 1rem; }
@@ -957,6 +997,7 @@ to { opacity: 1; transform: translateX(0); }
 .td-actions { flex-direction: column; }
 .td-actions .btn { width: 100%; }
 .stats-grid { grid-template-columns: repeat(2, 1fr); }
+.filter-bar .form-control { min-width: 100%; }
 }
 </style>
 </head>
@@ -1001,7 +1042,7 @@ to { opacity: 1; transform: translateX(0); }
 <h1 class="dash-title">Vue d'ensemble</h1>
 <p class="dash-subtitle">Synthèse des candidatures et indicateurs clés</p>
 </div>
-<button class="btn btn-primary btn-sm" onclick="refreshAll()">Actualiser</button>
+<button class="btn btn-primary btn-sm" onclick="refreshAll()">🔄 Actualiser</button>
 </div>
 <div class="stats-grid">
 <div class="stat-card blue">
@@ -1060,14 +1101,61 @@ to { opacity: 1; transform: translateX(0); }
 </div>
 </div>
 </div>
+<!-- SECTION EXPORT RAPPORTS -->
+<div class="export-section">
+<div>
+<h3>📊 Exporter les rapports</h3>
+<p class="export-subtitle">Téléchargez les données au format de votre choix avec filtres</p>
+</div>
+<div class="export-controls">
+<select id="export-poste-select" class="form-control" style="background:white;max-width:200px;">
+<option value="">Tous les postes</option>
+</select>
+<select id="export-statut-select" class="form-control" style="background:white;max-width:160px;">
+<option value="">Tous statuts</option>
+<option value="en_attente">En attente</option>
+<option value="retenu">Retenu</option>
+<option value="entretien">Entretien</option>
+<option value="rejete">Non retenu</option>
+</select>
+<input type="date" id="export-date-start" class="form-control" style="background:white;max-width:150px;" title="Date de début">
+<input type="date" id="export-date-end" class="form-control" style="background:white;max-width:150px;" title="Date de fin">
+<input type="number" id="export-min-score" class="form-control" style="background:white;max-width:80px;" placeholder="Score min" title="Score minimum">
+<div class="export-buttons">
+<button class="export-btn solid" onclick="exportReport('excel')">📊 Excel</button>
+<button class="export-btn solid" onclick="exportReport('csv')">📄 CSV</button>
+<button class="export-btn solid" onclick="exportReport('pdf')">📕 PDF</button>
+<button class="export-btn solid" onclick="exportReport('word')">📝 Word</button>
+</div>
+</div>
+</div>
+<!-- SECTION DOSSIERS CANDIDATS -->
+<div class="dossier-section">
+<div>
+<h3>📁 Dossiers candidats</h3>
+<p class="dossier-subtitle">Téléchargez les pièces jointes (CV, lettres, certificats) par poste et période</p>
+</div>
+<div class="dossier-controls">
+<select id="dossier-poste-select" class="form-control" style="background:white;max-width:200px;">
+<option value="">Tous les postes</option>
+</select>
+<input type="date" id="dossier-date-start" class="form-control" style="background:white;max-width:150px;" title="Date de début">
+<input type="date" id="dossier-date-end" class="form-control" style="background:white;max-width:150px;" title="Date de fin">
+<button class="export-btn solid" onclick="downloadAllDossiers()" style="background:white;color:#059669;">📦 Télécharger ZIP</button>
+</div>
+</div>
+<!-- SECTION RÉANALYSE -->
 <div class="reanalyze-section">
-<div style="flex:1;min-width:250px">
-<h3>Réanalyse automatique des postes actifs</h3>
-<p>Les postes actifs sont réanalysés automatiquement à chaque connexion.</p>
+<div style="flex:1;min-width:200px">
+<h3>🔄 Réanalyse des postes actifs</h3>
+<p>Relance l'analyse automatique avec les règles actuelles pour les postes ouverts</p>
 </div>
 <div class="reanalyze-controls">
+<select id="reanalyze-poste-select" class="form-control" style="background:rgba(255,255,255,0.95);max-width:200px;">
+<option value="">Tous les postes actifs</option>
+</select>
+<button class="export-btn solid" style="color:#d97706;" onclick="triggerManualReanalyze()">🚀 Lancer la réanalyse</button>
 <span id="reanalyze-status" class="reanalyze-status" style="display:none;"></span>
-<button class="export-btn solid" style="color:#d97706;" onclick="triggerManualReanalyze()">🔄 Réanalyser maintenant</button>
 </div>
 <div id="reanalyze-progress-inline" class="reanalyze-progress-inline" style="display:none;">
 <div class="progress-header">
@@ -1082,7 +1170,7 @@ to { opacity: 1; transform: translateX(0); }
 </div>
 <div class="card" style="margin-top:1.5rem">
 <div class="card-header">
-<h3 class="card-title">Dernières candidatures</h3>
+<h3 class="card-title">📋 Dernières candidatures</h3>
 <button class="btn btn-ghost btn-sm" onclick="showSection('candidats', document.getElementById('nav-candidats'))">Voir tout →</button>
 </div>
 <div id="recent-table">
@@ -1099,7 +1187,7 @@ to { opacity: 1; transform: translateX(0); }
 </div>
 <div class="card">
 <div class="filter-bar">
-<input class="form-control" id="f-search" placeholder="Rechercher par nom, email..." oninput="applyFilters()" style="min-width:220px;">
+<input class="form-control" id="f-search" placeholder="🔍 Rechercher..." oninput="applyFilters()" style="min-width:180px;">
 <select class="form-control" id="f-poste" onchange="applyFilters()">
 <option value="">Tous les postes</option>
 </select>
@@ -1110,7 +1198,10 @@ to { opacity: 1; transform: translateX(0); }
 <option value="entretien">Entretien</option>
 <option value="rejete">Non retenu</option>
 </select>
-<button class="btn btn-primary btn-sm" onclick="fetchCandidats()">Actualiser</button>
+<input class="form-control" id="f-date-start" type="date" onchange="applyFilters()" style="max-width:150px;" title="Date début">
+<input class="form-control" id="f-date-end" type="date" onchange="applyFilters()" style="max-width:150px;" title="Date fin">
+<input class="form-control" id="f-min-score" type="number" placeholder="Score min" onchange="applyFilters()" style="max-width:100px;">
+<button class="btn btn-primary btn-sm" onclick="fetchCandidats()">🔄 Actualiser</button>
 </div>
 <div class="table-wrap">
 <table>
@@ -1134,8 +1225,9 @@ to { opacity: 1; transform: translateX(0); }
 </div>
 </main>
 </div>
+<!-- MODAL CANDIDAT -->
 <div class="modal-overlay" id="modal-candidat">
-<div class="modal" style="max-width:820px">
+<div class="modal">
 <div class="modal-header">
 <h3 id="modal-title">Dossier <span class="readonly-badge">Analyse automatique</span></h3>
 <button class="modal-close" onclick="closeModal()">×</button>
@@ -1150,8 +1242,8 @@ Analyse automatique <span class="readonly-badge" style="font-size:.65rem;padding
 <div id="analyse-content"></div>
 </div>
 <div class="tabs">
-<button class="tab-btn active" onclick="switchTab('eval',this)">Évaluation</button>
-<button class="tab-btn" onclick="switchTab('grille',this)">Grille de présélection</button>
+<button class="tab-btn active" onclick="switchTab('eval',this)">📝 Évaluation</button>
+<button class="tab-btn" onclick="switchTab('grille',this)">📋 Grille</button>
 </div>
 <div id="tab-eval" class="tab-content active">
 <div class="form-group" style="margin-bottom:1rem">
@@ -1159,7 +1251,7 @@ Analyse automatique <span class="readonly-badge" style="font-size:.65rem;padding
 <div id="stars-row" style="display:flex;gap:0;margin-top:.3rem"></div>
 </div>
 <div class="form-group">
-<label>Notes internes <span style="color:var(--text-muted);font-weight:400;font-size:.8rem;text-transform:none;letter-spacing:0">(vos commentaires)</span></label>
+<label>Notes internes</label>
 <textarea class="form-control" id="modal-note" style="min-height:90px" placeholder="Observations, points forts, réserves..."></textarea>
 </div>
 </div>
@@ -1171,19 +1263,20 @@ Résultats de l'analyse automatique (Gemini + mots-clés)
 </div>
 </div>
 <div class="modal-footer">
-<button class="btn btn-success btn-sm" onclick="updateStatut('retenu')">Retenir</button>
-<button class="btn btn-warning btn-sm" onclick="updateStatut('entretien')">Entretien</button>
-<button class="btn btn-danger btn-sm" onclick="updateStatut('rejete')">Rejeter</button>
-<button class="btn btn-info btn-sm" onclick="openEmailModal()">Email</button>
-<button class="btn btn-outline btn-sm" onclick="reanalyzeOne()">Réanalyser</button>
+<button class="btn btn-success btn-sm" onclick="updateStatut('retenu')">✅ Retenir</button>
+<button class="btn btn-warning btn-sm" onclick="updateStatut('entretien')">📅 Entretien</button>
+<button class="btn btn-danger btn-sm" onclick="updateStatut('rejete')">❌ Rejeter</button>
+<button class="btn btn-info btn-sm" onclick="openEmailModal()">✉️ Email</button>
+<button class="btn btn-outline btn-sm" onclick="reanalyzeOne()">🔄 Réanalyser</button>
 <button class="btn btn-ghost btn-sm" onclick="closeModal()">Fermer</button>
 </div>
 </div>
 </div>
+<!-- MODAL EMAIL -->
 <div class="modal-overlay" id="modal-email">
 <div class="modal" style="max-width:600px">
 <div class="modal-header">
-<h3>Préparer l'Email</h3>
+<h3>✉️ Préparer l'Email</h3>
 <button class="modal-close" onclick="document.getElementById('modal-email').classList.remove('open')">×</button>
 </div>
 <div class="modal-body">
@@ -1195,12 +1288,12 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 <select class="form-control" id="email-type" onchange="buildEmail()" style="width:100%">
 <optgroup label="Postes scoring /12 (Compensation & Admin Crédit)">
 <option value="🥇 Entretien prioritaire">Entretien prioritaire (10-12/12)</option>
-<option value="🥈 Entretien si besoin (vivier de réserve)">Vivier de réserve (7-9/12)</option>
+<option value="🥈 Entretien si besoin (vivier)">Vivier de réserve (7-9/12)</option>
 <option value="❌ Rejet">Rejet (&lt;7/12)</option>
 </optgroup>
-<optgroup label="Postes scoring /14 (Chef Division Local Corporate)">
+<optgroup label="Postes scoring /14 (Chef Division)">
 <option value="🥇 Entretien prioritaire">Entretien prioritaire (11-14/14)</option>
-<option value="🥈 Potentiel à évaluer en entretien">Potentiel (7-10/14)</option>
+<option value="🥈 Potentiel">Potentiel (7-10/14)</option>
 <option value="❌ Rejet">Rejet (&lt;7/14)</option>
 </optgroup>
 <optgroup label="Postes scoring /100">
@@ -1223,12 +1316,13 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 </div>
 </div>
 <div class="modal-footer">
-<button class="btn btn-primary btn-sm" onclick="copyEmail()">Copier</button>
-<button class="btn btn-info btn-sm" onclick="openMailClient()">Ouvrir dans Mail</button>
+<button class="btn btn-primary btn-sm" onclick="copyEmail()">📋 Copier</button>
+<button class="btn btn-info btn-sm" onclick="openMailClient()">📧 Ouvrir dans Mail</button>
 <button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-email').classList.remove('open')">Fermer</button>
 </div>
 </div>
 </div>
+<!-- WIDGET PROGRESSION -->
 <div id="floating-progress" class="floating-progress">
 <div class="floating-progress-header">
 <span><span class="icon">🔄</span> <span id="floating-progress-title">Réanalyse en cours...</span></span>
@@ -1239,567 +1333,766 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 </div>
 <div id="floating-progress-detail" class="progress-detail">Préparation...</div>
 </div>
+<!-- TOAST -->
 <div class="toast-container" id="toast-container"></div>
 <script>
-const API = 'https://backend1-fiq5.onrender.com/api';
+// === CONFIGURATION ===
+const API = window.location.hostname === "localhost" ? "http://localhost:5000/api" : "https://backend1-fiq5.onrender.com/api";
 let jwtToken = localStorage.getItem('rh_token');
 let allCandidats = [];
 let currentC = null;
 let reanalyzePollingInterval = null;
+
 if (!jwtToken) { window.location.href = 'login.html'; }
+
 const nomRH = localStorage.getItem('rh_nom') || 'Recruteur';
 document.getElementById('nav-nom').textContent = nomRH;
 document.getElementById('sidebar-nom').textContent = nomRH;
 document.getElementById('sidebar-avatar').textContent = nomRH.charAt(0).toUpperCase();
+
+// === FONCTIONS UTILITAIRES ===
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 function authH() { return { 'Authorization': 'Bearer ' + jwtToken, 'Content-Type': 'application/json' }; }
+
 function showToast(message, type) {
-const container = document.getElementById('toast-container');
-if (!container) return;
-const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-const toast = document.createElement('div');
-toast.className = `toast ${type || 'info'}`;
-toast.innerHTML = `${icons[type] || 'ℹ️'} ${message}`;
-container.appendChild(toast);
-setTimeout(() => toast.remove(), 3500);
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type || 'info'}`;
+    toast.innerHTML = `${icons[type] || 'ℹ️'} ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
 }
-function parseJSONField(raw, fieldName, candidatId, poste) {
-if (!raw) return null;
-try {
-const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-return parsed;
-} catch (e) {
-return null;
+
+function parseJSONField(raw, fieldName) {
+    if (!raw) return null;
+    try {
+        return typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } catch (e) {
+        return null;
+    }
 }
+
+function fmtDate(iso) {
+    if (!iso) return '–';
+    try {
+        return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch { return '–'; }
 }
-async function triggerAutoReanalyze() {
-try {
-const response = await fetch(`${API}/recruteur/auto-reanalyze`, { method: 'POST', headers: authH() });
-const data = await response.json();
-if (data.status === 'started') {
-showToast(`🔄 Réanalyse automatique lancée (${data.total} candidats)`, 'info');
-startReanalyzePolling();
-} else if (data.status === 'already_running') {
-showToast('⏳ Réanalyse déjà en cours', 'info');
-startReanalyzePolling();
-} else if (data.status === 'no_candidates') {
-showToast('📭 Aucun candidat à réanalyser', 'info');
-} else {
-showToast(`⚠️ ${data.message || 'Erreur'}`, 'error');
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-} catch (error) {
-console.error('Auto-reanalyse error:', error);
-}
-}
-function startReanalyzePolling() {
-if (reanalyzePollingInterval) clearInterval(reanalyzePollingInterval);
-checkReanalyzeStatus();
-reanalyzePollingInterval = setInterval(checkReanalyzeStatus, 3000);
-setTimeout(() => {
-if (reanalyzePollingInterval) {
-clearInterval(reanalyzePollingInterval);
-reanalyzePollingInterval = null;
-}
-}, 600000);
-}
-async function checkReanalyzeStatus() {
-try {
-const response = await fetch(`${API}/recruteur/reanalyze-status`, { headers: authH() });
-if (!response.ok) {
-if (response.status === 404) {
-updateProgressWidget(-1, -1, 0, "Analyse en cours...");
-}
-return;
-}
-const data = await response.json();
-updateProgressWidget(data.processed || 0, data.total || 0, data.errors || 0, data.in_progress ? "Analyse en cours..." : "Terminé");
-updateReanalyzeBadge(data);
-if (!data.in_progress && data.total > 0) {
-if (reanalyzePollingInterval) {
-clearInterval(reanalyzePollingInterval);
-reanalyzePollingInterval = null;
-}
-showReanalyzeCompleteNotification(data);
-fetchCandidats();
-fetchStats();
-}
-} catch (error) {
-console.error('Check reanalyze status error:', error);
-}
-}
-function updateProgressWidget(processed, total, errors, statusText) {
-const widget = document.getElementById('floating-progress');
-if (!widget) return;
-if (total > 0 && processed < total) {
-widget.classList.add('active');
-widget.classList.remove('completed');
-const progress = total > 0 ? Math.round((processed / total) * 100) : 0;
-const bar = document.getElementById('floating-progress-bar');
-bar.style.width = progress + '%';
-document.getElementById('floating-progress-title').textContent = '🔄 Réanalyse en cours...';
-document.getElementById('floating-progress-count').textContent = `${processed}/${total} (${progress}%)`;
-let detailText = `Traitement: ${processed}/${total}`;
-if (errors > 0) detailText += ` · ❌ ${errors} erreur(s)`;
-if (statusText) detailText += ` · ${statusText}`;
-document.getElementById('floating-progress-detail').textContent = detailText;
-} else if (total > 0 && processed >= total) {
-widget.classList.add('completed');
-document.getElementById('floating-progress-title').textContent = '✅ Réanalyse terminée';
-document.getElementById('floating-progress-count').textContent = `${processed}/${total}`;
-document.getElementById('floating-progress-detail').textContent = errors > 0 ? `Terminé avec ${errors} erreur(s)` : 'Tous les dossiers sont à jour.';
-setTimeout(() => widget.classList.remove('active'), 8000);
-}
-}
-function updateReanalyzeBadge(data) {
-const badge = document.getElementById('reanalyze-status-badge');
-if (!badge) return;
-if (data.in_progress) {
-badge.style.display = 'inline-block';
-badge.textContent = `🔄 ${data.progress || 0}%`;
-badge.style.background = '#fef3cd';
-badge.style.color = '#856404';
-} else if (data.total > 0 && data.processed >= data.total) {
-badge.style.display = 'inline-block';
-badge.textContent = '✅ À jour';
-badge.style.background = '#d4edda';
-badge.style.color = '#155724';
-setTimeout(() => { badge.style.display = 'none'; }, 10000);
-} else {
-badge.style.display = 'none';
-}
-}
-function showReanalyzeCompleteNotification(data) {
-const success = data.success || 0;
-const errors = data.errors || 0;
-const total = data.total || 0;
-let message = `✅ Réanalyse terminée: ${success}/${total} dossiers mis à jour`;
-if (errors > 0) message += ` (${errors} erreur${errors > 1 ? 's' : ''})`;
-showToast(message, errors > 0 ? 'warning' : 'success');
-const notification = document.createElement('div');
-notification.className = `reanalyze-notification${errors > 0 ? ' warning' : ''}`;
-notification.innerHTML = `
-<div style="display:flex;align-items:center;gap:12px;">
-<span style="font-size:24px;">${errors > 0 ? '⚠️' : '✅'}</span>
-<div>
-<div style="font-weight:600;">${errors > 0 ? 'Réanalyse terminée avec des erreurs' : 'Réanalyse terminée avec succès'}</div>
-<div style="font-size:0.9rem;">${success}/${total} dossiers mis à jour${errors > 0 ? ` · ${errors} erreur${errors > 1 ? 's' : ''}` : ''}</div>
-</div>
-<button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666;">×</button>
-</div>
-`;
-document.body.appendChild(notification);
-setTimeout(() => { if (notification.parentElement) notification.remove(); }, 10000);
-}
-async function triggerManualReanalyze() {
-try {
-const response = await fetch(`${API}/recruteur/auto-reanalyze`, { method: 'POST', headers: authH() });
-const data = await response.json();
-if (data.status === 'started') {
-showToast(`🔄 Réanalyse manuelle lancée (${data.total} candidats)`, 'info');
-startReanalyzePolling();
-} else if (data.status === 'already_running') {
-showToast('⏳ Réanalyse déjà en cours', 'info');
-} else if (data.status === 'no_candidates') {
-showToast('📭 Aucun candidat à réanalyser', 'info');
-} else {
-showToast(`⚠️ ${data.message || 'Erreur'}`, 'error');
-}
-} catch (error) {
-showToast('Erreur: ' + error.message, 'error');
-}
-}
-async function fetchStats() {
-try {
-const res = await fetch(API + '/recruteur/stats', { headers: authH() });
-if (res.status === 401) { logout(); return; }
-if (!res.ok) return;
-const d = await res.json();
-document.getElementById('s-total').textContent = d.total;
-document.getElementById('s-attente').textContent = d.en_attente;
-document.getElementById('s-retenu').textContent = d.retenu;
-document.getElementById('s-rejete').textContent = d.rejete;
-document.getElementById('s-entretien').textContent = d.entretien;
-document.getElementById('donut-total').textContent = d.total;
-renderDonut(d);
-renderBarChart(d.by_poste || []);
-} catch (e) { console.error('fetchStats:', e); }
-}
-function renderDonut(d) {
-const total = d.total || 1;
-const segs = [
-{ id: 'arc-attente', val: d.en_attente },
-{ id: 'arc-retenu', val: d.retenu },
-{ id: 'arc-entretien', val: d.entretien },
-{ id: 'arc-rejete', val: d.rejete }
-];
-const circ = 100;
-let offset = 25;
-segs.forEach(s => {
-const pct = (s.val / total) * circ;
-const el = document.getElementById(s.id);
-el.setAttribute('stroke-dasharray', pct + ' ' + (circ - pct));
-el.setAttribute('stroke-dashoffset', String(-(offset - 25)));
-offset += pct;
-});
-}
-function renderBarChart(byPoste) {
-const el = document.getElementById('bar-chart');
-if (!byPoste.length) {
-el.innerHTML = '<div class="empty-state"><p>Aucune donnée</p></div>';
-return;
-}
-const max = Math.max(...byPoste.map(p => p.n), 1);
-el.innerHTML = byPoste.map(p => {
-const lbl = p.poste.split(' ').slice(0, 3).join(' ');
-const pct = Math.round((p.n / max) * 100);
-return '<div class="bar-row">'
-+ '<div class="bar-label" title="' + p.poste + '">' + lbl + '</div>'
-+ '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>'
-+ '<div class="bar-val">' + p.n + '</div>'
-+ '</div>';
-}).join('');
-}
-async function fetchCandidats() {
-try {
-const res = await fetch(API + '/recruteur/candidats', { headers: authH() });
-if (res.status === 401) { logout(); return; }
-if (!res.ok) { showToast('Erreur chargement candidats', 'error'); return; }
-allCandidats = await res.json();
-allCandidats.forEach(c => {
-if (c.score_breakdown && !c.score_breakdown_parsed) {
-c.score_breakdown_parsed = parseJSONField(c.score_breakdown, 'score_breakdown');
-}
-if (c.flags_eliminatoires && !c.flags_eliminatoires_parsed) {
-c.flags_eliminatoires_parsed = parseJSONField(c.flags_eliminatoires, 'flags_eliminatoires');
-}
-if (c.signaux_detectes && !c.signaux_detectes_parsed) {
-c.signaux_detectes_parsed = parseJSONField(c.signaux_detectes, 'signaux_detectes');
-}
-if (c.analyse_details && !c.analyse_details_parsed) {
-c.analyse_details_parsed = parseJSONField(c.analyse_details, 'analyse_details');
-}
-});
-populatePosteFilter(allCandidats);
-renderTable(allCandidats);
-renderRecent(allCandidats);
-} catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
-}
-function populatePosteFilter(data) {
-const sel = document.getElementById('f-poste');
-const postes = [...new Set(data.map(c => c.poste))].sort();
-while (sel.options.length > 1) sel.remove(1);
-postes.forEach(p => {
-const opt = document.createElement('option');
-opt.value = p; opt.textContent = p; sel.appendChild(opt);
-});
-}
-function applyFilters() {
-const search = document.getElementById('f-search').value.toLowerCase().trim();
-const poste = document.getElementById('f-poste').value;
-const statut = document.getElementById('f-statut').value;
-const result = allCandidats.filter(c => {
-const hay = (c.nom + ' ' + c.prenom + ' ' + c.email).toLowerCase();
-return (!search || hay.includes(search))
-&& (!poste || c.poste === poste)
-&& (!statut || c.statut === statut);
-});
-renderTable(result);
-}
+
 function getScoreMax(poste) {
-if (!poste) return 10;
-if (["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].includes(poste)) return 12;
-if (["Chef de Division Local Corporate"].includes(poste)) return 14;
-if (["Auditeur interne", "Chef service contrôle des engagements", "Chef service IT (maintenance/support)", "Chef service finance", "Chef service risques de marché", "Chef service reporting réglementaire"].includes(poste)) return 100;
-return 10;
+    if (!poste) return 10;
+    if (["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].includes(poste)) return 12;
+    if (["Chef de Division Local Corporate"].includes(poste)) return 14;
+    if (["Auditeur interne", "Chef service contrôle des engagements", "Chef service IT (maintenance/support)", "Chef service finance", "Chef service risques de marché", "Chef service reporting réglementaire"].includes(poste)) return 100;
+    return 10;
 }
-function renderTable(data) {
-const tbody = document.getElementById('candidats-tbody');
-if (!data.length) {
-tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Aucun candidat trouvé</td></tr>';
-return;
-}
-tbody.innerHTML = data.map(c => {
-const scoreMax = getScoreMax(c.poste);
-const scoreRaw = parseInt(c.score) || 0;
-const score = Math.max(0, Math.min(scoreMax, scoreRaw));
-const starUnit = scoreMax / 5;
-const stars = '★'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
-const cvLink = c.cv_filename ? '<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-outline btn-sm">CV</a>' : '<span style="color:var(--text-muted);font-size:.78rem">–</span>';
-const lmLink = c.lettre_filename ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-outline btn-sm">LM</a>' : '';
-const attLink = c.attestation_filename ? '<a href="' + API + '/recruteur/uploads/' + c.attestation_filename + '" target="_blank" class="btn btn-outline btn-sm">Certif</a>' : '';
-return '<tr>'
-+ '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br><span class="td-small">' + c.email + '</span></td>'
-+ '<td style="font-size:.82rem">' + c.poste + '</td>'
-+ '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
-+ '<td>' + badgePill(c.statut) + '</td>'
-+ '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace">' + stars + ' <span style="color:var(--text-secondary);font-family:inherit">(' + score + '/' + scoreMax + ')</span></td>'
-+ '<td style="display:flex;gap:0.25rem;flex-wrap:wrap">' + cvLink + lmLink + attLink + '</td>'
-+ '<td class="td-actions">'
-+ '<button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">Dossier</button>'
-+ '<button class="btn btn-info btn-sm" onclick="quickEmail(\'' + c.id + '\')">Email</button>'
-+ '<button class="btn btn-outline btn-sm" onclick="quickReanalyze(\'' + c.id + '\')" title="Réanalyser">↻</button>'
-+ '</td></tr>';
-}).join('');
-}
-function renderRecent(data) {
-const container = document.getElementById('recent-table');
-const slice = data.slice(0, 8);
-if (!slice.length) {
-container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Aucune candidature.</p></div>';
-return;
-}
-const rows = slice.map(c => {
-const scoreMax = getScoreMax(c.poste);
-const scoreRaw = parseInt(c.score) || 0;
-const score = Math.max(0, Math.min(scoreMax, scoreRaw));
-const starUnit = scoreMax / 5;
-const stars = '★'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
-return '<tr>'
-+ '<td><strong>' + c.prenom + ' ' + c.nom + '</strong><br><small style="color:var(--text-muted)">' + c.email + '</small></td>'
-+ '<td style="font-size:.82rem">' + c.poste + '</td>'
-+ '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
-+ '<td>' + badgePill(c.statut) + '</td>'
-+ '<td style="font-size:.9rem;font-family:monospace">' + stars + ' <span style="color:var(--text-secondary);font-family:inherit">(' + score + '/' + scoreMax + ')</span></td>'
-+ '<td><button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">Voir →</button></td>'
-+ '</tr>';
-}).join('');
-container.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th>Score</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-}
-function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('fr-FR') : '–'; }
+
 function badgePill(s) {
-const cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
-const lbl = { en_attente:'En attente', retenu:'Retenu', rejete:'Non retenu', entretien:'Entretien' };
-return '<span class="badge ' + (cls[s]||'badge-pending') + '">' + (lbl[s]||s) + '</span>';
+    const cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview', exclu:'badge-rejected' };
+    const lbl = { en_attente:'⏳ En attente', retenu:'✅ Retenu', rejete:'❌ Non retenu', entretien:'📅 Entretien', exclu:'🚫 Exclu' };
+    // Statuts avec emojis
+    const emojiStatus = ['🥇 Entretien prioritaire', '🥈 Entretien si besoin', '🥈 Potentiel', '❌ Rejet', '❌ Rejet (éliminatoire)', 'Shortlist', 'À considérer', 'Faible', 'Rejet'];
+    if (emojiStatus.includes(s)) {
+        return `<span class="badge badge-interview">${s}</span>`;
+    }
+    return `<span class="badge ${cls[s]||'badge-pending'}">${lbl[s]||s}</span>`;
 }
+
+// === NAVIGATION ===
 function showSection(name, el) {
-document.getElementById('section-overview').style.display = name === 'overview' ? 'block' : 'none';
-document.getElementById('section-candidats').style.display = name === 'candidats' ? 'block' : 'none';
-document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
-if (el) el.classList.add('active');
-if (name === 'candidats') renderTable(allCandidats);
+    document.getElementById('section-overview').style.display = name === 'overview' ? 'block' : 'none';
+    document.getElementById('section-candidats').style.display = name === 'candidats' ? 'block' : 'none';
+    document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (name === 'candidats') renderTable(allCandidats);
 }
+
+// === STATS ===
+async function fetchStats() {
+    try {
+        const res = await fetch(API + '/recruteur/stats', { headers: authH() });
+        if (res.status === 401) { logout(); return; }
+        if (!res.ok) return;
+        const d = await res.json();
+        document.getElementById('s-total').textContent = d.total;
+        document.getElementById('s-attente').textContent = d.en_attente;
+        document.getElementById('s-retenu').textContent = d.retenu;
+        document.getElementById('s-rejete').textContent = d.rejete;
+        document.getElementById('s-entretien').textContent = d.entretien;
+        document.getElementById('donut-total').textContent = d.total;
+        renderDonut(d);
+        renderBarChart(d.by_poste || []);
+    } catch (e) { console.error('fetchStats:', e); }
+}
+
+function renderDonut(d) {
+    const total = d.total || 1;
+    const segs = [
+        { id: 'arc-attente', val: d.en_attente },
+        { id: 'arc-retenu', val: d.retenu },
+        { id: 'arc-entretien', val: d.entretien },
+        { id: 'arc-rejete', val: d.rejete }
+    ];
+    const circ = 100;
+    let offset = 25;
+    segs.forEach(s => {
+        const pct = (s.val / total) * circ;
+        const el = document.getElementById(s.id);
+        el.setAttribute('stroke-dasharray', pct + ' ' + (circ - pct));
+        el.setAttribute('stroke-dashoffset', String(-(offset - 25)));
+        offset += pct;
+    });
+}
+
+function renderBarChart(byPoste) {
+    const el = document.getElementById('bar-chart');
+    if (!byPoste.length) {
+        el.innerHTML = '<div class="empty-state"><p>Aucune donnée</p></div>';
+        return;
+    }
+    const max = Math.max(...byPoste.map(p => p.n), 1);
+    el.innerHTML = byPoste.map(p => {
+        const lbl = p.poste.split(' ').slice(0, 3).join(' ');
+        const pct = Math.round((p.n / max) * 100);
+        return '<div class="bar-row">'
+            + '<div class="bar-label" title="' + p.poste + '">' + lbl + '</div>'
+            + '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>'
+            + '<div class="bar-val">' + p.n + '</div>'
+            + '</div>';
+    }).join('');
+}
+
+// === CANDIDATS ===
+async function fetchCandidats() {
+    try {
+        const res = await fetch(API + '/recruteur/candidats', { headers: authH() });
+        if (res.status === 401) { logout(); return; }
+        if (!res.ok) { showToast('Erreur chargement candidats', 'error'); return; }
+        allCandidats = await res.json();
+        allCandidats.forEach(c => {
+            if (c.score_breakdown && !c.score_breakdown_parsed) {
+                c.score_breakdown_parsed = parseJSONField(c.score_breakdown);
+            }
+            if (c.flags_eliminatoires && !c.flags_eliminatoires_parsed) {
+                c.flags_eliminatoires_parsed = parseJSONField(c.flags_eliminatoires);
+            }
+            if (c.signaux_detectes && !c.signaux_detectes_parsed) {
+                c.signaux_detectes_parsed = parseJSONField(c.signaux_detectes);
+            }
+            if (c.analyse_details && !c.analyse_details_parsed) {
+                c.analyse_details_parsed = parseJSONField(c.analyse_details);
+            }
+            if (c.score_breakdown_parsed && c.score_breakdown_parsed.decision && !c.statut) {
+                const dec = c.score_breakdown_parsed.decision;
+                if (dec.includes('Entretien')) c.statut = 'entretien';
+                else if (dec.includes('Rejet') || dec.includes('rejet')) c.statut = 'rejete';
+                else if (dec.includes('Shortlist') || dec.includes('retenu')) c.statut = 'retenu';
+                else c.statut = 'en_attente';
+            }
+        });
+        populatePosteFilter(allCandidats);
+        populateExportSelects(allCandidats);
+        renderTable(allCandidats);
+        renderRecent(allCandidats);
+    } catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
+}
+
+function populatePosteFilter(data) {
+    const sel = document.getElementById('f-poste');
+    const postes = [...new Set(data.map(c => c.poste))].sort();
+    while (sel.options.length > 1) sel.remove(1);
+    postes.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p; opt.textContent = p; sel.appendChild(opt);
+    });
+}
+
+function populateExportSelects(data) {
+    const postes = [...new Set(data.map(c => c.poste))].sort();
+    ['export-poste-select', 'dossier-poste-select', 'reanalyze-poste-select'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        while (sel.options.length > 1) sel.remove(1);
+        postes.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p; opt.textContent = p; sel.appendChild(opt);
+        });
+    });
+}
+
+function applyFilters() {
+    const search = document.getElementById('f-search').value.toLowerCase().trim();
+    const poste = document.getElementById('f-poste').value;
+    const statut = document.getElementById('f-statut').value;
+    const dateStart = document.getElementById('f-date-start').value;
+    const dateEnd = document.getElementById('f-date-end').value;
+    const minScore = parseInt(document.getElementById('f-min-score').value) || 0;
+    const result = allCandidats.filter(c => {
+        const hay = (c.nom + ' ' + c.prenom + ' ' + c.email + ' ' + c.numero_dossier + ' ' + c.poste).toLowerCase();
+        if (search && !hay.includes(search)) return false;
+        if (poste && c.poste !== poste) return false;
+        if (statut && c.statut !== statut) return false;
+        if (dateStart && c.date_candidature && c.date_candidature < dateStart) return false;
+        if (dateEnd && c.date_candidature && c.date_candidature > dateEnd + 'T23:59:59') return false;
+        if (minScore > 0 && (parseInt(c.score) || 0) < minScore) return false;
+        return true;
+    });
+    renderTable(result);
+}
+
+function renderTable(data) {
+    const tbody = document.getElementById('candidats-tbody');
+    if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Aucun candidat trouvé</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(c => {
+        const scoreMax = getScoreMax(c.poste);
+        const scoreRaw = parseInt(c.score) || 0;
+        const score = Math.max(0, Math.min(scoreMax, scoreRaw));
+        const starUnit = scoreMax / 5;
+        const stars = '★'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
+        const cvLink = c.cv_filename ? `<a href="${API}/recruteur/uploads/${c.cv_filename}" target="_blank" class="btn btn-outline btn-sm">CV</a>` : '<span style="color:var(--text-muted);font-size:.78rem">–</span>';
+        const lmLink = c.lettre_filename ? `<a href="${API}/recruteur/uploads/${c.lettre_filename}" target="_blank" class="btn btn-outline btn-sm">LM</a>` : '';
+        const attLink = c.attestation_filenames_parsed && c.attestation_filenames_parsed.length ? `<a href="${API}/recruteur/uploads/${c.attestation_filenames_parsed[0]}" target="_blank" class="btn btn-outline btn-sm">📎</a>` : '';
+        const decision = c.score_breakdown_parsed?.decision || c.statut || '';
+        return '<tr>'
+            + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><span class="td-small">' + escHtml(c.email) + '</span></td>'
+            + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>'
+            + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
+            + '<td>' + badgePill(decision || c.statut) + '</td>'
+            + '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace" title="Score: ' + score + '/' + scoreMax + '">' + stars + ' <span style="color:var(--text-secondary);font-family:inherit">(' + score + '/' + scoreMax + ')</span></td>'
+            + '<td style="display:flex;gap:0.25rem;flex-wrap:wrap">' + cvLink + lmLink + attLink + '</td>'
+            + '<td class="td-actions">'
+            + '<button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">📂 Dossier</button>'
+            + '<button class="btn btn-info btn-sm" onclick="quickEmail(\'' + c.id + '\')">✉️</button>'
+            + '<button class="btn btn-outline btn-sm" onclick="quickReanalyze(\'' + c.id + '\')" title="Réanalyser">🔄</button>'
+            + '</td></tr>';
+    }).join('');
+}
+
+function renderRecent(data) {
+    const container = document.getElementById('recent-table');
+    const slice = data.slice(0, 8);
+    if (!slice.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Aucune candidature.</p></div>';
+        return;
+    }
+    const rows = slice.map(c => {
+        const scoreMax = getScoreMax(c.poste);
+        const scoreRaw = parseInt(c.score) || 0;
+        const score = Math.max(0, Math.min(scoreMax, scoreRaw));
+        const starUnit = scoreMax / 5;
+        const stars = '★'.repeat(Math.floor(score / starUnit)) + '☆'.repeat(5 - Math.floor(score / starUnit));
+        const decision = c.score_breakdown_parsed?.decision || c.statut || '';
+        return '<tr>'
+            + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><small style="color:var(--text-muted)">' + escHtml(c.email) + '</small></td>'
+            + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>'
+            + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
+            + '<td>' + badgePill(decision || c.statut) + '</td>'
+            + '<td style="font-size:.9rem;font-family:monospace">' + stars + ' <span style="color:var(--text-secondary);font-family:inherit">(' + score + '/' + scoreMax + ')</span></td>'
+            + '<td><button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">📂 Voir</button></td>'
+            + '</tr>';
+    }).join('');
+    container.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut</th><th>Score</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
 function refreshAll() { fetchStats(); fetchCandidats(); checkReanalyzeStatus(); }
+
+// === MODAL ===
 function closeModal() { document.getElementById('modal-candidat').classList.remove('open'); currentC = null; }
+
 function switchTab(name, btn) {
-document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-btn.classList.add('active');
-document.getElementById('tab-' + name).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
 }
+
 function openModal(id) {
-const c = allCandidats.find(x => x.id === id);
-if (!c) { showToast('Actualisez la liste d\'abord', 'error'); return; }
-currentC = c;
-document.getElementById('modal-title').innerHTML = c.prenom + ' ' + c.nom + ' <span class="readonly-badge">Analyse automatique</span>';
-document.getElementById('modal-infos').innerHTML =
-'<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Email</div><div>' + c.email + '</div></div>' +
-'<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Téléphone</div><div>' + (c.telephone || '–') + '</div></div>' +
-'<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Poste</div><div><strong style="color:var(--primary)">' + c.poste + '</strong></div></div>' +
-'<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Statut</div><div>' + badgePill(c.statut) + '</div></div>' +
-'<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Date candidature</div><div>' + fmtDate(c.date_candidature) + '</div></div>';
-const files = [];
-if (c.cv_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-primary btn-sm">CV</a>');
-else files.push('<span style="color:var(--text-muted);font-size:.83rem">CV non fourni</span>');
-if (c.lettre_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-primary btn-sm">Lettre</a>');
-if (c.attestation_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.attestation_filename + '" target="_blank" class="btn btn-primary btn-sm">Certificats</a>');
-document.getElementById('modal-fichiers').innerHTML = files.join(' ');
-renderAnalyseResume(c);
-renderStars(parseInt(c.score) || 0);
-document.getElementById('modal-note').value = c.note || '';
-renderGrille(c.poste, c.checklist || '', c.score_breakdown_parsed);
-document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-document.querySelector('.tab-btn').classList.add('active');
-document.getElementById('tab-eval').classList.add('active');
-document.getElementById('modal-candidat').classList.add('open');
+    const c = allCandidats.find(x => x.id === id);
+    if (!c) { showToast('Actualisez la liste d\'abord', 'error'); return; }
+    currentC = c;
+    document.getElementById('modal-title').innerHTML = escHtml(c.prenom) + ' ' + escHtml(c.nom) + ' <span class="readonly-badge">Analyse automatique</span>';
+    document.getElementById('modal-infos').innerHTML =
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Email</div><div>' + escHtml(c.email) + '</div></div>' +
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Téléphone</div><div>' + (c.telephone || '–') + '</div></div>' +
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Poste</div><div><strong style="color:var(--primary)">' + escHtml(c.poste) + '</strong></div></div>' +
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Statut</div><div>' + badgePill(c.score_breakdown_parsed?.decision || c.statut) + '</div></div>' +
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">N° Dossier</div><div>' + (c.numero_dossier || '–') + '</div></div>' +
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Date candidature</div><div>' + fmtDate(c.date_candidature) + '</div></div>';
+    const files = [];
+    if (c.cv_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-primary btn-sm">📄 CV</a>');
+    else files.push('<span style="color:var(--text-muted);font-size:.83rem">CV non fourni</span>');
+    if (c.lettre_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-primary btn-sm">📝 Lettre</a>');
+    if (c.attestation_filenames_parsed && c.attestation_filenames_parsed.length) {
+        c.attestation_filenames_parsed.forEach(fn => {
+            files.push('<a href="' + API + '/recruteur/uploads/' + fn + '" target="_blank" class="btn btn-primary btn-sm">📎 Certificat</a>');
+        });
+    }
+    document.getElementById('modal-fichiers').innerHTML = files.join(' ');
+    renderAnalyseResume(c);
+    const scoreMax = getScoreMax(c.poste);
+    const score = Math.max(0, Math.min(scoreMax, parseInt(c.score) || 0));
+    renderStars(score, scoreMax);
+    document.getElementById('modal-note').value = c.note || '';
+    renderGrille(c.poste, c.checklist || '', c.score_breakdown_parsed);
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab-btn').classList.add('active');
+    document.getElementById('tab-eval').classList.add('active');
+    document.getElementById('modal-candidat').classList.add('open');
 }
+
 function renderAnalyseResume(c) {
-const container = document.getElementById('analyse-resume');
-const content = document.getElementById('analyse-content');
-if (!c.score_breakdown_parsed) { container.style.display = 'none'; return; }
-container.style.display = 'block';
-const sb = c.score_breakdown_parsed;
-const details = c.analyse_details_parsed || {};
-const scoreMax = getScoreMax(c.poste);
-let html = '';
-if (sb.sous_scores && Object.keys(sb.sous_scores).length > 0) {
-html += '<div class="score-breakdown">';
-Object.entries(sb.sous_scores).forEach(([key, val]) => {
-html += `<div class="sb-row"><span class="sb-label">${key}</span><span class="sb-val ok">${val}</span></div>`;
-});
-html += `<div class="sb-row"><span class="sb-label">Score total</span><span class="sb-val ok">${sb.score_final || 0} / ${scoreMax}</span></div>`;
-html += '</div>';
+    const container = document.getElementById('analyse-resume');
+    const content = document.getElementById('analyse-content');
+    if (!c.score_breakdown_parsed) { container.style.display = 'none'; return; }
+    container.style.display = 'block';
+    const sb = c.score_breakdown_parsed;
+    const details = c.analyse_details_parsed || {};
+    const scoreMax = getScoreMax(c.poste);
+    let html = '';
+    if (sb.sous_scores && Object.keys(sb.sous_scores).length > 0) {
+        html += '<div class="score-breakdown">';
+        Object.entries(sb.sous_scores).forEach(([key, val]) => {
+            html += `<div class="sb-row"><span class="sb-label">${escHtml(key)}</span><span class="sb-val ok">${val}</span></div>`;
+        });
+        html += `<div class="sb-row"><span class="sb-label">Score total</span><span class="sb-val ok">${sb.score_final || 0} / ${scoreMax}</span></div>`;
+        html += '</div>';
+    }
+    if (sb.decision) {
+        const color = sb.decision.includes('prioritaire') ? '#166534' : (sb.decision.includes('Rejet') ? '#991b1b' : '#3B6D11');
+        html += `<div style="text-align:center;margin:.5rem 0"><span style="font-weight:700;color:${color}">${sb.decision}</span></div>`;
+    }
+    if (details.points_forts && details.points_forts.length) {
+        html += '<div class="bloc-alert signal"><strong>✅ Points forts</strong><div style="margin-top:.4rem">' + details.points_forts.map(p => '• ' + escHtml(p)).join('<br>') + '</div></div>';
+    }
+    if (details.points_vigilance && details.points_vigilance.length) {
+        html += '<div class="bloc-alert attn"><strong>⚠️ Points de vigilance</strong><div style="margin-top:.4rem">' + details.points_vigilance.map(p => '• ' + escHtml(p)).join('<br>') + '</div></div>';
+    }
+    if (details.synthese_recruteur) {
+        html += '<div class="bloc-alert signal"><strong>📝 Synthèse</strong><div style="margin-top:.4rem;font-style:italic">' + escHtml(details.synthese_recruteur) + '</div></div>';
+    }
+    if (sb.moteur) {
+        html += `<p style="font-size:.7rem;color:var(--text-muted);text-align:right;margin-top:.5rem">Analyse: ${sb.moteur}</p>`;
+    }
+    content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail disponible.</p>';
 }
-if (sb.decision) {
-const decisionColor = sb.decision.includes('prioritaire') ? '#166534' : (sb.decision.includes('Rejet') ? '#991b1b' : '#3B6D11');
-html += `<div style="text-align:center;margin:.5rem 0"><span style="font-weight:700;color:${decisionColor}">${sb.decision}</span></div>`;
+
+function renderStars(score, scoreMax) {
+    const row = document.getElementById('stars-row');
+    row.innerHTML = '';
+    const starUnit = scoreMax / 5;
+    const starCount = Math.floor(score / starUnit);
+    for (let i = 1; i <= 5; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'star-btn';
+        btn.textContent = i <= starCount ? '★' : '☆';
+        btn.disabled = true;
+        row.appendChild(btn);
+    }
+    const scoreText = document.createElement('span');
+    scoreText.style.cssText = 'margin-left:1rem;font-weight:700;color:var(--primary);font-size:1.1rem';
+    scoreText.textContent = `${score}/${scoreMax}`;
+    row.appendChild(scoreText);
 }
-if (details.points_forts && details.points_forts.length) {
-html += '<div class="bloc-alert signal"><strong>✅ Points forts</strong><div style="margin-top:.4rem">' + details.points_forts.map(p => '• ' + p).join('<br>') + '</div></div>';
-}
-if (details.points_vigilance && details.points_vigilance.length) {
-html += '<div class="bloc-alert attn"><strong>⚠️ Points de vigilance</strong><div style="margin-top:.4rem">' + details.points_vigilance.map(p => '• ' + p).join('<br>') + '</div></div>';
-}
-if (details.synthese_recruteur) {
-html += '<div class="bloc-alert signal"><strong>📝 Synthèse recruteur</strong><div style="margin-top:.4rem;font-style:italic">' + details.synthese_recruteur + '</div></div>';
-}
-if (sb.moteur) {
-html += `<p style="font-size:.7rem;color:var(--text-muted);text-align:right;margin-top:.5rem">Analyse: ${sb.moteur}</p>`;
-}
-content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail disponible.</p>';
-}
-function renderStars(n) {
-const row = document.getElementById('stars-row');
-row.innerHTML = '';
-const poste = currentC?.poste || '';
-const scoreMax = getScoreMax(poste);
-const score = Math.max(0, Math.min(scoreMax, n));
-const starUnit = scoreMax / 5;
-const starCount = Math.floor(score / starUnit);
-for (let i = 1; i <= 5; i++) {
-const btn = document.createElement('button');
-btn.className = 'star-btn';
-btn.textContent = i <= starCount ? '★' : '☆';
-btn.disabled = true;
-row.appendChild(btn);
-}
-const scoreText = document.createElement('span');
-scoreText.style.cssText = 'margin-left:1rem;font-weight:700;color:var(--primary);font-size:1.1rem';
-scoreText.textContent = `${score}/${scoreMax}`;
-row.appendChild(scoreText);
-}
+
 function renderGrille(poste, checklistJson, scoreBreakdown) {
-const g = GRILLE[poste] || { eliminatoire: [], a_verifier: [], signaux_forts: [], points_attention: [] };
-const el = document.getElementById('grille-content');
-let checked = {};
-try { checked = JSON.parse(checklistJson || '{}'); } catch {}
-const mkSection = (title, color, items, pfx) => {
-if (!items || !items.length) return '';
-return '<div class="grille-section">'
-+ '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">' + title + '</div>'
-+ items.map((item, i) => {
-const key = pfx + '_' + i;
-const isValidated = checked[key] === true;
-return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + '">'
-+ '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
-+ '<span>' + item + '</span>'
-+ '<span class="status-icon">' + (isValidated ? '✓' : '✕') + '</span>'
-+ '</label>';
-}).join('')
-+ '</div>';
-};
-el.innerHTML = mkSection('🔴 Critères éliminatoires', '#dc2626', g.eliminatoire, 'elim') +
-mkSection('🟠 Points à vérifier', '#d97706', g.a_verifier, 'verif') +
-mkSection('🟡 Signaux forts', '#16a34a', g.signaux_forts, 'signal') +
-mkSection('⚠️ Points d\'attention', '#64748b', g.points_attention, 'attn');
+    const g = window.GRILLE && window.GRILLE[poste] ? window.GRILLE[poste] : { eliminatoire: [], a_verifier: [], signaux_forts: [], points_attention: [] };
+    const el = document.getElementById('grille-content');
+    let checked = {};
+    try { checked = JSON.parse(checklistJson || '{}'); } catch {}
+    const mkSection = (title, color, items, pfx) => {
+        if (!items || !items.length) return '';
+        return '<div class="grille-section">'
+            + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">' + title + '</div>'
+            + items.map((item, i) => {
+                const key = pfx + '_' + i;
+                const isValidated = checked[key] === true;
+                return '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + '">'
+                    + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
+                    + '<span>' + escHtml(item) + '</span>'
+                    + '<span class="status-icon">' + (isValidated ? '✓' : '✕') + '</span>'
+                    + '</label>';
+            }).join('')
+            + '</div>';
+    };
+    el.innerHTML = mkSection('🔴 Critères éliminatoires', '#dc2626', g.eliminatoire, 'elim') +
+        mkSection('🟠 Points à vérifier', '#d97706', g.a_verifier, 'verif') +
+        mkSection('🟡 Signaux forts', '#16a34a', g.signaux_forts, 'signal') +
+        mkSection('⚠️ Points d\'attention', '#64748b', g.points_attention, 'attn');
 }
+
+// === STATUT ===
 async function updateStatut(statut) {
-if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
-const note = document.getElementById('modal-note').value;
-try {
-const res = await fetch(API + '/recruteur/candidats/' + currentC.id + '/statut',
-{ method:'PUT', headers: authH(), body: JSON.stringify({ statut, note }) }
-);
-if (res.ok) {
-const idx = allCandidats.findIndex(x => x.id === currentC.id);
-if (idx !== -1) Object.assign(allCandidats[idx], { statut, note });
-showToast('Statut mis à jour : ' + statut, 'success');
-closeModal();
-applyFilters();
-renderRecent(allCandidats);
-fetchStats();
-} else {
-const d = await res.json().catch(() => ({}));
-showToast(d.error || 'Erreur', 'error');
+    if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
+    const note = document.getElementById('modal-note').value;
+    try {
+        const res = await fetch(API + '/recruteur/candidats/' + currentC.id + '/statut',
+            { method:'PUT', headers: authH(), body: JSON.stringify({ statut, note }) }
+        );
+        if (res.ok) {
+            const idx = allCandidats.findIndex(x => x.id === currentC.id);
+            if (idx !== -1) Object.assign(allCandidats[idx], { statut, note });
+            showToast('✅ Statut mis à jour : ' + statut, 'success');
+            closeModal();
+            applyFilters();
+            renderRecent(allCandidats);
+            fetchStats();
+        } else {
+            const d = await res.json().catch(() => ({}));
+            showToast(d.error || 'Erreur', 'error');
+        }
+    } catch (e) { showToast('Erreur de connexion', 'error'); }
 }
-} catch (e) { showToast('Erreur de connexion', 'error'); }
+
+// === EXPORT ===
+function getExportParams() {
+    const poste = document.getElementById('export-poste-select').value;
+    const statut = document.getElementById('export-statut-select').value;
+    const dateStart = document.getElementById('export-date-start').value;
+    const dateEnd = document.getElementById('export-date-end').value;
+    const minScore = document.getElementById('export-min-score').value;
+    const params = new URLSearchParams();
+    if (poste) params.append('poste', poste);
+    if (statut) params.append('statut', statut);
+    if (dateStart) params.append('date_start', dateStart);
+    if (dateEnd) params.append('date_end', dateEnd);
+    if (minScore) params.append('min_score', minScore);
+    return params;
 }
-function openEmailModal() {
-if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
-buildEmail();
-document.getElementById('modal-email').classList.add('open');
+
+async function exportReport(format) {
+    try {
+        const params = getExportParams();
+        const url = API + '/recruteur/export/' + format + '?' + params.toString();
+        showToast('📊 Génération du rapport en cours...', 'info');
+        const response = await fetch(url, { method: 'GET', headers: authH() });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || 'Erreur export');
+        }
+        const blob = await response.blob();
+        const urlBlob = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = urlBlob;
+        const extensions = { excel: 'xlsx', csv: 'csv', pdf: 'pdf', word: 'docx' };
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        a.download = `rapport_candidats_${timestamp}.${extensions[format] || 'xlsx'}`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { window.URL.revokeObjectURL(urlBlob); document.body.removeChild(a); }, 100);
+        showToast('✅ Rapport téléchargé', 'success');
+    } catch (error) {
+        console.error('Erreur export:', error);
+        showToast('❌ Erreur: ' + error.message, 'error');
+    }
 }
-function quickEmail(id) {
-const c = allCandidats.find(x => x.id === id);
-if (!c) return;
-currentC = c;
-buildEmail();
-document.getElementById('modal-email').classList.add('open');
+
+// === DOSSIERS ZIP ===
+async function downloadAllDossiers() {
+    try {
+        const poste = document.getElementById('dossier-poste-select').value;
+        const dateStart = document.getElementById('dossier-date-start').value;
+        const dateEnd = document.getElementById('dossier-date-end').value;
+        const params = new URLSearchParams();
+        if (poste) params.append('poste', poste);
+        if (dateStart) params.append('date_start', dateStart);
+        if (dateEnd) params.append('date_end', dateEnd);
+        const url = API + '/recruteur/dossiers/zip?' + params.toString();
+        showToast('📦 Génération du ZIP en cours...', 'info');
+        const response = await fetch(url, { method: 'GET', headers: authH() });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || 'Erreur téléchargement');
+        }
+        const blob = await response.blob();
+        const urlBlob = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = urlBlob;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        a.download = `dossiers_candidats_${timestamp}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { window.URL.revokeObjectURL(urlBlob); document.body.removeChild(a); }, 100);
+        showToast('✅ ZIP téléchargé', 'success');
+    } catch (error) {
+        console.error('Erreur ZIP:', error);
+        showToast('❌ Erreur: ' + error.message, 'error');
+    }
 }
+
+// === RÉANALYSE ===
+function triggerManualReanalyze() {
+    const poste = document.getElementById('reanalyze-poste-select').value;
+    const url = API + '/recruteur/auto-reanalyze' + (poste ? '?poste=' + encodeURIComponent(poste) : '');
+    showToast('🔄 Lancement de la réanalyse...', 'info');
+    fetch(url, { method: 'POST', headers: authH() })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'started') {
+                showToast('🔄 Réanalyse lancée (' + data.total + ' candidats)', 'success');
+                startReanalyzePolling();
+            } else if (data.status === 'already_running') {
+                showToast('⏳ Réanalyse déjà en cours', 'info');
+                startReanalyzePolling();
+            } else if (data.status === 'no_candidates') {
+                showToast('📭 Aucun candidat à réanalyser', 'info');
+            } else {
+                showToast('❌ ' + (data.message || 'Erreur'), 'error');
+            }
+        })
+        .catch(e => { showToast('❌ Erreur: ' + e.message, 'error'); });
+}
+
+function startReanalyzePolling() {
+    if (reanalyzePollingInterval) clearInterval(reanalyzePollingInterval);
+    checkReanalyzeStatus();
+    reanalyzePollingInterval = setInterval(checkReanalyzeStatus, 3000);
+    setTimeout(() => {
+        if (reanalyzePollingInterval) {
+            clearInterval(reanalyzePollingInterval);
+            reanalyzePollingInterval = null;
+        }
+    }, 600000);
+}
+
+async function checkReanalyzeStatus() {
+    try {
+        const response = await fetch(API + '/recruteur/reanalyze-status', { headers: authH() });
+        if (!response.ok) {
+            if (response.status === 404) {
+                updateProgressWidget(-1, -1, 0, "Analyse en cours...");
+            }
+            return;
+        }
+        const data = await response.json();
+        updateProgressWidget(data.processed || 0, data.total || 0, data.errors || 0, data.in_progress ? "Analyse en cours..." : "Terminé");
+        updateReanalyzeBadge(data);
+        if (!data.in_progress && data.total > 0) {
+            if (reanalyzePollingInterval) {
+                clearInterval(reanalyzePollingInterval);
+                reanalyzePollingInterval = null;
+            }
+            showReanalyzeCompleteNotification(data);
+            fetchCandidats();
+            fetchStats();
+        }
+    } catch (error) {
+        console.error('Check reanalyze status error:', error);
+    }
+}
+
+function updateProgressWidget(processed, total, errors, statusText) {
+    const widget = document.getElementById('floating-progress');
+    if (!widget) return;
+    if (total > 0 && processed < total) {
+        widget.classList.add('active');
+        widget.classList.remove('completed');
+        const progress = total > 0 ? Math.round((processed / total) * 100) : 0;
+        const bar = document.getElementById('floating-progress-bar');
+        bar.style.width = progress + '%';
+        document.getElementById('floating-progress-title').textContent = '🔄 Réanalyse en cours...';
+        document.getElementById('floating-progress-count').textContent = `${processed}/${total} (${progress}%)`;
+        let detailText = `Traitement: ${processed}/${total}`;
+        if (errors > 0) detailText += ` · ❌ ${errors} erreur(s)`;
+        if (statusText) detailText += ` · ${statusText}`;
+        document.getElementById('floating-progress-detail').textContent = detailText;
+    } else if (total > 0 && processed >= total) {
+        widget.classList.add('completed');
+        document.getElementById('floating-progress-title').textContent = '✅ Réanalyse terminée';
+        document.getElementById('floating-progress-count').textContent = `${processed}/${total}`;
+        document.getElementById('floating-progress-detail').textContent = errors > 0 ? `Terminé avec ${errors} erreur(s)` : 'Tous les dossiers sont à jour.';
+        setTimeout(() => widget.classList.remove('active'), 8000);
+    }
+}
+
+function updateReanalyzeBadge(data) {
+    const badge = document.getElementById('reanalyze-status-badge');
+    if (!badge) return;
+    if (data.in_progress) {
+        badge.style.display = 'inline-block';
+        badge.textContent = '🔄 ' + (data.progress || 0) + '%';
+        badge.style.background = '#fef3cd';
+        badge.style.color = '#856404';
+    } else if (data.total > 0 && data.processed >= data.total) {
+        badge.style.display = 'inline-block';
+        badge.textContent = '✅ À jour';
+        badge.style.background = '#d4edda';
+        badge.style.color = '#155724';
+        setTimeout(() => { badge.style.display = 'none'; }, 10000);
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function showReanalyzeCompleteNotification(data) {
+    const success = data.success || 0;
+    const errors = data.errors || 0;
+    const total = data.total || 0;
+    let message = '✅ Réanalyse terminée: ' + success + '/' + total + ' dossiers mis à jour';
+    if (errors > 0) message += ' (' + errors + ' erreur' + (errors > 1 ? 's' : '') + ')';
+    showToast(message, errors > 0 ? 'warning' : 'success');
+}
+
+// === QUICK ACTIONS ===
 async function quickReanalyze(id) {
-const c = allCandidats.find(x => x.id === id);
-if (!c) return;
-if (!confirm(`Relancer l'analyse de ${c.prenom} ${c.nom} ?`)) return;
-try {
-const res = await fetch(`${API}/recruteur/candidats/${id}/analyze`, { method: 'POST', headers: authH() });
-if (res.ok) {
-showToast('Analyse relancée', 'success');
-setTimeout(fetchCandidats, 3000);
-} else {
-const data = await res.json().catch(() => ({}));
-showToast(data.error || 'Erreur', 'error');
+    const c = allCandidats.find(x => x.id === id);
+    if (!c) return;
+    if (!confirm(`Relancer l'analyse de ${c.prenom} ${c.nom} ?`)) return;
+    try {
+        const res = await fetch(`${API}/recruteur/candidats/${id}/analyze`, { method: 'POST', headers: authH() });
+        if (res.ok) {
+            showToast('🔄 Analyse relancée', 'success');
+            setTimeout(fetchCandidats, 3000);
+        } else {
+            const data = await res.json().catch(() => ({}));
+            showToast(data.error || 'Erreur', 'error');
+        }
+    } catch (e) { showToast('❌ Erreur: ' + e.message, 'error'); }
 }
-} catch (e) { showToast('Erreur: ' + e.message, 'error'); }
-}
+
 async function reanalyzeOne() {
-if (!currentC) return;
-if (!confirm('Relancer l\'analyse de cette candidature ?')) return;
-try {
-const res = await fetch(`${API}/recruteur/candidats/${currentC.id}/analyze`, { method: 'POST', headers: authH() });
-if (res.ok) {
-showToast('Analyse relancée', 'success');
-setTimeout(() => {
-fetchCandidats();
-const updated = allCandidats.find(x => x.id === currentC.id);
-if (updated) {
-currentC = updated;
-renderAnalyseResume(updated);
-renderGrille(updated.poste, updated.checklist || '', updated.score_breakdown_parsed);
+    if (!currentC) return;
+    if (!confirm('Relancer l\'analyse de cette candidature ?')) return;
+    try {
+        const res = await fetch(`${API}/recruteur/candidats/${currentC.id}/analyze`, { method: 'POST', headers: authH() });
+        if (res.ok) {
+            showToast('🔄 Analyse relancée', 'success');
+            setTimeout(() => {
+                fetchCandidats();
+                const updated = allCandidats.find(x => x.id === currentC.id);
+                if (updated) {
+                    currentC = updated;
+                    renderAnalyseResume(updated);
+                    renderGrille(updated.poste, updated.checklist || '', updated.score_breakdown_parsed);
+                }
+            }, 3000);
+        } else {
+            const data = await res.json().catch(() => ({}));
+            showToast(data.error || 'Erreur', 'error');
+        }
+    } catch (e) { showToast('❌ Erreur: ' + e.message, 'error'); }
 }
-}, 3000);
-} else {
-const data = await res.json().catch(() => ({}));
-showToast(data.error || 'Erreur', 'error');
+
+// === EMAIL ===
+function openEmailModal() {
+    if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
+    buildEmail();
+    document.getElementById('modal-email').classList.add('open');
 }
-} catch (e) { showToast('Erreur: ' + e.message, 'error'); }
+
+function quickEmail(id) {
+    const c = allCandidats.find(x => x.id === id);
+    if (!c) return;
+    currentC = c;
+    buildEmail();
+    document.getElementById('modal-email').classList.add('open');
 }
+
 function buildEmail() {
-if (!currentC) return;
-const type = document.getElementById('email-type').value;
-const nom = currentC.prenom + ' ' + currentC.nom;
-const pos = currentC.poste;
-document.getElementById('ep-to').textContent = nom + ' <' + currentC.email + '>';
-document.getElementById('ep-subject').textContent = 'Réponse à votre candidature – ' + pos;
-document.getElementById('ep-body').value = 'Madame, Monsieur ' + nom + ',\n\nSuite à l\'examen de votre candidature pour le poste de ' + pos + ', nous vous remercions de l\'intérêt que vous portez à notre institution.\n\nNous reviendrons vers vous prochainement.\n\nCordialement,\nL\'équipe RH\nRecrutBank';
+    if (!currentC) return;
+    const type = document.getElementById('email-type').value;
+    const nom = currentC.prenom + ' ' + currentC.nom;
+    const pos = currentC.poste;
+    document.getElementById('ep-to').textContent = nom + ' <' + currentC.email + '>';
+    document.getElementById('ep-subject').textContent = emailSubject(type, pos);
+    document.getElementById('ep-body').value = emailBody(type, nom, pos);
 }
+
+function emailSubject(type, poste) {
+    const subjects = {
+        'retenu': 'Candidature retenue – ' + poste,
+        'entretien': 'Invitation à un entretien – ' + poste,
+        'rejete': 'Réponse à votre candidature – ' + poste,
+        'Shortlist': 'Présélection prioritaire – ' + poste,
+        'À considérer': 'Votre candidature – ' + poste,
+        'Faible': 'Réponse à votre candidature – ' + poste,
+        'Rejet': 'Réponse à votre candidature – ' + poste,
+        '🥇 Entretien prioritaire': 'Entretien prioritaire – ' + poste,
+        '🥈 Entretien si besoin (vivier)': 'Vivier de réserve – ' + poste,
+        '🥈 Potentiel': 'Potentiel à évaluer – ' + poste,
+        '❌ Rejet': 'Réponse à votre candidature – ' + poste
+    };
+    return subjects[type] || 'Réponse à votre candidature – ' + poste;
+}
+
+function emailBody(type, nom, poste) {
+    const sign = '\n\nCordialement,\nL\'équipe Ressources Humaines\nRecrutBank';
+    if (type === '🥇 Entretien prioritaire' || type === 'retenu' || type === 'Shortlist') {
+        return 'Madame, Monsieur ' + nom + ',\n\nFélicitations ! Votre candidature pour le poste de ' + poste + ' a été retenue en priorité.\n\nVotre profil correspond parfaitement aux exigences du poste.\n\nNous vous contacterons dans les plus brefs délais pour convenir d\'un entretien.\n\nCordialement,' + sign;
+    }
+    if (type === '🥈 Entretien si besoin (vivier)' || type === '🥈 Potentiel' || type === 'entretien' || type === 'À considérer') {
+        return 'Madame, Monsieur ' + nom + ',\n\nVotre candidature pour le poste de ' + poste + ' a retenu notre attention.\n\nVotre profil présente des atouts intéressants et nous souhaitons vous rencontrer.\n\nNous prendrons contact avec vous prochainement pour convenir d\'un entretien.\n\nCordialement,' + sign;
+    }
+    if (type === '❌ Rejet' || type === 'rejete' || type === 'Rejet' || type === 'Faible') {
+        return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions de l\'intérêt que vous portez à notre institution pour le poste de ' + poste + '.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour cette sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil.\n\nCordialement,' + sign;
+    }
+    return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions de votre candidature pour le poste de ' + poste + '.\n\nNous reviendrons vers vous prochainement.\n\nCordialement,' + sign;
+}
+
 function copyEmail() {
-const to = currentC ? currentC.email : '';
-const sub = document.getElementById('ep-subject').textContent;
-const bdy = document.getElementById('ep-body').value;
-navigator.clipboard.writeText('À: ' + to + '\nObjet: ' + sub + '\n' + bdy)
-.then(() => showToast('Email copié', 'success'))
-.catch(() => { document.getElementById('ep-body').select(); showToast('Sélectionnez le texte et Ctrl+C', 'info'); });
+    const to = currentC ? currentC.email : '';
+    const sub = document.getElementById('ep-subject').textContent;
+    const bdy = document.getElementById('ep-body').value;
+    navigator.clipboard.writeText('À: ' + to + '\nObjet: ' + sub + '\n\n' + bdy)
+        .then(() => showToast('📋 Email copié', 'success'))
+        .catch(() => { document.getElementById('ep-body').select(); showToast('Sélectionnez le texte et Ctrl+C', 'info'); });
 }
+
 function openMailClient() {
-if (!currentC) return;
-const to = encodeURIComponent(currentC.email);
-const sub = encodeURIComponent(document.getElementById('ep-subject').textContent);
-const bdy = encodeURIComponent(document.getElementById('ep-body').value);
-window.open('mailto:' + to + '?subject=' + sub + '&body=' + bdy);
+    if (!currentC) return;
+    const to = encodeURIComponent(currentC.email);
+    const sub = encodeURIComponent(document.getElementById('ep-subject').textContent);
+    const bdy = encodeURIComponent(document.getElementById('ep-body').value);
+    window.open('mailto:' + to + '?subject=' + sub + '&body=' + bdy);
 }
+
+// === CHARGEMENT DES GRILLES ===
 window.GRILLE = {};
-fetch(API + '/postes').then(r => r.json()).then(data => {
-if (data.postes) {
-data.postes.forEach(p => {
-fetch(API + '/grille/' + encodeURIComponent(p)).then(r => r.json()).then(g => {
-if (!g.error) window.GRILLE[p] = g;
-}).catch(() => {});
-});
+async function loadGrilles() {
+    try {
+        const res = await fetch(API + '/postes');
+        const data = await res.json();
+        if (data.postes) {
+            for (const p of data.postes) {
+                try {
+                    const g = await fetch(API + '/grille/' + encodeURIComponent(p), { headers: authH() });
+                    const grille = await g.json();
+                    if (!grille.error) window.GRILLE[p] = grille;
+                } catch (e) { console.warn('Grille non chargée pour', p); }
+            }
+        }
+    } catch (e) { console.warn('Erreur chargement grilles:', e); }
 }
-}).catch(() => {});
-triggerAutoReanalyze();
-fetchStats();
-fetchCandidats();
+
+// === INIT ===
+async function init() {
+    await loadGrilles();
+    // Déclencher la réanalyse auto à la connexion
+    try {
+        const res = await fetch(API + '/recruteur/auto-reanalyze', { method: 'POST', headers: authH() });
+        const data = await res.json();
+        if (data.status === 'started') {
+            showToast('🔄 Réanalyse automatique lancée (' + data.total + ' candidats)', 'info');
+            startReanalyzePolling();
+        } else if (data.status === 'already_running') {
+            showToast('⏳ Réanalyse déjà en cours', 'info');
+            startReanalyzePolling();
+        }
+    } catch (e) { console.log('Auto-reanalyze init:', e); }
+    fetchStats();
+    fetchCandidats();
+}
+
+init();
 </script>
 </body>
 </html>
