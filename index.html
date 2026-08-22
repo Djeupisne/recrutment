@@ -34,7 +34,7 @@
     position: relative;
 }
 .poste-card.active::before {
-    content: "OUVERT AU RECRUTEMENT";
+    content: "📢 OUVERT AU RECRUTEMENT";
     position: absolute;
     top: -10px;
     right: 12px;
@@ -241,6 +241,53 @@ select option:disabled {
     margin-left: 0.4rem;
     border: 1px solid #ffc107;
 }
+
+/* === STATUT ÉLIMINÉ === */
+.badge-eliminated {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+.badge-eliminated::before {
+    content: "🚫 ";
+}
+.elimination-details {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #dc2626;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.8rem 0;
+    text-align: left;
+}
+.elimination-details strong {
+    color: #991b1b;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+.elimination-details ul {
+    margin: 0.3rem 0;
+    padding-left: 1.2rem;
+    color: #7f1d1d;
+}
+.elimination-details li {
+    margin: 0.3rem 0;
+}
+.elimination-details .score-display {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #fecaca;
+    font-weight: 600;
+    color: #991b1b;
+}
+
+/* Poste actif highlight */
+.poste-card.active .poste-apply-btn {
+    display: inline-block !important;
+}
+.poste-apply-btn {
+    display: none;
+}
 </style>
 </head>
 <body>
@@ -376,10 +423,10 @@ Utilisez le numéro de suivi dans la section <strong>Suivi de dossier</strong> c
 <div class="container">
 <h2 style="text-align:center;font-size:1.7rem;font-weight:800;color:var(--primary);margin-bottom:.5rem">Suivi de Dossier</h2>
 <p style="text-align:center;color:var(--text-muted);margin-bottom:2.5rem">Entrez votre numéro de suivi pour connaître l'état de votre candidature</p>
-<div class="card" style="max-width:540px;margin:0 auto">
+<div class="card" style="max-width:640px;margin:0 auto">
 <div style="display:flex;gap:.8rem">
 <input class="form-control" id="suivi-token" placeholder="Entrez votre numéro de suivi...">
-<button class="btn btn-primary" onclick="checkSuivi()">Rechercher</button>
+<button class="btn btn-primary" onclick="checkSuivi()">🔍 Rechercher</button>
 </div>
 <div id="suivi-result" style="margin-top:1.2rem"></div>
 </div>
@@ -435,6 +482,9 @@ Utilisez le numéro de suivi dans la section <strong>Suivi de dossier</strong> c
 <script>
 const API = 'https://backend1-fiq5.onrender.com/api';
 
+// === POSTES ACTIFS (définis dans le backend) ===
+const POSTES_ACTIFS_BACKEND = ["Chargé(e) d'Administration de Crédit", "Chef de Division Local Corporate"];
+
 // Métadonnées d'affichage pour chaque poste
 const POSTES_INFO = {
     "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS", category:"credit", senior: false },
@@ -472,20 +522,20 @@ const POSTES_INFO = {
     }
 };
 
-// ★ APPEL API MIS À JOUR pour la nouvelle structure {postes, postes_actifs, postes_clotures} ★
+// ★ APPEL API ★
 fetch(`${API}/postes`)
 .then(r => r.json())
 .then(data => {
-    // Support de l'ancienne structure (simple tableau) ET de la nouvelle (objet)
+    // Utiliser les postes actifs du backend, ou fallback
     const postes = Array.isArray(data) ? data : (data.postes || []);
-    const postesActifs = Array.isArray(data) ? [] : (data.postes_actifs || []);
+    const postesActifs = Array.isArray(data) ? POSTES_ACTIFS_BACKEND : (data.postes_actifs || POSTES_ACTIFS_BACKEND);
     
     const grid = document.getElementById("postes-list");
     const sel  = document.getElementById("poste-select");
     const infoBox = document.getElementById("info-postes-actifs");
     grid.innerHTML = "";
     
-    // Affichage du message d'information sur les postes actifs
+    // Message d'information sur les postes actifs
     if (postesActifs.length > 0 && infoBox) {
         if (postesActifs.length === 1) {
             infoBox.innerHTML = `<strong>Un seul poste est actuellement ouvert au recrutement :</strong> ${postesActifs[0]}. Les autres postes seront ouverts prochainement.`;
@@ -498,8 +548,6 @@ fetch(`${API}/postes`)
     // Génération des cartes et des options du select
     postes.forEach(p => {
         const info = POSTES_INFO[p] || { icon:"💼", desc:"", category:"" };
-        
-        // ★ SOURCE DE VÉRITÉ : le backend décide si un poste est actif ★
         const isActive = postesActifs.includes(p);
         
         const catBadge = info.category ? `<span style="display:inline-block;font-size:.65rem;background:#e8f4fd;color:#1a3a5c;padding:2px 6px;border-radius:4px;margin-left:.4rem">${info.category}</span>` : "";
@@ -521,12 +569,21 @@ fetch(`${API}/postes`)
     ${beacHighlight}
     ${corporateHighlight}
     ${seniorIndicator}
-    ${isActive ? `<a href="#postuler" style="display:inline-block;margin-top:.8rem;font-size:.82rem;font-weight:600;color:var(--accent)">Postuler →</a>` : ''}
+    ${isActive ? `<a href="#postuler" class="poste-apply-btn" style="display:inline-block;margin-top:.8rem;font-size:.82rem;font-weight:600;color:var(--accent)">📝 Postuler →</a>` : ''}
 </div>`;
         
+        // Option du select
         const optionDisabled = isActive ? "" : "disabled";
         const optionLabel = isActive ? p : `🔒 ${p} (clôturé)`;
-        sel.innerHTML += `<option value="${p}" ${optionDisabled} data-category="${info.category||""}" data-senior="${info.senior||false}" data-reduce-letter="${info.reduceLetter||false}" data-active="${isActive}">${optionLabel}</option>`;
+        const option = document.createElement('option');
+        option.value = p;
+        option.textContent = optionLabel;
+        if (!isActive) option.disabled = true;
+        option.dataset.category = info.category || "";
+        option.dataset.senior = info.senior || false;
+        option.dataset.reduceLetter = info.reduceLetter || false;
+        option.dataset.active = isActive;
+        sel.appendChild(option);
     });
     
     // Gestion du badge "Lettre optionnelle"
@@ -706,6 +763,7 @@ document.getElementById('candidature-form').addEventListener('submit', async fun
     btn.disabled  = false;
 });
 
+// === FONCTION DE SUIVI AMÉLIORÉE AVEC DÉTAILS D'ÉLIMINATION ===
 async function checkSuivi() {
     const token = document.getElementById('suivi-token').value.trim();
     if (!token) return;
@@ -715,32 +773,150 @@ async function checkSuivi() {
         const r = await fetch(`${API}/candidats/statut/${token}`);
         const d = await r.json();
         if (!r.ok) { area.innerHTML = `<div class="alert alert-error">❌ ${d.error}</div>`; return; }
-        const badges   = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
-        const labels   = { en_attente:'⏳ En attente', retenu:'✅ Retenu(e)', rejete:'❌ Non retenu(e)', entretien:'📅 Convoqué(e) en entretien' };
+        
+        // === RÉCUPÉRATION DES DÉTAILS COMPLETS ===
+        let scoreBreakdown = null;
+        let flagsEliminatoires = [];
+        let signauxDetectes = [];
+        let detailsAnalyse = null;
+        
+        try {
+            const detailRes = await fetch(`${API}/recruteur/candidats/${token}`, {
+                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('rh_token') || '') }
+            });
+            if (detailRes.ok) {
+                const detailData = await detailRes.json();
+                if (detailData.score_breakdown) {
+                    try {
+                        scoreBreakdown = typeof detailData.score_breakdown === 'string' 
+                            ? JSON.parse(detailData.score_breakdown) 
+                            : detailData.score_breakdown;
+                    } catch(e) {}
+                }
+                if (detailData.flags_eliminatoires) {
+                    try {
+                        flagsEliminatoires = typeof detailData.flags_eliminatoires === 'string'
+                            ? JSON.parse(detailData.flags_eliminatoires)
+                            : detailData.flags_eliminatoires;
+                    } catch(e) {}
+                }
+                if (detailData.signaux_detectes) {
+                    try {
+                        signauxDetectes = typeof detailData.signaux_detectes === 'string'
+                            ? JSON.parse(detailData.signaux_detectes)
+                            : detailData.signaux_detectes;
+                    } catch(e) {}
+                }
+                if (detailData.analyse_details) {
+                    try {
+                        detailsAnalyse = typeof detailData.analyse_details === 'string'
+                            ? JSON.parse(detailData.analyse_details)
+                            : detailData.analyse_details;
+                    } catch(e) {}
+                }
+            }
+        } catch(e) { console.warn('Erreur récupération détails:', e); }
+        
+        const badges = {
+            en_attente: 'badge-pending',
+            retenu: 'badge-retained',
+            rejete: 'badge-rejected',
+            entretien: 'badge-interview',
+            exclu: 'badge-eliminated'
+        };
+        
+        const labels = {
+            en_attente: '⏳ En attente',
+            retenu: '✅ Retenu(e)',
+            rejete: '❌ Non retenu(e)',
+            entretien: '📅 Convoqué(e) en entretien',
+            exclu: '🚫 Éliminé(e) - Critères non satisfaits'
+        };
+        
         const messages = {
             en_attente: "Votre dossier est en cours d'examen. Nous vous contacterons dès que possible.",
-            retenu:     "Félicitations ! Votre candidature a été retenue. Nous vous contacterons très prochainement.",
-            rejete:     "Votre candidature n'a pas été retenue pour cette sélection. Merci de votre intérêt.",
-            entretien:  "Votre profil nous a intéressé. Vous serez contacté(e) pour un entretien."
+            retenu: "Félicitations ! Votre candidature a été retenue. Nous vous contacterons très prochainement.",
+            rejete: "Votre candidature n'a pas été retenue pour cette sélection. Merci de votre intérêt.",
+            entretien: "Votre profil nous a intéressé. Vous serez contacté(e) pour un entretien.",
+            exclu: "Après analyse automatique de votre dossier, votre candidature ne répond pas aux critères requis pour ce poste."
         };
-        const icons = { en_attente:'⏳', retenu:'🎉', rejete:'😔', entretien:'🤝' };
-        const numDossierBlock = d.numero_dossier
-            ? `<div style="margin:.6rem auto;max-width:240px;padding:.4rem .8rem;background:#EBF5FB;border-radius:6px;font-family:monospace;font-size:.85rem;font-weight:700;color:#1a3a5c">🗂️ Dossier : ${escHtml(d.numero_dossier)}</div>`
-            : '';
-        area.innerHTML = `
-<div style="text-align:center;padding:1rem 0">
-<div style="font-size:2.5rem;margin-bottom:.6rem">${icons[d.statut]||'📋'}</div>
-<div style="font-weight:700;font-size:1.05rem">${escHtml(d.prenom)} ${escHtml(d.nom)}</div>
-<div style="color:var(--text-muted);font-size:.85rem;margin-bottom:.5rem">${escHtml(d.poste)}</div>
-${numDossierBlock}
-<span class="badge ${badges[d.statut]||'badge-pending'}" style="font-size:.88rem;padding:.4rem 1rem">${labels[d.statut]||d.statut}</span>
-<p style="margin-top:1rem;font-size:.88rem;color:var(--text)">${messages[d.statut]||''}</p>
-${d.note ? `<div style="margin-top:.8rem;padding:.8rem;background:#f8fafd;border-radius:6px;font-size:.85rem;border-left:3px solid var(--accent)"><strong>Message RH :</strong> ${escHtml(d.note)}</div>` : ''}
-<div style="margin-top:.8rem;font-size:.78rem;color:var(--text-muted)">
-Dossier déposé le ${new Date(d.date_candidature).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}
-</div>
-</div>`;
-    } catch {
+        
+        const icons = {
+            en_attente: '⏳',
+            retenu: '🎉',
+            rejete: '😔',
+            entretien: '🤝',
+            exclu: '🚫'
+        };
+        
+        const isEliminated = d.statut === 'exclu' || 
+            (scoreBreakdown && scoreBreakdown.bloc1_eliminatoire === true) ||
+            (flagsEliminatoires && flagsEliminatoires.length > 0);
+        
+        let html = `<div style="text-align:center;padding:1rem 0">
+            <div style="font-size:2.5rem;margin-bottom:.6rem">${icons[d.statut] || '📋'}</div>
+            <div style="font-weight:700;font-size:1.05rem">${escHtml(d.prenom)} ${escHtml(d.nom)}</div>
+            <div style="color:var(--text-muted);font-size:.85rem;margin-bottom:.5rem">${escHtml(d.poste)}</div>`;
+        
+        if (d.numero_dossier) {
+            html += `<div style="margin:.6rem auto;max-width:240px;padding:.4rem .8rem;background:#EBF5FB;border-radius:6px;font-family:monospace;font-size:.85rem;font-weight:700;color:#1a3a5c">🗂️ Dossier : ${escHtml(d.numero_dossier)}</div>`;
+        }
+        
+        const statutKey = isEliminated ? 'exclu' : (d.statut || 'en_attente');
+        html += `<span class="badge ${badges[statutKey] || 'badge-pending'}" style="font-size:.88rem;padding:.4rem 1rem">${labels[statutKey] || d.statut}</span>`;
+        html += `<p style="margin-top:1rem;font-size:.88rem;color:var(--text)">${messages[statutKey] || ''}</p>`;
+        
+        // === DÉTAILS D'ÉLIMINATION ===
+        if (isEliminated) {
+            html += `<div class="elimination-details">
+                <strong>⛔ Raisons de l'élimination :</strong>`;
+            
+            if (flagsEliminatoires && flagsEliminatoires.length > 0) {
+                html += `<ul>`;
+                flagsEliminatoires.forEach(flag => {
+                    const cleanFlag = flag.replace(/^[❌]/, '').trim();
+                    html += `<li>❌ ${escHtml(cleanFlag)}</li>`;
+                });
+                html += `</ul>`;
+            }
+            
+            if (scoreBreakdown && scoreBreakdown.note) {
+                html += `<p style="margin:.5rem 0;font-size:.85rem;color:#7f1d1d">${escHtml(scoreBreakdown.note)}</p>`;
+            }
+            
+            const scoreMax = d.poste && ["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].includes(d.poste) ? 12 :
+                            d.poste && ["Chef de Division Local Corporate"].includes(d.poste) ? 14 : 10;
+            const score = parseInt(d.score) || 0;
+            html += `<div class="score-display">Score : ${score} / ${scoreMax}</div>`;
+            
+            html += `</div>`;
+        }
+        
+        // === SIGNAUX FORTS ===
+        if (signauxDetectes && signauxDetectes.length > 0 && !isEliminated) {
+            html += `<div style="margin-top:.8rem;padding:.8rem;background:#dcfce7;border-radius:6px;border-left:3px solid #16a34a;text-align:left">
+                <strong style="color:#166534;">🟢 Signaux positifs détectés :</strong>
+                <ul style="margin:.3rem 0;padding-left:1.2rem;color:#166534;font-size:.85rem">`;
+            signauxDetectes.forEach(s => {
+                html += `<li>${escHtml(s)}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+        
+        if (d.note) {
+            html += `<div style="margin-top:.8rem;padding:.8rem;background:#f8fafd;border-radius:6px;font-size:.85rem;border-left:3px solid var(--accent);text-align:left">
+                <strong>📝 Message de l'équipe RH :</strong><br>${escHtml(d.note)}</div>`;
+        }
+        
+        html += `<div style="margin-top:.8rem;font-size:.78rem;color:var(--text-muted)">
+            Dossier déposé le ${new Date(d.date_candidature).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}
+        </div>`;
+        
+        html += `</div>`;
+        area.innerHTML = html;
+        
+    } catch (e) {
+        console.error('Erreur checkSuivi:', e);
         area.innerHTML = `<div class="alert alert-error">⚠️ Erreur de connexion au serveur.</div>`;
     }
 }
