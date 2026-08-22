@@ -1418,6 +1418,31 @@ function showSection(name, el) {
     if (name === 'candidats') renderTable(allCandidats);
 }
 
+// === NOUVELLE FONCTION : getDisplayStatus ===
+function getDisplayStatus(candidat) {
+    // 1. PRIORITÉ : Utiliser la décision calculée si disponible
+    if (candidat.decision) {
+        if (candidat.decision.includes("🟢")) return "retenu";
+        if (candidat.decision.includes("🟡")) return "entretien";
+        if (candidat.decision.includes("🔴")) return "rejete";
+    }
+    
+    // 2. Utiliser le score_breakdown si disponible
+    if (candidat.score_breakdown_parsed && candidat.score_breakdown_parsed.decision) {
+        var dec = candidat.score_breakdown_parsed.decision;
+        if (dec.includes("🟢")) return "retenu";
+        if (dec.includes("🟡")) return "entretien";
+        if (dec.includes("🔴")) return "rejete";
+    }
+    
+    // 3. Fallback sur le statut en base
+    var statut = candidat.statut || 'en_attente';
+    if (statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)' || statut === 'rejet_eliminatoire') {
+        return 'rejete';
+    }
+    return statut;
+}
+
 // === STATS ===
 async function fetchStats() {
     try {
@@ -1425,18 +1450,28 @@ async function fetchStats() {
         if (res.status === 401) { logout(); return; }
         if (!res.ok) return;
         var d = await res.json();
-        var total = d.total || 0;
-        var retenus = d.retenu || 0;
-        var entretien = d.entretien || 0;
-        var rejetes = d.rejete || 0;
-        var en_attente = total - retenus - entretien - rejetes;
-        document.getElementById('s-total').textContent = total;
-        document.getElementById('s-attente').textContent = en_attente;
-        document.getElementById('s-retenu').textContent = retenus;
-        document.getElementById('s-rejete').textContent = rejetes;
-        document.getElementById('s-entretien').textContent = entretien;
-        document.getElementById('donut-total').textContent = total;
-        renderDonut({ total: total, en_attente: en_attente, retenu: retenus, entretien: entretien, rejete: rejetes });
+        
+        // Récupérer tous les candidats pour calculer les stats avec getDisplayStatus
+        var all = await fetch(API + '/recruteur/candidats', { headers: authH() });
+        if (all.ok) {
+            var data = await all.json();
+            var total = data.length;
+            var retenus = 0, entretien = 0, rejetes = 0, en_attente = 0;
+            for (var i = 0; i < data.length; i++) {
+                var status = getDisplayStatus(data[i]);
+                if (status === 'retenu') retenus++;
+                else if (status === 'entretien') entretien++;
+                else if (status === 'rejete') rejetes++;
+                else en_attente++;
+            }
+            document.getElementById('s-total').textContent = total;
+            document.getElementById('s-attente').textContent = en_attente;
+            document.getElementById('s-retenu').textContent = retenus;
+            document.getElementById('s-rejete').textContent = rejetes;
+            document.getElementById('s-entretien').textContent = entretien;
+            document.getElementById('donut-total').textContent = total;
+            renderDonut({ total: total, en_attente: en_attente, retenu: retenus, entretien: entretien, rejete: rejetes });
+        }
         renderBarChart(d.by_poste || []);
     } catch (e) { console.error('fetchStats:', e); }
 }
@@ -1549,6 +1584,7 @@ async function fetchCandidats() {
         populateExportSelects(allCandidats);
         renderTable(allCandidats);
         renderRecent(allCandidats);
+        fetchStats();
     } catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
 }
 
@@ -1601,7 +1637,8 @@ function applyFilters() {
         var hay = (c.nom + ' ' + c.prenom + ' ' + c.email + ' ' + c.numero_dossier + ' ' + c.poste).toLowerCase();
         if (search && hay.indexOf(search) === -1) continue;
         if (poste && c.poste !== poste) continue;
-        if (statut && c.statut !== statut) continue;
+        var displayStatus = getDisplayStatus(c);
+        if (statut && displayStatus !== statut) continue;
         if (dateStart && c.date_candidature && c.date_candidature < dateStart) continue;
         if (dateEnd && c.date_candidature && c.date_candidature > dateEnd + 'T23:59:59') continue;
         if (minScore > 0 && (parseInt(c.score) || 0) < minScore) continue;
@@ -1610,6 +1647,7 @@ function applyFilters() {
     renderTable(result);
 }
 
+// === RENDER TABLE AVEC getDisplayStatus ===
 function renderTable(data) {
     var tbody = document.getElementById('candidats-tbody');
     if (!data.length) {
@@ -1635,8 +1673,10 @@ function renderTable(data) {
         var cvLink = c.cv_filename ? '<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-outline btn-sm">CV</a>' : '<span style="color:var(--text-muted);font-size:.78rem">–</span>';
         var lmLink = c.lettre_filename ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-outline btn-sm">LM</a>' : '';
         var attLink = (c.attestation_filenames_parsed && c.attestation_filenames_parsed.length) ? '<a href="' + API + '/recruteur/uploads/' + c.attestation_filenames_parsed[0] + '" target="_blank" class="btn btn-outline btn-sm">📎</a>' : '';
-        var statut = c.statut || 'en_attente';
-        if (statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)' || statut === 'rejet_eliminatoire') { statut = 'rejete'; }
+        
+        // Utiliser getDisplayStatus
+        var statut = getDisplayStatus(c);
+        
         html += '<tr>'
             + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><span class="td-small">' + escHtml(c.email) + '</span></td>'
             + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>'
@@ -1653,6 +1693,7 @@ function renderTable(data) {
     tbody.innerHTML = html;
 }
 
+// === RENDER RECENT AVEC getDisplayStatus ===
 function renderRecent(data) {
     var container = document.getElementById('recent-table');
     var slice = data.slice(0, 8);
@@ -1670,8 +1711,10 @@ function renderRecent(data) {
         var stars = '';
         for (var j = 0; j < Math.floor(score / starUnit); j++) stars += '★';
         for (var j = 0; j < 5 - Math.floor(score / starUnit); j++) stars += '☆';
-        var statut = c.statut || 'en_attente';
-        if (statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)' || statut === 'rejet_eliminatoire') { statut = 'rejete'; }
+        
+        // Utiliser getDisplayStatus
+        var statut = getDisplayStatus(c);
+        
         html += '<tr style="cursor:pointer" onclick="openModal(\'' + c.id + '\')">'
             + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><small style="color:var(--text-muted)">' + escHtml(c.email) + '</small></td>'
             + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>'
@@ -1707,10 +1750,12 @@ function openModal(id) {
     if (!c) { showToast('Actualisez la liste d\'abord', 'error'); return; }
     currentC = c;
     
+    // Utiliser getDisplayStatus
+    var statut = getDisplayStatus(c);
+    
     // === AFFICHAGE DE L'ALERTE DE REJET ===
     var rejectAlert = document.getElementById('reject-alert');
     var rejectReasons = document.getElementById('reject-reasons');
-    var statut = c.statut || 'en_attente';
     
     var isRejected = statut === 'rejete' || statut === 'Rejete' || 
                      statut === 'exclu' || statut === 'Exclu' || 
@@ -1861,26 +1906,35 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
     var el = document.getElementById('grille-content');
     var checked = {};
     try { checked = JSON.parse(checklistJson || '{}'); } catch (e) {}
-    function mkSection(title, color, items, pfx) {
+    function mkSection(title, color, items, pfx, isAttention) {
         if (!items || !items.length) return '';
         var html = '<div class="grille-section">'
-            + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">' + title + '</div>';
+            + '<div class="grille-header" style="color:' + color + ';background:' + color + '18;border-left-color:' + color + '">'
+            + title + ' (' + items.length + ' critères)'
+            + '</div>';
         for (var i = 0; i < items.length; i++) {
             var key = pfx + '_' + i;
             var isValidated = checked[key] === true;
-            html += '<label class="grille-item' + (isValidated ? ' checked' : ' not-checked') + '">'
-                + '<input type="checkbox" ' + (isValidated ? 'checked' : '') + ' disabled>'
+            // Pour les points d'attention, on inverse la logique : VERT si NON détecté
+            var isOk = isAttention ? !isValidated : isValidated;
+            var icon = isOk ? '✅' : '❌';
+            var statusClass = isOk ? 'checked' : 'not-checked';
+            var label = isAttention ? (isOk ? '⚠️ Non détecté' : '⚠️ Détecté') : '';
+            
+            html += '<label class="grille-item ' + statusClass + '" title="' + escHtml(items[i]) + '">'
+                + '<input type="checkbox" ' + (isOk ? 'checked' : '') + ' disabled>'
                 + '<span>' + escHtml(items[i]) + '</span>'
-                + '<span class="status-icon">' + (isValidated ? '✓' : '✕') + '</span>'
+                + '<span class="status-icon" style="' + (isOk ? 'color:#16a34a' : 'color:#dc2626') + '">' + icon + '</span>'
+                + '<span style="font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem;">' + label + '</span>'
                 + '</label>';
         }
         html += '</div>';
         return html;
     }
-    el.innerHTML = mkSection('🔴 Critères éliminatoires', '#dc2626', g.eliminatoire, 'elim') +
-        mkSection('🟠 Points à vérifier', '#d97706', g.a_verifier, 'verif') +
-        mkSection('🟡 Signaux forts', '#16a34a', g.signaux_forts, 'signal') +
-        mkSection('⚠️ Points d\'attention', '#64748b', g.points_attention, 'attn');
+    el.innerHTML = mkSection('🔴 Critères éliminatoires', '#dc2626', g.eliminatoire, 'elim', false)
+        + mkSection('🟠 Points à vérifier', '#d97706', g.a_verifier, 'verif', false)
+        + mkSection('🟡 Signaux forts', '#16a34a', g.signaux_forts, 'signal', false)
+        + mkSection('⚠️ Points d\'attention', '#64748b', g.points_attention, 'attn', true);
 }
 
 async function updateStatut(statut) {
