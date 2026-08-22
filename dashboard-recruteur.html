@@ -1144,14 +1144,14 @@ to { opacity: 1; transform: translateX(0); }
 <button class="export-btn solid" onclick="downloadAllDossiers()" style="background:white;color:#059669;">📦 Télécharger ZIP</button>
 </div>
 </div>
-<!-- SECTION RÉANALYSE - UNIQUEMENT POSTES ACTIFS -->
+<!-- SECTION RÉANALYSE -->
 <div class="reanalyze-section">
 <div style="flex:1;min-width:200px">
 <h3>🔄 Réanalyse des postes actifs</h3>
-<p id="reanalyze-info-text">Relance l'analyse automatique uniquement pour les postes ouverts au recrutement</p>
+<p>Relance l'analyse automatique avec les règles actuelles pour les postes ouverts</p>
 </div>
 <div class="reanalyze-controls">
-<select id="reanalyze-poste-select" class="form-control" style="background:rgba(255,255,255,0.95);max-width:220px;">
+<select id="reanalyze-poste-select" class="form-control" style="background:rgba(255,255,255,0.95);max-width:200px;">
 <option value="">Tous les postes actifs</option>
 </select>
 <button class="export-btn solid" style="color:#d97706;" onclick="triggerManualReanalyze()">🚀 Lancer la réanalyse</button>
@@ -1342,7 +1342,6 @@ let jwtToken = localStorage.getItem('rh_token');
 let allCandidats = [];
 let currentC = null;
 let reanalyzePollingInterval = null;
-let postesActifs = [];
 
 if (!jwtToken) { window.location.href = 'login.html'; }
 
@@ -1397,6 +1396,7 @@ function getScoreMax(poste) {
 function badgePill(s) {
     const cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview', exclu:'badge-rejected' };
     const lbl = { en_attente:'⏳ En attente', retenu:'✅ Retenu', rejete:'❌ Non retenu', entretien:'📅 Entretien', exclu:'🚫 Exclu' };
+    // Statuts avec emojis
     const emojiStatus = ['🥇 Entretien prioritaire', '🥈 Entretien si besoin', '🥈 Potentiel', '❌ Rejet', '❌ Rejet (éliminatoire)', 'Shortlist', 'À considérer', 'Faible', 'Rejet'];
     if (emojiStatus.includes(s)) {
         return `<span class="badge badge-interview">${s}</span>`;
@@ -1468,60 +1468,6 @@ function renderBarChart(byPoste) {
     }).join('');
 }
 
-// === RÉCUPÉRATION DES POSTES ACTIFS ===
-async function fetchPostesActifs() {
-    try {
-        const res = await fetch(API + '/postes', { headers: authH() });
-        if (res.ok) {
-            const data = await res.json();
-            postesActifs = Array.isArray(data) ? [] : (data.postes_actifs || []);
-            // Mettre à jour le select de réanalyse
-            populateReanalyzeSelect(postesActifs);
-            // Mettre à jour le texte d'information
-            updateReanalyzeInfo(postesActifs);
-            return postesActifs;
-        }
-    } catch (e) { console.warn('Erreur récupération postes actifs:', e); }
-    return [];
-}
-
-function populateReanalyzeSelect(actifs) {
-    const sel = document.getElementById('reanalyze-poste-select');
-    if (!sel) return;
-    while (sel.options.length > 1) sel.remove(1);
-    if (actifs.length === 0) {
-        const opt = document.createElement('option');
-        opt.value = '';
-        opt.textContent = 'Aucun poste actif';
-        opt.disabled = true;
-        sel.appendChild(opt);
-        return;
-    }
-    actifs.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        sel.appendChild(opt);
-    });
-    // Mettre à jour le texte du placeholder
-    sel.options[0].textContent = actifs.length > 1 ? 'Tous les postes actifs' : 'Tous les postes actifs';
-}
-
-function updateReanalyzeInfo(actifs) {
-    const infoText = document.getElementById('reanalyze-info-text');
-    if (!infoText) return;
-    if (actifs.length === 0) {
-        infoText.textContent = '⚠️ Aucun poste actif actuellement. La réanalyse sera ignorée.';
-        infoText.style.color = '#ffebcc';
-    } else if (actifs.length === 1) {
-        infoText.textContent = `📌 Un poste actif : "${actifs[0]}". La réanalyse concerne uniquement ce poste.`;
-        infoText.style.color = 'rgba(255,255,255,0.9)';
-    } else {
-        infoText.textContent = `📌 ${actifs.length} postes actifs : ${actifs.join(', ')}. La réanalyse concerne uniquement ces postes.`;
-        infoText.style.color = 'rgba(255,255,255,0.9)';
-    }
-}
-
 // === CANDIDATS ===
 async function fetchCandidats() {
     try {
@@ -1569,7 +1515,7 @@ function populatePosteFilter(data) {
 
 function populateExportSelects(data) {
     const postes = [...new Set(data.map(c => c.poste))].sort();
-    ['export-poste-select', 'dossier-poste-select'].forEach(id => {
+    ['export-poste-select', 'dossier-poste-select', 'reanalyze-poste-select'].forEach(id => {
         const sel = document.getElementById(id);
         if (!sel) return;
         while (sel.options.length > 1) sel.remove(1);
@@ -1883,25 +1829,22 @@ async function downloadAllDossiers() {
     }
 }
 
-// === RÉANALYSE - UNIQUEMENT POSTES ACTIFS ===
+// === RÉANALYSE ===
 function triggerManualReanalyze() {
     const poste = document.getElementById('reanalyze-poste-select').value;
-    let url = API + '/recruteur/auto-reanalyze';
-    if (poste) {
-        url += '?poste=' + encodeURIComponent(poste);
-    }
-    showToast('🔄 Lancement de la réanalyse des postes actifs...', 'info');
+    const url = API + '/recruteur/auto-reanalyze' + (poste ? '?poste=' + encodeURIComponent(poste) : '');
+    showToast('🔄 Lancement de la réanalyse...', 'info');
     fetch(url, { method: 'POST', headers: authH() })
         .then(r => r.json())
         .then(data => {
             if (data.status === 'started') {
-                showToast('🔄 Réanalyse lancée (' + data.total + ' candidats sur les postes actifs)', 'success');
+                showToast('🔄 Réanalyse lancée (' + data.total + ' candidats)', 'success');
                 startReanalyzePolling();
             } else if (data.status === 'already_running') {
                 showToast('⏳ Réanalyse déjà en cours', 'info');
                 startReanalyzePolling();
             } else if (data.status === 'no_candidates') {
-                showToast('📭 Aucun candidat à réanalyser sur les postes actifs', 'info');
+                showToast('📭 Aucun candidat à réanalyser', 'info');
             } else {
                 showToast('❌ ' + (data.message || 'Erreur'), 'error');
             }
@@ -1956,7 +1899,7 @@ function updateProgressWidget(processed, total, errors, statusText) {
         const progress = total > 0 ? Math.round((processed / total) * 100) : 0;
         const bar = document.getElementById('floating-progress-bar');
         bar.style.width = progress + '%';
-        document.getElementById('floating-progress-title').textContent = '🔄 Réanalyse des postes actifs...';
+        document.getElementById('floating-progress-title').textContent = '🔄 Réanalyse en cours...';
         document.getElementById('floating-progress-count').textContent = `${processed}/${total} (${progress}%)`;
         let detailText = `Traitement: ${processed}/${total}`;
         if (errors > 0) detailText += ` · ❌ ${errors} erreur(s)`;
@@ -1966,7 +1909,7 @@ function updateProgressWidget(processed, total, errors, statusText) {
         widget.classList.add('completed');
         document.getElementById('floating-progress-title').textContent = '✅ Réanalyse terminée';
         document.getElementById('floating-progress-count').textContent = `${processed}/${total}`;
-        document.getElementById('floating-progress-detail').textContent = errors > 0 ? `Terminé avec ${errors} erreur(s)` : 'Tous les dossiers des postes actifs sont à jour.';
+        document.getElementById('floating-progress-detail').textContent = errors > 0 ? `Terminé avec ${errors} erreur(s)` : 'Tous les dossiers sont à jour.';
         setTimeout(() => widget.classList.remove('active'), 8000);
     }
 }
@@ -1994,7 +1937,7 @@ function showReanalyzeCompleteNotification(data) {
     const success = data.success || 0;
     const errors = data.errors || 0;
     const total = data.total || 0;
-    let message = '✅ Réanalyse des postes actifs terminée: ' + success + '/' + total + ' dossiers mis à jour';
+    let message = '✅ Réanalyse terminée: ' + success + '/' + total + ' dossiers mis à jour';
     if (errors > 0) message += ' (' + errors + ' erreur' + (errors > 1 ? 's' : '') + ')';
     showToast(message, errors > 0 ? 'warning' : 'success');
 }
@@ -2118,57 +2061,33 @@ async function loadGrilles() {
     try {
         const res = await fetch(API + '/postes');
         const data = await res.json();
-        const postes = Array.isArray(data) ? data : (data.postes || []);
-        for (const p of postes) {
-            try {
-                const g = await fetch(API + '/grille/' + encodeURIComponent(p), { headers: authH() });
-                const grille = await g.json();
-                if (!grille.error) window.GRILLE[p] = grille;
-            } catch (e) { console.warn('Grille non chargée pour', p); }
+        if (data.postes) {
+            for (const p of data.postes) {
+                try {
+                    const g = await fetch(API + '/grille/' + encodeURIComponent(p), { headers: authH() });
+                    const grille = await g.json();
+                    if (!grille.error) window.GRILLE[p] = grille;
+                } catch (e) { console.warn('Grille non chargée pour', p); }
+            }
         }
     } catch (e) { console.warn('Erreur chargement grilles:', e); }
-}
-
-// === RÉANALYSE AUTOMATIQUE À LA CONNEXION (UNIQUEMENT POSTES ACTIFS) ===
-async function triggerAutoReanalyze() {
-    try {
-        // Récupérer les postes actifs
-        const actifs = await fetchPostesActifs();
-        if (actifs.length === 0) {
-            showToast('📭 Aucun poste actif - réanalyse automatique ignorée', 'info');
-            return;
-        }
-        
-        const response = await fetch(`${API}/recruteur/auto-reanalyze`, { method: 'POST', headers: authH() });
-        const data = await response.json();
-        
-        if (data.status === 'started') {
-            showToast(`🔄 Réanalyse automatique des postes actifs lancée (${data.total} candidats)`, 'info');
-            startReanalyzePolling();
-        } else if (data.status === 'already_running') {
-            showToast('⏳ Réanalyse déjà en cours', 'info');
-            startReanalyzePolling();
-        } else if (data.status === 'no_candidates') {
-            showToast('📭 Aucun candidat à réanalyser sur les postes actifs', 'info');
-        } else {
-            showToast(`⚠️ ${data.message || 'Erreur lors de la réanalyse'}`, 'error');
-        }
-    } catch (error) {
-        console.error('Auto-reanalyse error:', error);
-        showToast('⚠️ Erreur réanalyse automatique: ' + error.message, 'error');
-    }
 }
 
 // === INIT ===
 async function init() {
     await loadGrilles();
-    
-    // Récupérer les postes actifs pour le select
-    await fetchPostesActifs();
-    
-    // Déclencher la réanalyse automatique à la connexion (UNIQUEMENT POSTES ACTIFS)
-    await triggerAutoReanalyze();
-    
+    // Déclencher la réanalyse auto à la connexion
+    try {
+        const res = await fetch(API + '/recruteur/auto-reanalyze', { method: 'POST', headers: authH() });
+        const data = await res.json();
+        if (data.status === 'started') {
+            showToast('🔄 Réanalyse automatique lancée (' + data.total + ' candidats)', 'info');
+            startReanalyzePolling();
+        } else if (data.status === 'already_running') {
+            showToast('⏳ Réanalyse déjà en cours', 'info');
+            startReanalyzePolling();
+        }
+    } catch (e) { console.log('Auto-reanalyze init:', e); }
     fetchStats();
     fetchCandidats();
 }
