@@ -1403,6 +1403,75 @@ function getScoreMax(poste) {
     return 10;
 }
 
+function getDecisionFromScore(score, poste) {
+    var s = parseInt(score) || 0;
+    if (!poste) {
+        if (s >= 8) return "🟢 Entretien prioritaire";
+        if (s >= 5) return "🟡 Potentiel à évaluer en entretien";
+        return "🔴 Rejet";
+    }
+    if (["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].indexOf(poste) !== -1) {
+        if (s >= 10) return "🟢 Entretien prioritaire";
+        if (s >= 7) return "🟡 Potentiel à évaluer en entretien";
+        return "🔴 Rejet";
+    }
+    if (["Chef de Division Local Corporate"].indexOf(poste) !== -1) {
+        if (s >= 11) return "🟢 Entretien prioritaire";
+        if (s >= 7) return "🟡 Potentiel à évaluer en entretien";
+        return "🔴 Rejet";
+    }
+    if (["Auditeur interne", "Chef service contrôle des engagements", "Chef service IT (maintenance/support)", "Chef service finance", "Chef service risques de marché", "Chef service reporting réglementaire"].indexOf(poste) !== -1) {
+        if (s >= 80) return "🟢 Shortlist";
+        if (s >= 60) return "🟡 À considérer";
+        return "🔴 Rejet";
+    }
+    if (s >= 8) return "🟢 Entretien prioritaire";
+    if (s >= 5) return "🟡 Potentiel à évaluer en entretien";
+    return "🔴 Rejet";
+}
+
+function getStatutFromDecision(decision) {
+    if (!decision) return 'en_attente';
+    if (decision.includes("🟢")) return "retenu";
+    if (decision.includes("🟡")) return "entretien";
+    if (decision.includes("🔴")) return "rejete";
+    return 'en_attente';
+}
+
+function getDisplayStatus(candidat) {
+    // 1. PRIORITÉ : Utiliser la décision calculée
+    if (candidat.decision) {
+        if (candidat.decision.includes("🟢")) return "retenu";
+        if (candidat.decision.includes("🟡")) return "entretien";
+        if (candidat.decision.includes("🔴")) return "rejete";
+    }
+    
+    // 2. Utiliser le score_breakdown si disponible
+    if (candidat.score_breakdown_parsed && candidat.score_breakdown_parsed.decision) {
+        var dec = candidat.score_breakdown_parsed.decision;
+        if (dec.includes("🟢")) return "retenu";
+        if (dec.includes("🟡")) return "entretien";
+        if (dec.includes("🔴")) return "rejete";
+    }
+    
+    // 3. FALLBACK : Calculer la décision à partir du score
+    if (candidat.score && candidat.poste) {
+        var dec = getDecisionFromScore(candidat.score, candidat.poste);
+        if (dec) {
+            if (dec.includes("🟢")) return "retenu";
+            if (dec.includes("🟡")) return "entretien";
+            if (dec.includes("🔴")) return "rejete";
+        }
+    }
+    
+    // 4. Fallback final sur le statut en base
+    var statut = candidat.statut || 'en_attente';
+    if (statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)' || statut === 'rejet_eliminatoire') {
+        return 'rejete';
+    }
+    return statut;
+}
+
 function badgePill(s) {
     var cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
     var lbl = { en_attente:'⏳ En attente', retenu:'✅ Retenu', rejete:'❌ Rejeté', entretien:'📅 Entretien' };
@@ -1418,31 +1487,6 @@ function showSection(name, el) {
     if (name === 'candidats') renderTable(allCandidats);
 }
 
-// === NOUVELLE FONCTION : getDisplayStatus ===
-function getDisplayStatus(candidat) {
-    // 1. PRIORITÉ : Utiliser la décision calculée si disponible
-    if (candidat.decision) {
-        if (candidat.decision.includes("🟢")) return "retenu";
-        if (candidat.decision.includes("🟡")) return "entretien";
-        if (candidat.decision.includes("🔴")) return "rejete";
-    }
-    
-    // 2. Utiliser le score_breakdown si disponible
-    if (candidat.score_breakdown_parsed && candidat.score_breakdown_parsed.decision) {
-        var dec = candidat.score_breakdown_parsed.decision;
-        if (dec.includes("🟢")) return "retenu";
-        if (dec.includes("🟡")) return "entretien";
-        if (dec.includes("🔴")) return "rejete";
-    }
-    
-    // 3. Fallback sur le statut en base
-    var statut = candidat.statut || 'en_attente';
-    if (statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)' || statut === 'rejet_eliminatoire') {
-        return 'rejete';
-    }
-    return statut;
-}
-
 // === STATS ===
 async function fetchStats() {
     try {
@@ -1451,7 +1495,6 @@ async function fetchStats() {
         if (!res.ok) return;
         var d = await res.json();
         
-        // Récupérer tous les candidats pour calculer les stats avec getDisplayStatus
         var all = await fetch(API + '/recruteur/candidats', { headers: authH() });
         if (all.ok) {
             var data = await all.json();
@@ -1647,7 +1690,6 @@ function applyFilters() {
     renderTable(result);
 }
 
-// === RENDER TABLE AVEC getDisplayStatus ===
 function renderTable(data) {
     var tbody = document.getElementById('candidats-tbody');
     if (!data.length) {
@@ -1673,10 +1715,7 @@ function renderTable(data) {
         var cvLink = c.cv_filename ? '<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-outline btn-sm">CV</a>' : '<span style="color:var(--text-muted);font-size:.78rem">–</span>';
         var lmLink = c.lettre_filename ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-outline btn-sm">LM</a>' : '';
         var attLink = (c.attestation_filenames_parsed && c.attestation_filenames_parsed.length) ? '<a href="' + API + '/recruteur/uploads/' + c.attestation_filenames_parsed[0] + '" target="_blank" class="btn btn-outline btn-sm">📎</a>' : '';
-        
-        // Utiliser getDisplayStatus
         var statut = getDisplayStatus(c);
-        
         html += '<tr>'
             + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><span class="td-small">' + escHtml(c.email) + '</span></td>'
             + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>'
@@ -1693,7 +1732,6 @@ function renderTable(data) {
     tbody.innerHTML = html;
 }
 
-// === RENDER RECENT AVEC getDisplayStatus ===
 function renderRecent(data) {
     var container = document.getElementById('recent-table');
     var slice = data.slice(0, 8);
@@ -1711,10 +1749,7 @@ function renderRecent(data) {
         var stars = '';
         for (var j = 0; j < Math.floor(score / starUnit); j++) stars += '★';
         for (var j = 0; j < 5 - Math.floor(score / starUnit); j++) stars += '☆';
-        
-        // Utiliser getDisplayStatus
         var statut = getDisplayStatus(c);
-        
         html += '<tr style="cursor:pointer" onclick="openModal(\'' + c.id + '\')">'
             + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><small style="color:var(--text-muted)">' + escHtml(c.email) + '</small></td>'
             + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>'
@@ -1730,7 +1765,6 @@ function renderRecent(data) {
 
 function refreshAll() { fetchStats(); fetchCandidats(); checkReanalyzeStatus(); }
 
-// === MODAL ===
 function closeModal() { document.getElementById('modal-candidat').classList.remove('open'); currentC = null; }
 
 function switchTab(name, btn) {
@@ -1749,26 +1783,18 @@ function openModal(id) {
     }
     if (!c) { showToast('Actualisez la liste d\'abord', 'error'); return; }
     currentC = c;
-    
-    // Utiliser getDisplayStatus
     var statut = getDisplayStatus(c);
-    
-    // === AFFICHAGE DE L'ALERTE DE REJET ===
     var rejectAlert = document.getElementById('reject-alert');
     var rejectReasons = document.getElementById('reject-reasons');
-    
     var isRejected = statut === 'rejete' || statut === 'Rejete' || 
                      statut === 'exclu' || statut === 'Exclu' || 
                      statut === 'rejete(eliminatoire)' || 
                      statut === 'rejet_eliminatoire';
-    
     if (isRejected) {
         rejectAlert.classList.add('visible');
         var flags = c.flags_eliminatoires_parsed || [];
         var sb = c.score_breakdown_parsed || {};
-        
         var html = '<p><strong>Ce candidat a été rejeté pour les raisons suivantes :</strong></p><ul>';
-        
         if (flags && flags.length > 0) {
             for (var f = 0; f < flags.length; f++) {
                 var clean_f = flags[f].replace('❌', '').replace('⚠️', '').trim();
@@ -1779,7 +1805,6 @@ function openModal(id) {
         } else {
             html += '<li><span class="reason">• Un ou plusieurs critères éliminatoires non satisfaits</span></li>';
         }
-        
         var note = '';
         if (sb && typeof sb === 'object') {
             note = sb.note || '';
@@ -1791,9 +1816,7 @@ function openModal(id) {
                 html += '<li><span class="reason">• ' + escHtml(decision) + '</span></li>';
             }
         }
-        
         html += '</ul>';
-        
         var scoreMax = getScoreMax(c.poste);
         var score = parseInt(c.score) || 0;
         html += '<p style="margin-top:0.5rem;"><strong>Score final :</strong> ' + score + '/' + scoreMax + '</p>';
@@ -1801,8 +1824,6 @@ function openModal(id) {
     } else {
         rejectAlert.classList.remove('visible');
     }
-    
-    // === SUITE DU MODAL ===
     document.getElementById('modal-title').innerHTML = escHtml(c.prenom) + ' ' + escHtml(c.nom) + ' <span class="readonly-badge">Analyse automatique</span>';
     document.getElementById('modal-infos').innerHTML =
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Email</div><div>' + escHtml(c.email) + '</div></div>' +
@@ -1811,7 +1832,6 @@ function openModal(id) {
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Statut</div><div>' + badgePill(statut) + '</div></div>' +
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">N° Dossier</div><div>' + (c.numero_dossier || '–') + '</div></div>' +
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Date candidature</div><div>' + fmtDate(c.date_candidature) + '</div></div>';
-    
     var files = [];
     if (c.cv_filename) files.push('<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-primary btn-sm">📄 CV</a>');
     else files.push('<span style="color:var(--text-muted);font-size:.83rem">CV non fourni</span>');
@@ -1915,12 +1935,10 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
         for (var i = 0; i < items.length; i++) {
             var key = pfx + '_' + i;
             var isValidated = checked[key] === true;
-            // Pour les points d'attention, on inverse la logique : VERT si NON détecté
             var isOk = isAttention ? !isValidated : isValidated;
             var icon = isOk ? '✅' : '❌';
             var statusClass = isOk ? 'checked' : 'not-checked';
             var label = isAttention ? (isOk ? '⚠️ Non détecté' : '⚠️ Détecté') : '';
-            
             html += '<label class="grille-item ' + statusClass + '" title="' + escHtml(items[i]) + '">'
                 + '<input type="checkbox" ' + (isOk ? 'checked' : '') + ' disabled>'
                 + '<span>' + escHtml(items[i]) + '</span>'
