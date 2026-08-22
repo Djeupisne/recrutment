@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tableau de Bord – Recrutement | RecrutBank</title>
-<link rel="stylesheet" href="style.css">
 <style>
 :root {
 --primary: #1a3a5c;
@@ -930,30 +929,6 @@ white-space: nowrap;
 background: #fef3cd;
 color: #856404;
 }
-.reanalyze-notification {
-position: fixed;
-top: 20px;
-right: 20px;
-border-radius: 8px;
-padding: 16px 20px;
-box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-z-index: 10000;
-max-width: 400px;
-animation: slideDown 0.5s ease-out;
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-background: #d4edda;
-border: 1px solid #28a745;
-color: #155724;
-}
-.reanalyze-notification.warning {
-background: #fff3cd;
-border: 1px solid #ffc107;
-color: #856404;
-}
-@keyframes slideDown {
-from { opacity: 0; transform: translateY(-20px); }
-to { opacity: 1; transform: translateY(0); }
-}
 .toast-container {
 position: fixed;
 bottom: 1.5rem;
@@ -1063,7 +1038,7 @@ to { opacity: 1; transform: translateX(0); }
 <div class="stat-card red">
 <div class="stat-icon">✕</div>
 <div class="stat-value" id="s-rejete">–</div>
-<div class="stat-label">Non retenus</div>
+<div class="stat-label">Rejetés</div>
 </div>
 <div class="stat-card purple">
 <div class="stat-icon">📅</div>
@@ -1091,7 +1066,7 @@ to { opacity: 1; transform: translateX(0); }
 <span><span class="legend-dot" style="background:#d97706"></span>En attente</span>
 <span><span class="legend-dot" style="background:#16a34a"></span>Retenu</span>
 <span><span class="legend-dot" style="background:#2563eb"></span>Entretien</span>
-<span><span class="legend-dot" style="background:#dc2626"></span>Non retenu</span>
+<span><span class="legend-dot" style="background:#dc2626"></span>Rejeté</span>
 </div>
 </div>
 <div class="chart-box">
@@ -1115,7 +1090,7 @@ to { opacity: 1; transform: translateX(0); }
 <option value="en_attente">En attente</option>
 <option value="retenu">Retenu</option>
 <option value="entretien">Entretien</option>
-<option value="rejete">Non retenu</option>
+<option value="rejete">Rejeté</option>
 </select>
 <input type="date" id="export-date-start" class="form-control" style="background:white;max-width:150px;" title="Date de début">
 <input type="date" id="export-date-end" class="form-control" style="background:white;max-width:150px;" title="Date de fin">
@@ -1193,7 +1168,7 @@ to { opacity: 1; transform: translateX(0); }
 <option value="en_attente">En attente</option>
 <option value="retenu">Retenu</option>
 <option value="entretien">Entretien</option>
-<option value="rejete">Non retenu</option>
+<option value="rejete">Rejeté</option>
 </select>
 <input class="form-control" id="f-date-start" type="date" onchange="applyFilters()" style="max-width:150px;" title="Date début">
 <input class="form-control" id="f-date-end" type="date" onchange="applyFilters()" style="max-width:150px;" title="Date fin">
@@ -1254,7 +1229,7 @@ Analyse automatique <span class="readonly-badge" style="font-size:.65rem;padding
 <div id="tab-grille" class="tab-content">
 <div id="grille-content" style="padding-top:.4rem"></div>
 <p style="text-align:center;color:var(--text-muted);font-size:.73rem;margin-top:1rem;font-style:italic;border-top:1px dashed var(--border);padding-top:.8rem">
-Résultats de l'analyse automatique (Gemini + mots-clés)
+Résultats de l'analyse automatique
 </p>
 </div>
 </div>
@@ -1329,38 +1304,50 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 </div>
 <div class="toast-container" id="toast-container"></div>
 <script>
+// === CONFIGURATION ===
 const API = window.location.hostname === "localhost" ? "http://localhost:5000/api" : "https://backend1-fiq5.onrender.com/api";
 let jwtToken = localStorage.getItem('rh_token');
 let allCandidats = [];
 let currentC = null;
 let reanalyzePollingInterval = null;
 let postesActifs = [];
+
 if (!jwtToken) { window.location.href = 'login.html'; }
+
 const nomRH = localStorage.getItem('rh_nom') || 'Recruteur';
 document.getElementById('nav-nom').textContent = nomRH;
 document.getElementById('sidebar-nom').textContent = nomRH;
 document.getElementById('sidebar-avatar').textContent = nomRH.charAt(0).toUpperCase();
+
+// === FONCTIONS UTILITAIRES ===
 function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 function authH() { return { 'Authorization': 'Bearer ' + jwtToken, 'Content-Type': 'application/json' }; }
+
 function showToast(message, type) {
-    const container = document.getElementById('toast-container');
+    var container = document.getElementById('toast-container');
     if (!container) return;
-    const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-    const toast = document.createElement('div');
+    var icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+    var toast = document.createElement('div');
     toast.className = 'toast ' + (type || 'info');
     toast.innerHTML = (icons[type] || 'ℹ️') + ' ' + message;
     container.appendChild(toast);
     setTimeout(function() { toast.remove(); }, 3500);
 }
+
 function parseJSONField(raw) {
     if (!raw) return null;
     try { return typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { return null; }
 }
+
 function fmtDate(iso) {
     if (!iso) return '–';
     try { return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); } catch { return '–'; }
 }
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function getScoreMax(poste) {
     if (!poste) return 10;
     if (["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].includes(poste)) return 12;
@@ -1368,13 +1355,13 @@ function getScoreMax(poste) {
     if (["Auditeur interne", "Chef service contrôle des engagements", "Chef service IT (maintenance/support)", "Chef service finance", "Chef service risques de marché", "Chef service reporting réglementaire"].includes(poste)) return 100;
     return 10;
 }
+
 function badgePill(s) {
-    var cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview', exclu:'badge-rejected' };
-    var lbl = { en_attente:'⏳ En attente', retenu:'✅ Retenu', rejete:'❌ Non retenu', entretien:'📅 Entretien', exclu:'🚫 Exclu' };
-    var emojiStatus = ['🥇 Entretien prioritaire', '🥈 Entretien si besoin', '🥈 Potentiel', '❌ Rejet', '❌ Rejet (éliminatoire)', 'Shortlist', 'À considérer', 'Faible', 'Rejet'];
-    if (emojiStatus.indexOf(s) !== -1) { return '<span class="badge badge-interview">' + s + '</span>'; }
+    var cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
+    var lbl = { en_attente:'⏳ En attente', retenu:'✅ Retenu', rejete:'❌ Rejeté', entretien:'📅 Entretien' };
     return '<span class="badge ' + (cls[s] || 'badge-pending') + '">' + (lbl[s] || s) + '</span>';
 }
+
 function showSection(name, el) {
     document.getElementById('section-overview').style.display = name === 'overview' ? 'block' : 'none';
     document.getElementById('section-candidats').style.display = name === 'candidats' ? 'block' : 'none';
@@ -1383,22 +1370,30 @@ function showSection(name, el) {
     if (el) el.classList.add('active');
     if (name === 'candidats') renderTable(allCandidats);
 }
+
+// === STATS ===
 async function fetchStats() {
     try {
         var res = await fetch(API + '/recruteur/stats', { headers: authH() });
         if (res.status === 401) { logout(); return; }
         if (!res.ok) return;
         var d = await res.json();
-        document.getElementById('s-total').textContent = d.total;
-        document.getElementById('s-attente').textContent = d.en_attente;
-        document.getElementById('s-retenu').textContent = d.retenu;
-        document.getElementById('s-rejete').textContent = d.rejete;
-        document.getElementById('s-entretien').textContent = d.entretien;
-        document.getElementById('donut-total').textContent = d.total;
-        renderDonut(d);
+        var total = d.total || 0;
+        var retenus = d.retenu || 0;
+        var entretien = d.entretien || 0;
+        var rejetes = d.rejete || 0;
+        var en_attente = total - retenus - entretien - rejetes;
+        document.getElementById('s-total').textContent = total;
+        document.getElementById('s-attente').textContent = en_attente;
+        document.getElementById('s-retenu').textContent = retenus;
+        document.getElementById('s-rejete').textContent = rejetes;
+        document.getElementById('s-entretien').textContent = entretien;
+        document.getElementById('donut-total').textContent = total;
+        renderDonut({ total: total, en_attente: en_attente, retenu: retenus, entretien: entretien, rejete: rejetes });
         renderBarChart(d.by_poste || []);
     } catch (e) { console.error('fetchStats:', e); }
 }
+
 function renderDonut(d) {
     var total = d.total || 1;
     var segs = [
@@ -1418,9 +1413,10 @@ function renderDonut(d) {
         offset += pct;
     }
 }
+
 function renderBarChart(byPoste) {
     var el = document.getElementById('bar-chart');
-    if (!byPoste.length) { el.innerHTML = '<div class="empty-state"><p>Aucune donnée</p></div>'; return; }
+    if (!byPoste || !byPoste.length) { el.innerHTML = '<div class="empty-state"><p>Aucune donnée</p></div>'; return; }
     var max = 1;
     for (var i = 0; i < byPoste.length; i++) { if (byPoste[i].n > max) max = byPoste[i].n; }
     var html = '';
@@ -1436,6 +1432,7 @@ function renderBarChart(byPoste) {
     }
     el.innerHTML = html;
 }
+
 async function fetchPostesActifs() {
     try {
         var res = await fetch(API + '/postes', { headers: authH() });
@@ -1451,6 +1448,7 @@ async function fetchPostesActifs() {
     } catch (e) { console.warn('Erreur récupération postes actifs:', e); }
     return [];
 }
+
 function populateReanalyzeSelect(actifs) {
     var sel = document.getElementById('reanalyze-poste-select');
     if (!sel) return;
@@ -1471,6 +1469,7 @@ function populateReanalyzeSelect(actifs) {
     }
     sel.options[0].textContent = actifs.length > 1 ? 'Tous les postes actifs' : 'Tous les postes actifs';
 }
+
 function updateReanalyzeInfo(actifs) {
     var infoText = document.getElementById('reanalyze-info-text');
     if (!infoText) return;
@@ -1485,6 +1484,7 @@ function updateReanalyzeInfo(actifs) {
         infoText.style.color = 'rgba(255,255,255,0.9)';
     }
 }
+
 async function fetchCandidats() {
     try {
         var res = await fetch(API + '/recruteur/candidats', { headers: authH() });
@@ -1497,13 +1497,6 @@ async function fetchCandidats() {
             if (c.flags_eliminatoires && !c.flags_eliminatoires_parsed) { c.flags_eliminatoires_parsed = parseJSONField(c.flags_eliminatoires); }
             if (c.signaux_detectes && !c.signaux_detectes_parsed) { c.signaux_detectes_parsed = parseJSONField(c.signaux_detectes); }
             if (c.analyse_details && !c.analyse_details_parsed) { c.analyse_details_parsed = parseJSONField(c.analyse_details); }
-            if (c.score_breakdown_parsed && c.score_breakdown_parsed.decision && !c.statut) {
-                var dec = c.score_breakdown_parsed.decision;
-                if (dec.indexOf('Entretien') !== -1) c.statut = 'entretien';
-                else if (dec.indexOf('Rejet') !== -1 || dec.indexOf('rejet') !== -1) c.statut = 'rejete';
-                else if (dec.indexOf('Shortlist') !== -1 || dec.indexOf('retenu') !== -1) c.statut = 'retenu';
-                else c.statut = 'en_attente';
-            }
         }
         populatePosteFilter(allCandidats);
         populateExportSelects(allCandidats);
@@ -1511,6 +1504,7 @@ async function fetchCandidats() {
         renderRecent(allCandidats);
     } catch (e) { console.error('fetchCandidats:', e); showToast('Erreur connexion serveur', 'error'); }
 }
+
 function populatePosteFilter(data) {
     var sel = document.getElementById('f-poste');
     var postes = [];
@@ -1526,6 +1520,7 @@ function populatePosteFilter(data) {
         sel.appendChild(opt);
     }
 }
+
 function populateExportSelects(data) {
     var postes = [];
     for (var i = 0; i < data.length; i++) {
@@ -1545,6 +1540,7 @@ function populateExportSelects(data) {
         }
     }
 }
+
 function applyFilters() {
     var search = document.getElementById('f-search').value.toLowerCase().trim();
     var poste = document.getElementById('f-poste').value;
@@ -1566,6 +1562,7 @@ function applyFilters() {
     }
     renderTable(result);
 }
+
 function renderTable(data) {
     var tbody = document.getElementById('candidats-tbody');
     if (!data.length) {
@@ -1591,12 +1588,14 @@ function renderTable(data) {
         var cvLink = c.cv_filename ? '<a href="' + API + '/recruteur/uploads/' + c.cv_filename + '" target="_blank" class="btn btn-outline btn-sm">CV</a>' : '<span style="color:var(--text-muted);font-size:.78rem">–</span>';
         var lmLink = c.lettre_filename ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-outline btn-sm">LM</a>' : '';
         var attLink = (c.attestation_filenames_parsed && c.attestation_filenames_parsed.length) ? '<a href="' + API + '/recruteur/uploads/' + c.attestation_filenames_parsed[0] + '" target="_blank" class="btn btn-outline btn-sm">📎</a>' : '';
-        var decision = (c.score_breakdown_parsed && c.score_breakdown_parsed.decision) || c.statut || '';
+        var statut = c.statut || 'en_attente';
+        // Uniformiser les statuts
+        if (statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)') { statut = 'rejete'; }
         html += '<tr>'
             + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><span class="td-small">' + escHtml(c.email) + '</span></td>'
             + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>'
             + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
-            + '<td>' + badgePill(decision || c.statut) + '</td>'
+            + '<td>' + badgePill(statut) + '</td>'
             + '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace" title="Score: ' + score + '/' + scoreMax + '">' + stars + ' <span style="color:var(--text-secondary);font-family:inherit">(' + score + '/' + scoreMax + ')</span></td>'
             + '<td style="display:flex;gap:0.25rem;flex-wrap:wrap">' + cvLink + lmLink + attLink + '</td>'
             + '<td class="td-actions">'
@@ -1607,6 +1606,7 @@ function renderTable(data) {
     }
     tbody.innerHTML = html;
 }
+
 function renderRecent(data) {
     var container = document.getElementById('recent-table');
     var slice = data.slice(0, 8);
@@ -1624,12 +1624,13 @@ function renderRecent(data) {
         var stars = '';
         for (var j = 0; j < Math.floor(score / starUnit); j++) stars += '★';
         for (var j = 0; j < 5 - Math.floor(score / starUnit); j++) stars += '☆';
-        var decision = (c.score_breakdown_parsed && c.score_breakdown_parsed.decision) || c.statut || '';
+        var statut = c.statut || 'en_attente';
+        if (statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)') { statut = 'rejete'; }
         html += '<tr style="cursor:pointer" onclick="openModal(\'' + c.id + '\')">'
             + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><small style="color:var(--text-muted)">' + escHtml(c.email) + '</small></td>'
             + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>'
             + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>'
-            + '<td>' + badgePill(decision || c.statut) + '</td>'
+            + '<td>' + badgePill(statut) + '</td>'
             + '<td style="font-size:.9rem;font-family:monospace">' + stars + ' <span style="color:var(--text-secondary);font-family:inherit">(' + score + '/' + scoreMax + ')</span></td>'
             + '<td onclick="event.stopPropagation()"><button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openModal(\'' + c.id + '\')">📂 Voir</button></td>'
             + '</tr>';
@@ -1637,8 +1638,12 @@ function renderRecent(data) {
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
+
 function refreshAll() { fetchStats(); fetchCandidats(); checkReanalyzeStatus(); }
+
+// === MODAL ===
 function closeModal() { document.getElementById('modal-candidat').classList.remove('open'); currentC = null; }
+
 function switchTab(name, btn) {
     var btns = document.querySelectorAll('.tab-btn');
     for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
@@ -1647,6 +1652,7 @@ function switchTab(name, btn) {
     btn.classList.add('active');
     document.getElementById('tab-' + name).classList.add('active');
 }
+
 function openModal(id) {
     var c = null;
     for (var i = 0; i < allCandidats.length; i++) {
@@ -1659,7 +1665,7 @@ function openModal(id) {
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Email</div><div>' + escHtml(c.email) + '</div></div>' +
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Téléphone</div><div>' + (c.telephone || '–') + '</div></div>' +
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Poste</div><div><strong style="color:var(--primary)">' + escHtml(c.poste) + '</strong></div></div>' +
-        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Statut</div><div>' + badgePill((c.score_breakdown_parsed && c.score_breakdown_parsed.decision) || c.statut) + '</div></div>' +
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Statut</div><div>' + badgePill(c.statut) + '</div></div>' +
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">N° Dossier</div><div>' + (c.numero_dossier || '–') + '</div></div>' +
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Date candidature</div><div>' + fmtDate(c.date_candidature) + '</div></div>';
     var files = [];
@@ -1686,6 +1692,7 @@ function openModal(id) {
     document.getElementById('tab-eval').classList.add('active');
     document.getElementById('modal-candidat').classList.add('open');
 }
+
 function renderAnalyseResume(c) {
     var container = document.getElementById('analyse-resume');
     var content = document.getElementById('analyse-content');
@@ -1731,6 +1738,7 @@ function renderAnalyseResume(c) {
     }
     content.innerHTML = html || '<p style="color:var(--text-muted);font-style:italic">Aucun détail disponible.</p>';
 }
+
 function renderStars(score, scoreMax) {
     var row = document.getElementById('stars-row');
     row.innerHTML = '';
@@ -1748,6 +1756,7 @@ function renderStars(score, scoreMax) {
     scoreText.textContent = score + '/' + scoreMax;
     row.appendChild(scoreText);
 }
+
 function renderGrille(poste, checklistJson, scoreBreakdown) {
     var g = (window.GRILLE && window.GRILLE[poste]) ? window.GRILLE[poste] : { eliminatoire: [], a_verifier: [], signaux_forts: [], points_attention: [] };
     var el = document.getElementById('grille-content');
@@ -1774,6 +1783,7 @@ function renderGrille(poste, checklistJson, scoreBreakdown) {
         mkSection('🟡 Signaux forts', '#16a34a', g.signaux_forts, 'signal') +
         mkSection('⚠️ Points d\'attention', '#64748b', g.points_attention, 'attn');
 }
+
 async function updateStatut(statut) {
     if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
     var note = document.getElementById('modal-note').value;
@@ -1798,6 +1808,7 @@ async function updateStatut(statut) {
         }
     } catch (e) { showToast('Erreur de connexion', 'error'); }
 }
+
 function getExportParams() {
     var poste = document.getElementById('export-poste-select').value;
     var statut = document.getElementById('export-statut-select').value;
@@ -1812,6 +1823,7 @@ function getExportParams() {
     if (minScore) params.append('min_score', minScore);
     return params;
 }
+
 async function exportReport(format) {
     try {
         var params = getExportParams();
@@ -1838,6 +1850,7 @@ async function exportReport(format) {
         showToast('❌ Erreur: ' + error.message, 'error');
     }
 }
+
 async function downloadAllDossiers() {
     try {
         var poste = document.getElementById('dossier-poste-select').value;
@@ -1869,6 +1882,7 @@ async function downloadAllDossiers() {
         showToast('❌ Erreur: ' + error.message, 'error');
     }
 }
+
 function triggerManualReanalyze() {
     var poste = document.getElementById('reanalyze-poste-select').value;
     var url;
@@ -1882,21 +1896,19 @@ function triggerManualReanalyze() {
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data.reanalyzed_count !== undefined && data.reanalyzed_count > 0) {
-                showToast('🔄 Réanalyse lancée : ' + data.reanalyzed_count + ' candidats (' + (data.elapsed_seconds || 0) + 's)', 'success');
+                showToast('🔄 Réanalyse lancée : ' + data.reanalyzed_count + ' candidats', 'success');
                 startReanalyzePolling();
             } else if (data.message && data.message.indexOf('Aucun') !== -1) {
                 showToast('📭 ' + data.message, 'info');
-            } else if (data.reanalyzed_count === 0 && data.total_candidates > 0) {
-                showToast('⚠️ Réanalyse terminée : 0 candidats traités', 'warning');
             } else {
                 showToast('⚠️ ' + (data.message || 'Erreur lors de la réanalyse'), 'warning');
             }
-            if (data.errors && data.errors.length > 0) { console.warn('Erreurs de réanalyse:', data.errors); }
             fetchCandidats();
             fetchStats();
         })
         .catch(function(e) { showToast('❌ Erreur: ' + e.message, 'error'); });
 }
+
 function startReanalyzePolling() {
     if (reanalyzePollingInterval) clearInterval(reanalyzePollingInterval);
     checkReanalyzeStatus();
@@ -1908,6 +1920,7 @@ function startReanalyzePolling() {
         }
     }, 300000);
 }
+
 async function checkReanalyzeStatus() {
     try {
         var response = await fetch(API + '/recruteur/reanalyze-status', { headers: authH() });
@@ -1923,7 +1936,7 @@ async function checkReanalyzeStatus() {
                 clearInterval(reanalyzePollingInterval);
                 reanalyzePollingInterval = null;
             }
-            showReanalyzeCompleteNotification(data);
+            showToast('✅ Réanalyse terminée: ' + data.processed + '/' + data.total + ' dossiers mis à jour', 'success');
             fetchCandidats();
             fetchStats();
         }
@@ -1946,6 +1959,7 @@ async function checkReanalyzeStatus() {
         console.error('Check reanalyze status error:', error);
     }
 }
+
 function updateProgressWidget(processed, total, errors, statusText) {
     var widget = document.getElementById('floating-progress');
     if (!widget) return;
@@ -1971,6 +1985,7 @@ function updateProgressWidget(processed, total, errors, statusText) {
         widget.classList.remove('active');
     }
 }
+
 function updateReanalyzeBadge(data) {
     var badge = document.getElementById('reanalyze-status-badge');
     if (!badge) return;
@@ -1990,12 +2005,7 @@ function updateReanalyzeBadge(data) {
         badge.style.display = 'none';
     }
 }
-function showReanalyzeCompleteNotification(data) {
-    var total = data.total || 0;
-    var processed = data.processed || 0;
-    var message = '✅ Réanalyse terminée: ' + processed + '/' + total + ' dossiers mis à jour';
-    showToast(message, 'success');
-}
+
 async function quickReanalyze(id) {
     var c = null;
     for (var i = 0; i < allCandidats.length; i++) {
@@ -2014,6 +2024,7 @@ async function quickReanalyze(id) {
         }
     } catch (e) { showToast('❌ Erreur: ' + e.message, 'error'); }
 }
+
 async function reanalyzeOne() {
     if (!currentC) return;
     if (!confirm('Relancer l\'analyse de cette candidature ?')) return;
@@ -2039,11 +2050,13 @@ async function reanalyzeOne() {
         }
     } catch (e) { showToast('❌ Erreur: ' + e.message, 'error'); }
 }
+
 function openEmailModal() {
     if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
     buildEmail();
     document.getElementById('modal-email').classList.add('open');
 }
+
 function quickEmail(id) {
     var c = null;
     for (var i = 0; i < allCandidats.length; i++) {
@@ -2054,6 +2067,7 @@ function quickEmail(id) {
     buildEmail();
     document.getElementById('modal-email').classList.add('open');
 }
+
 function buildEmail() {
     if (!currentC) return;
     var type = document.getElementById('email-type').value;
@@ -2063,6 +2077,7 @@ function buildEmail() {
     document.getElementById('ep-subject').textContent = emailSubject(type, pos);
     document.getElementById('ep-body').value = emailBody(type, nom, pos);
 }
+
 function emailSubject(type, poste) {
     var subjects = {
         'retenu': 'Candidature retenue – ' + poste,
@@ -2079,6 +2094,7 @@ function emailSubject(type, poste) {
     };
     return subjects[type] || 'Réponse à votre candidature – ' + poste;
 }
+
 function emailBody(type, nom, poste) {
     var sign = '\n\nCordialement,\nL\'équipe Ressources Humaines\nRecrutBank';
     if (type === '🥇 Entretien prioritaire' || type === 'retenu' || type === 'Shortlist') {
@@ -2092,6 +2108,7 @@ function emailBody(type, nom, poste) {
     }
     return 'Madame, Monsieur ' + nom + ',\n\nNous vous remercions de votre candidature pour le poste de ' + poste + '.\n\nNous reviendrons vers vous prochainement.\n\nCordialement,' + sign;
 }
+
 function copyEmail() {
     var to = currentC ? currentC.email : '';
     var sub = document.getElementById('ep-subject').textContent;
@@ -2100,6 +2117,7 @@ function copyEmail() {
         .then(function() { showToast('📋 Email copié', 'success'); })
         .catch(function() { document.getElementById('ep-body').select(); showToast('Sélectionnez le texte et Ctrl+C', 'info'); });
 }
+
 function openMailClient() {
     if (!currentC) return;
     var to = encodeURIComponent(currentC.email);
@@ -2107,6 +2125,7 @@ function openMailClient() {
     var bdy = encodeURIComponent(document.getElementById('ep-body').value);
     window.open('mailto:' + to + '?subject=' + sub + '&body=' + bdy);
 }
+
 window.GRILLE = {};
 async function loadGrilles() {
     try {
@@ -2122,6 +2141,7 @@ async function loadGrilles() {
         }
     } catch (e) { console.warn('Erreur chargement grilles:', e); }
 }
+
 async function triggerAutoReanalyze() {
     try {
         var actifs = await fetchPostesActifs();
@@ -2152,13 +2172,12 @@ async function triggerAutoReanalyze() {
         if (data.reanalyzed_count !== undefined && data.reanalyzed_count > 0) {
             showToast('🔄 Réanalyse automatique lancée (' + data.reanalyzed_count + ' candidats)', 'info');
             startReanalyzePolling();
-        } else if (data.reanalyzed_count === 0 && data.total_candidates > 0) {
-            console.log('ℹ️ Aucun candidat à réanalyser (déjà à jour)');
         }
     } catch (error) {
         console.error('Auto-reanalyse error:', error);
     }
 }
+
 async function init() {
     await loadGrilles();
     await fetchPostesActifs();
