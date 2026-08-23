@@ -1401,12 +1401,31 @@ if (decision.includes("🔴")) return "rejete";
 return 'en_attente';
 }
 function getDisplayStatus(candidat) {
-if (candidat.decision) { if (candidat.decision.includes("🟢") || candidat.decision.includes("Shortlist")) return "retenu"; if (candidat.decision.includes("🟡")) return "entretien"; if (candidat.decision.includes("🔴")) return "rejete"; }
-if (candidat.score_breakdown_parsed && candidat.score_breakdown_parsed.decision) { var dec = candidat.score_breakdown_parsed.decision; if (dec.includes("🟢") || dec.includes("Shortlist")) return "retenu"; if (dec.includes("🟡")) return "entretien"; if (dec.includes("🔴")) return "rejete"; }
-if (candidat.score && candidat.poste) { var dec = getDecisionFromScore(candidat.score, candidat.poste); if (dec) { if (dec.includes("🟢") || dec.includes("Shortlist")) return "retenu"; if (dec.includes("🟡")) return "entretien"; if (dec.includes("🔴")) return "rejete"; } }
 var statut = candidat.statut || 'en_attente';
-if (statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)' || statut === 'rejet_eliminatoire') { return 'rejete'; }
-return statut;
+if (statut === "rejete" || statut === "Rejete" || statut === "exclu" || statut === "Exclu" || statut === "rejete(eliminatoire)" || statut === "rejet_eliminatoire") { return "rejete"; }
+if (statut === "retenu" || statut === "Retenu") { return "retenu"; }
+if (statut === "entretien" || statut === "Entretien") { return "entretien"; }
+var decision = candidat.decision || '';
+if (decision) {
+if (decision.includes("🟢") || decision.includes("Shortlist")) { return "retenu"; }
+if (decision.includes("🟡")) { return "entretien"; }
+if (decision.includes("🔴") || decision.includes("Rejet")) { return "rejete"; }
+}
+if (candidat.score_breakdown_parsed && candidat.score_breakdown_parsed.decision) {
+var dec = candidat.score_breakdown_parsed.decision;
+if (dec.includes("🟢") || dec.includes("Shortlist")) { return "retenu"; }
+if (dec.includes("🟡")) { return "entretien"; }
+if (dec.includes("🔴")) { return "rejete"; }
+}
+if (candidat.score && candidat.poste) {
+var dec = getDecisionFromScore(candidat.score, candidat.poste);
+if (dec) {
+if (dec.includes("🟢") || dec.includes("Shortlist")) { return "retenu"; }
+if (dec.includes("🟡")) { return "entretien"; }
+if (dec.includes("🔴")) { return "rejete"; }
+}
+}
+return 'en_attente';
 }
 function badgePill(s) {
 var cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
@@ -1630,12 +1649,24 @@ var rejectReasons = document.getElementById('reject-reasons');
 var isRejected = statut === 'rejete' || statut === 'Rejete' || statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)' || statut === 'rejet_eliminatoire';
 if (isRejected) {
 rejectAlert.classList.add('visible');
+var note = c.note || 'Décision du recruteur';
 var flags = c.flags_eliminatoires_parsed || [];
 var sb = c.score_breakdown_parsed || {};
-var html = '<p><strong>Ce candidat a été rejeté pour les raisons suivantes :</strong></p><ul>';
-if (flags && flags.length > 0) { for (var f = 0; f < flags.length; f++) { var clean_f = flags[f].replace('❌', '').replace('⚠️', '').trim(); if (clean_f && clean_f.length > 5) { html += '<li><span class="reason">• ' + escHtml(clean_f) + '</span></li>'; } } } else { html += '<li><span class="reason">• Un ou plusieurs critères éliminatoires non satisfaits</span></li>'; }
-var note = '';
-if (sb && typeof sb === 'object') { note = sb.note || ''; if (note && note.indexOf('ÉLIMINÉ') !== -1) { html += '<li><span class="reason">• ' + escHtml(note) + '</span></li>'; } var decision = sb.decision || ''; if (decision && decision.indexOf('Rejet') !== -1 && note.indexOf('ÉLIMINÉ') === -1) { html += '<li><span class="reason">• ' + escHtml(decision) + '</span></li>'; } }
+var html = '<p><strong>Ce candidat a été rejeté :</strong></p><ul>';
+if (note && note.length > 10) {
+html += '<li><span class="reason">• ' + escHtml(note) + '</span></li>';
+}
+if (flags && flags.length > 0) {
+for (var f = 0; f < flags.length; f++) {
+var clean_f = flags[f].replace('❌', '').replace('⚠️', '').trim();
+if (clean_f && clean_f.length > 5) {
+html += '<li><span class="reason">• ' + escHtml(clean_f) + '</span></li>';
+}
+}
+}
+if (flags.length === 0 && (!note || note.length <= 10)) {
+html += '<li><span class="reason">• Rejeté manuellement par le recruteur</span></li>';
+}
 html += '</ul>';
 var scoreMax = getScoreMax(c.poste);
 var score = parseInt(c.score) || 0;
@@ -1741,18 +1772,41 @@ el.innerHTML = mkSection('🔴 Critères éliminatoires', '#dc2626', g.eliminato
 async function updateStatut(statut) {
 if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
 var note = document.getElementById('modal-note').value;
+if (statut === 'rejete' && !note) {
+note = 'Candidat rejeté manuellement par le recruteur';
+}
 try {
-var res = await fetch(API + '/recruteur/candidats/' + currentC.id + '/statut', { method: 'PUT', headers: authH(), body: JSON.stringify({ statut: statut, note: note }) });
+var res = await fetch(API + '/recruteur/candidats/' + currentC.id + '/statut', {
+method: 'PUT',
+headers: authH(),
+body: JSON.stringify({ statut: statut, note: note })
+});
 if (res.ok) {
 var idx = -1;
-for (var i = 0; i < allCandidats.length; i++) { if (allCandidats[i].id === currentC.id) { idx = i; break; } }
-if (idx !== -1) { allCandidats[idx].statut = statut; allCandidats[idx].note = note; }
+for (var i = 0; i < allCandidats.length; i++) {
+if (allCandidats[i].id === currentC.id) { idx = i; break; }
+}
+if (idx !== -1) {
+allCandidats[idx].statut = statut;
+allCandidats[idx].note = note;
+if (statut === 'rejete') {
+allCandidats[idx].decision = 'Rejet - Décision du recruteur';
+} else if (statut === 'retenu') {
+allCandidats[idx].decision = 'Retenu - Décision du recruteur';
+} else if (statut === 'entretien') {
+allCandidats[idx].decision = 'Entretien - Décision du recruteur';
+}
+}
 showToast('✅ Statut mis à jour : ' + statut, 'success');
 closeModal();
 applyFilters();
 renderRecent(allCandidats);
 fetchStats();
-} else { var d = await res.json().catch(function() { return {}; }); showToast(d.error || 'Erreur', 'error'); }
+renderTable(allCandidats);
+} else {
+var d = await res.json().catch(function() { return {}; });
+showToast(d.error || 'Erreur', 'error');
+}
 } catch (e) { showToast('Erreur de connexion', 'error'); }
 }
 function getExportParams() {
