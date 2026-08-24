@@ -1194,7 +1194,7 @@ color: #b91c1c;
 </div>
 <div class="card">
 <div class="filter-bar">
-<input class="form-control" id="f-search" placeholder="🔍 Rechercher..." oninput="applyFilters()" style="min-width:180px;">
+<input class="form-control" id="f-search" placeholder="🔍 Rechercher..." onchange="applyFilters()" style="min-width:180px;">
 <select class="form-control" id="f-poste" onchange="applyFilters()">
 <option value="">Tous les postes</option>
 </select>
@@ -1308,6 +1308,11 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 <option value="🥈 Potentiel">Potentiel (7-10/14)</option>
 <option value="❌ Rejet">Rejet (&lt;7/14)</option>
 </optgroup>
+<optgroup label="Postes scoring /10 (Data Analyst Finance & autres)">
+<option value="🥇 Entretien prioritaire">Entretien prioritaire (8-10/10)</option>
+<option value="🥈 Potentiel">Potentiel (5-7/10)</option>
+<option value="❌ Rejet">Rejet (&lt;5/10)</option>
+</optgroup>
 <optgroup label="Postes scoring /100">
 <option value="Shortlist">Shortlist - Prioritaire</option>
 <option value="À considérer">À considérer</option>
@@ -1383,6 +1388,7 @@ if (!poste) return 10;
 if (["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].indexOf(poste) !== -1) return 12;
 if (["Chef de Division Local Corporate"].indexOf(poste) !== -1) return 14;
 if (["Auditeur interne", "Chef service contrôle des engagements", "Chef service IT (maintenance/support)", "Chef service finance", "Chef service risques de marché", "Chef service reporting réglementaire"].indexOf(poste) !== -1) return 100;
+if (["Data Analyst Finance"].indexOf(poste) !== -1) return 10;
 return 10;
 }
 function getDecisionFromScore(score, poste) {
@@ -1391,6 +1397,7 @@ if (!poste) { if (s >= 8) return "🟢 Entretien prioritaire"; if (s >= 5) retur
 if (["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].indexOf(poste) !== -1) { if (s >= 10) return "🟢 Entretien prioritaire"; if (s >= 7) return "🟡 Potentiel à évaluer en entretien"; return "🔴 Rejet"; }
 if (["Chef de Division Local Corporate"].indexOf(poste) !== -1) { if (s >= 11) return "🟢 Entretien prioritaire"; if (s >= 7) return "🟡 Potentiel à évaluer en entretien"; return "🔴 Rejet"; }
 if (["Auditeur interne", "Chef service contrôle des engagements", "Chef service IT (maintenance/support)", "Chef service finance", "Chef service risques de marché", "Chef service reporting réglementaire"].indexOf(poste) !== -1) { if (s >= 80) return "🟢 Shortlist"; if (s >= 60) return "🟡 À considérer"; return "🔴 Rejet"; }
+if (["Data Analyst Finance"].indexOf(poste) !== -1) { if (s >= 8) return "🟢 Entretien prioritaire"; if (s >= 5) return "🟡 Potentiel à évaluer en entretien"; return "🔴 Rejet"; }
 if (s >= 8) return "🟢 Entretien prioritaire"; if (s >= 5) return "🟡 Potentiel à évaluer en entretien"; return "🔴 Rejet";
 }
 function getStatutFromDecision(decision) {
