@@ -300,6 +300,30 @@ select option:disabled {
 .poste-apply-btn {
     display: none;
 }
+
+/* Badge clôturé */
+.poste-card.closed {
+    opacity: 0.5;
+    filter: grayscale(80%);
+    pointer-events: none;
+    position: relative;
+}
+.poste-card.closed::after {
+    content: "🔒 Clôturé";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(26, 58, 92, 0.9);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    z-index: 10;
+}
 </style>
 </head>
 <body>
@@ -495,34 +519,37 @@ Utilisez le numéro de suivi dans la section <strong>Suivi de dossier</strong> c
 const API = 'https://backend1-fiq5.onrender.com/api';
 
 // === POSTES ACTIFS (définis dans le backend) ===
-const POSTES_ACTIFS_BACKEND = ["Chargé(e) d'Administration de Crédit", "Chef de Division Local Corporate", "Data Analyst Finance"];
+// Chargé(e) d'Administration de Crédit est retiré des postes actifs (clôturé)
+const POSTES_ACTIFS_BACKEND = ["Chef de Division Local Corporate", "Data Analyst Finance"];
 
 // Métadonnées d'affichage pour chaque poste
 const POSTES_INFO = {
-    "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS", category:"credit", senior: false },
-    "Analyste Crédit CCB":                  { icon:"📊", desc:"Analyse financière, montage et suivi de crédits", category:"credit", senior: false },
-    "Archiviste (Administration Crédit)":   { icon:"🗂️", desc:"Gestion documentaire et archivage des dossiers", category:"credit", senior: false },
-    "Senior Finance Officer":               { icon:"💰", desc:"Pilotage financier et reporting senior", category:"finance", senior: true },
-    "Market Risk Officer":                  { icon:"📈", desc:"Gestion et modélisation des risques de marché", category:"risque", senior: false },
-    "IT Réseau & Infrastructure":           { icon:"🖥️", desc:"Administration réseau, sécurité et infrastructure", category:"it", senior: false, badge: "technique" },
-    "Auditeur interne":                     { icon:"🔍", desc:"Audit interne et contrôle des processus", category:"audit", senior: false },
-    "Chef service contrôle des engagements":{ icon:"📋", desc:"Contrôle des engagements et garanties", category:"risque", senior: true },
-    "Chef service IT (maintenance/support)":{ icon:"🛠️", desc:"Maintenance et support informatique", category:"it", senior: true, badge: "technique" },
-    "Chef service finance":                 { icon:"💵", desc:"Management de la fonction finance", category:"finance", senior: true },
-    "Chef service risques de marché":       { icon:"📉", desc:"Gestion des risques financiers et de marché", category:"risque", senior: true },
-    "Chef service reporting réglementaire": { icon:"📑", desc:"Reporting prudentiel et réglementaire", category:"conformite", senior: true },
+    "Responsable Administration de Crédit": { icon:"🏛️", desc:"Gestion portefeuille, conformité COBAC/IFRS", category:"credit", senior: false, closed: true },
+    "Analyste Crédit CCB":                  { icon:"📊", desc:"Analyse financière, montage et suivi de crédits", category:"credit", senior: false, closed: true },
+    "Archiviste (Administration Crédit)":   { icon:"🗂️", desc:"Gestion documentaire et archivage des dossiers", category:"credit", senior: false, closed: true },
+    "Senior Finance Officer":               { icon:"💰", desc:"Pilotage financier et reporting senior", category:"finance", senior: true, closed: true },
+    "Market Risk Officer":                  { icon:"📈", desc:"Gestion et modélisation des risques de marché", category:"risque", senior: false, closed: true },
+    "IT Réseau & Infrastructure":           { icon:"🖥️", desc:"Administration réseau, sécurité et infrastructure", category:"it", senior: false, badge: "technique", closed: true },
+    "Auditeur interne":                     { icon:"🔍", desc:"Audit interne et contrôle des processus", category:"audit", senior: false, closed: true },
+    "Chef service contrôle des engagements":{ icon:"📋", desc:"Contrôle des engagements et garanties", category:"risque", senior: true, closed: true },
+    "Chef service IT (maintenance/support)":{ icon:"🛠️", desc:"Maintenance et support informatique", category:"it", senior: true, badge: "technique", closed: true },
+    "Chef service finance":                 { icon:"💵", desc:"Management de la fonction finance", category:"finance", senior: true, closed: true },
+    "Chef service risques de marché":       { icon:"📉", desc:"Gestion des risques financiers et de marché", category:"risque", senior: true, closed: true },
+    "Chef service reporting réglementaire": { icon:"📑", desc:"Reporting prudentiel et réglementaire", category:"conformite", senior: true, closed: true },
     "Chef de Section Compensation":         {
         icon: "💳",
         desc: "Supervision des opérations de compensation interbancaire (BEAC/GIMAC)",
         category: "operations",
         senior: true,
-        highlight: "beac-gimac"
+        highlight: "beac-gimac",
+        closed: true
     },
     "Chargé(e) d'Administration de Crédit": {
         icon: "📑",
         desc: "Gestion du cycle de crédit, garanties, reporting IFRS 9 et COBAC",
         category: "credit",
-        senior: false
+        senior: false,
+        closed: true
     },
     "Chef de Division Local Corporate": {
         icon: "🏢",
@@ -567,8 +594,9 @@ fetch(`${API}/postes`)
     
     // Génération des cartes et des options du select
     postes.forEach(p => {
-        const info = POSTES_INFO[p] || { icon:"💼", desc:"", category:"" };
+        const info = POSTES_INFO[p] || { icon:"💼", desc:"", category:"", closed: true };
         const isActive = postesActifs.includes(p);
+        const isClosed = info.closed === true;
         
         const catBadge = info.category ? `<span style="display:inline-block;font-size:.65rem;background:#e8f4fd;color:#1a3a5c;padding:2px 6px;border-radius:4px;margin-left:.4rem">${info.category}</span>` : "";
         const certHighlight = info.highlight === "certifications" ? `<div style="font-size:.75rem;color:#1e7e34;margin-top:.3rem">🎯 <strong>Certifications requises</strong></div>` : "";
@@ -579,13 +607,21 @@ fetch(`${API}/postes`)
         const managementBadge = info.badge === "management" ? `<span class="badge-management">Management</span>` : "";
         const dataFinanceBadge = info.badge === "data-finance" ? `<span class="badge-data-finance">Data & Finance</span>` : "";
         const seniorIndicator = info.senior ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.3rem">⚠️ Niveau Senior Requis (> 5 ans)</div>` : "";
+        const closedBadge = isClosed ? `<span style="display:inline-block;font-size:.65rem;background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;margin-left:.4rem;border:1px solid #fecaca">🔒 Clôturé</span>` : "";
         
-        const cardClass = isActive ? "poste-card active" : "poste-card inactive";
+        let cardClass = "poste-card";
+        if (isActive) {
+            cardClass += " active";
+        } else if (isClosed) {
+            cardClass += " closed";
+        } else {
+            cardClass += " inactive";
+        }
         
         grid.innerHTML += `
 <div class="${cardClass}">
     <div style="font-size:1.8rem;margin-bottom:.6rem;display:flex;align-items:center">${info.icon}${techBadge}${managementBadge}${dataFinanceBadge}</div>
-    <h3>${p}${catBadge}</h3>
+    <h3>${p}${catBadge}${closedBadge}</h3>
     <p>${info.desc || 'Poste à pourvoir prochainement.'}</p>
     ${certHighlight}
     ${beacHighlight}
@@ -597,7 +633,12 @@ fetch(`${API}/postes`)
         
         // Option du select
         const optionDisabled = isActive ? "" : "disabled";
-        const optionLabel = isActive ? p : `🔒 ${p} (clôturé)`;
+        let optionLabel = p;
+        if (isClosed) {
+            optionLabel = `🔒 ${p} (clôturé)`;
+        } else if (!isActive) {
+            optionLabel = `🔒 ${p} (clôturé)`;
+        }
         const option = document.createElement('option');
         option.value = p;
         option.textContent = optionLabel;
