@@ -1852,46 +1852,11 @@ var params = new URLSearchParams();
 if (poste) params.append('poste', poste);
 if (dateStart) params.append('date_start', dateStart);
 if (dateEnd) params.append('date_end', dateEnd);
-showToast('📦 Préparation du ZIP en cours...', 'info');
-var response = await fetch(API + '/recruteur/dossiers/zip/start?' + params.toString(), { method: 'POST', headers: authH() });
-if (!response.ok) {
-var error = await response.json().catch(function() { return {}; });
-throw new Error(error.error || 'Erreur démarrage export');
-}
-var data = await response.json();
-var taskId = data.task_id;
-showToast('⏳ Génération en cours (suivez la progression en bas à droite)...', 'info');
-var widget = document.getElementById('floating-progress');
-if (widget) {
-widget.classList.add('active');
-widget.classList.remove('completed');
-document.getElementById('floating-progress-title').textContent = '📦 Génération du ZIP...';
-document.getElementById('floating-progress-count').textContent = '0%';
-document.getElementById('floating-progress-detail').textContent = 'Préparation des fichiers...';
-}
-var interval = setInterval(async function() {
-try {
-var statusRes = await fetch(API + '/recruteur/dossiers/zip/status/' + taskId, { headers: authH() });
-if (!statusRes.ok) return;
-var statusData = await statusRes.json();
-var progress = statusData.progress || 0;
-var status = statusData.status || 'pending';
-if (widget) {
-document.getElementById('floating-progress-count').textContent = progress + '%';
-document.getElementById('floating-progress-bar').style.width = progress + '%';
-document.getElementById('floating-progress-detail').textContent = 'Téléchargement: ' + (statusData.done || 0) + '/' + (statusData.total || 0) + ' fichiers';
-}
-if (status === 'completed') {
-clearInterval(interval);
-if (widget) {
-widget.classList.add('completed');
-document.getElementById('floating-progress-title').textContent = '✅ ZIP prêt !';
-document.getElementById('floating-progress-detail').textContent = 'Téléchargement automatique...';
-}
-var downloadUrl = API + '/recruteur/dossiers/zip/download/' + taskId;
-var downloadRes = await fetch(downloadUrl, { method: 'GET', headers: authH() });
-if (downloadRes.ok) {
-var blob = await downloadRes.blob();
+var url = API + '/recruteur/dossiers/zip?' + params.toString();
+showToast('📦 Génération du ZIP en cours...', 'info');
+var response = await fetch(url, { method: 'GET', headers: authH() });
+if (!response.ok) { var error = await response.json().catch(function() { return {}; }); throw new Error(error.error || 'Erreur téléchargement'); }
+var blob = await response.blob();
 var urlBlob = window.URL.createObjectURL(blob);
 var a = document.createElement('a');
 a.href = urlBlob;
@@ -1900,23 +1865,8 @@ a.download = 'dossiers_candidats_' + timestamp + '.zip';
 document.body.appendChild(a);
 a.click();
 setTimeout(function() { window.URL.revokeObjectURL(urlBlob); document.body.removeChild(a); }, 100);
-showToast('✅ ZIP téléchargé !', 'success');
-setTimeout(function() { if (widget) widget.classList.remove('active'); }, 5000);
-}
-}
-if (status === 'error') {
-clearInterval(interval);
-showToast('❌ Erreur: ' + (statusData.error || 'Génération échouée'), 'error');
-if (widget) widget.classList.remove('active');
-}
-} catch (e) {
-console.error('Polling error:', e);
-}
-}, 3000);
-} catch (error) {
-console.error('Erreur ZIP:', error);
-showToast('❌ Erreur: ' + error.message, 'error');
-}
+showToast('✅ ZIP téléchargé', 'success');
+} catch (error) { console.error('Erreur ZIP:', error); showToast('❌ Erreur: ' + error.message, 'error'); }
 }
 function triggerManualReanalyze() {
 var poste = document.getElementById('reanalyze-poste-select').value;
