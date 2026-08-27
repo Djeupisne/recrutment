@@ -1668,6 +1668,99 @@ btn.classList.add('active');
 document.getElementById('tab-' + name).classList.add('active');
 }
 
+function updateEmailOptions(poste) {
+var sel = document.getElementById('email-type');
+while (sel.options.length > 0) sel.remove(0);
+
+if (["Chef de Division Local Corporate", "Data Analyst Finance"].indexOf(poste) !== -1) {
+var optGroup = document.createElement('optgroup');
+optGroup.label = 'Poste avec scoring /14 (' + poste + ')';
+sel.appendChild(optGroup);
+var opt1 = document.createElement('option');
+opt1.value = '🥇 Entretien prioritaire';
+opt1.textContent = 'Entretien prioritaire (11-14/14)';
+optGroup.appendChild(opt1);
+var opt2 = document.createElement('option');
+opt2.value = '🥈 Potentiel';
+opt2.textContent = 'Potentiel à évaluer (7-10/14)';
+optGroup.appendChild(opt2);
+var opt3 = document.createElement('option');
+opt3.value = '❌ Rejet';
+opt3.textContent = 'Rejet (<7/14)';
+optGroup.appendChild(opt3);
+} else if (["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].indexOf(poste) !== -1) {
+var optGroup = document.createElement('optgroup');
+optGroup.label = 'Poste avec scoring /12 (' + poste + ')';
+sel.appendChild(optGroup);
+var opt1 = document.createElement('option');
+opt1.value = '🥇 Entretien prioritaire';
+opt1.textContent = 'Entretien prioritaire (10-12/12)';
+optGroup.appendChild(opt1);
+var opt2 = document.createElement('option');
+opt2.value = '🥈 Entretien si besoin (vivier)';
+opt2.textContent = 'Vivier de réserve (7-9/12)';
+optGroup.appendChild(opt2);
+var opt3 = document.createElement('option');
+opt3.value = '❌ Rejet';
+opt3.textContent = 'Rejet (<7/12)';
+optGroup.appendChild(opt3);
+} else if (["Auditeur interne", "Chef service contrôle des engagements", "Chef service IT (maintenance/support)", "Chef service finance", "Chef service risques de marché", "Chef service reporting réglementaire"].indexOf(poste) !== -1) {
+var optGroup = document.createElement('optgroup');
+optGroup.label = 'Poste avec scoring /100 (' + poste + ')';
+sel.appendChild(optGroup);
+var opt1 = document.createElement('option');
+opt1.value = 'Shortlist';
+opt1.textContent = 'Shortlist - Prioritaire (80-100)';
+optGroup.appendChild(opt1);
+var opt2 = document.createElement('option');
+opt2.value = 'À considérer';
+opt2.textContent = 'À considérer (70-79)';
+optGroup.appendChild(opt2);
+var opt3 = document.createElement('option');
+opt3.value = 'Faible';
+opt3.textContent = 'Faible (60-69)';
+optGroup.appendChild(opt3);
+var opt4 = document.createElement('option');
+opt4.value = 'Rejet';
+opt4.textContent = 'Rejet (<60)';
+optGroup.appendChild(opt4);
+} else {
+var optGroup = document.createElement('optgroup');
+optGroup.label = 'Poste classique';
+sel.appendChild(optGroup);
+var opt1 = document.createElement('option');
+opt1.value = 'retenu';
+opt1.textContent = 'Candidature retenue (8-10)';
+optGroup.appendChild(opt1);
+var opt2 = document.createElement('option');
+opt2.value = 'entretien';
+opt2.textContent = 'Convocation entretien (5-7)';
+optGroup.appendChild(opt2);
+var opt3 = document.createElement('option');
+opt3.value = 'rejete';
+opt3.textContent = 'Email de refus (<5)';
+optGroup.appendChild(opt3);
+}
+// Sélectionner l'option par défaut en fonction du score si disponible
+if (currentC && currentC.score) {
+var score = parseInt(currentC.score) || 0;
+if (["Chef de Division Local Corporate", "Data Analyst Finance"].indexOf(poste) !== -1) {
+if (score >= 11) sel.value = '🥇 Entretien prioritaire';
+else if (score >= 7) sel.value = '🥈 Potentiel';
+else sel.value = '❌ Rejet';
+} else if (["Chef de Section Compensation", "Chargé(e) d'Administration de Crédit"].indexOf(poste) !== -1) {
+if (score >= 10) sel.value = '🥇 Entretien prioritaire';
+else if (score >= 7) sel.value = '🥈 Entretien si besoin (vivier)';
+else sel.value = '❌ Rejet';
+} else if (["Auditeur interne", "Chef service contrôle des engagements", "Chef service IT (maintenance/support)", "Chef service finance", "Chef service risques de marché", "Chef service reporting réglementaire"].indexOf(poste) !== -1) {
+if (score >= 80) sel.value = 'Shortlist';
+else if (score >= 70) sel.value = 'À considérer';
+else if (score >= 60) sel.value = 'Faible';
+else sel.value = 'Rejet';
+}
+}
+}
+
 function openModal(id) {
 var c = null;
 for (var i = 0; i < allCandidats.length; i++) { if (allCandidats[i].id === id) { c = allCandidats[i]; break; } }
@@ -1724,6 +1817,7 @@ for (var i = 0; i < contents.length; i++) contents[i].classList.remove('active')
 document.querySelector('.tab-btn').classList.add('active');
 document.getElementById('tab-eval').classList.add('active');
 document.getElementById('modal-candidat').classList.add('open');
+updateEmailOptions(c.poste);
 }
 
 function renderAnalyseResume(c) {
