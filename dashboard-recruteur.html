@@ -379,6 +379,12 @@ color: var(--text-secondary);
 border: none;
 }
 .btn-ghost:hover { background: var(--bg-light); color: var(--text); }
+.btn-delete {
+background: transparent;
+color: var(--danger);
+border: 1px solid var(--danger);
+}
+.btn-delete:hover { background: var(--danger-light); }
 .form-control {
 padding: 0.5rem 0.75rem;
 border: 1px solid var(--border);
@@ -623,6 +629,7 @@ white-space: nowrap;
 .badge-retained { background: var(--success-light); color: #166534; }
 .badge-rejected { background: var(--danger-light); color: #991b1b; }
 .badge-interview { background: var(--info-light); color: #1e40af; }
+.badge-eliminatoire { background: #7f1d1d; color: white; }
 .empty-state {
 text-align: center;
 padding: 3rem 1rem;
@@ -991,6 +998,15 @@ margin-bottom: 0.25rem;
 font-weight: 600;
 color: #b91c1c;
 }
+.reject-alert .score-conserve {
+margin-top: 0.5rem;
+padding: 0.5rem 0.75rem;
+background: #fef3c7;
+border-radius: 4px;
+font-weight: 600;
+color: #92400e;
+border: 1px solid #fcd34d;
+}
 @media (max-width: 992px) {
 .dash-layout { grid-template-columns: 1fr; }
 .sidebar { display: none; }
@@ -1219,12 +1235,13 @@ color: #b91c1c;
 <th>Date</th>
 <th>Statut</th>
 <th>Score</th>
+<th>Élim.</th>
 <th>Fichiers</th>
 <th>Actions</th>
 </tr>
 </thead>
 <tbody id="candidats-tbody">
-<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Chargement...</td></tr>
+<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Chargement...</td></tr>
 </tbody>
 </table>
 </div>
@@ -1243,8 +1260,7 @@ color: #b91c1c;
 <div class="alert-title">
 <span class="icon">🚫</span> CANDIDAT REJETÉ
 </div>
-<div class="alert-body" id="reject-reasons">
-</div>
+<div class="alert-body" id="reject-reasons"></div>
 </div>
 <div id="modal-infos" style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem 1.4rem;margin-bottom:1.1rem;font-size:.87rem"></div>
 <div id="modal-fichiers" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.3rem"></div>
@@ -1281,6 +1297,7 @@ Résultats de l'analyse automatique
 <button class="btn btn-danger btn-sm" onclick="updateStatut('rejete')">❌ Rejeter</button>
 <button class="btn btn-info btn-sm" onclick="openEmailModal()">✉️ Email</button>
 <button class="btn btn-info btn-sm" onclick="reanalyzeOne()">🔄 Réanalyser</button>
+<button class="btn btn-danger btn-sm" onclick="deleteCandidat()">🗑️ Supprimer</button>
 <button class="btn btn-ghost btn-sm" onclick="closeModal()">Fermer</button>
 </div>
 </div>
@@ -1298,15 +1315,15 @@ Copiez cet email ou ouvrez-le dans votre client de messagerie.
 <div class="form-group">
 <label>Type de message</label>
 <select class="form-control" id="email-type" onchange="buildEmail()" style="width:100%">
+<optgroup label="Postes scoring /14 (Chef Division & Data Analyst)">
+<option value="🥇 Entretien prioritaire">Entretien prioritaire (11-14/14)</option>
+<option value="🥈 Potentiel">Potentiel à évaluer (7-10/14)</option>
+<option value="❌ Rejet">Rejet (<7/14)</option>
+</optgroup>
 <optgroup label="Postes scoring /12 (Compensation & Admin Crédit)">
 <option value="🥇 Entretien prioritaire">Entretien prioritaire (10-12/12)</option>
 <option value="🥈 Entretien si besoin (vivier)">Vivier de réserve (7-9/12)</option>
-<option value="❌ Rejet">Rejet (&lt;7/12)</option>
-</optgroup>
-<optgroup label="Postes scoring /14 (Chef Division & Data Analyst Finance)">
-<option value="🥇 Entretien prioritaire">Entretien prioritaire (11-14/14)</option>
-<option value="🥈 Potentiel">Potentiel (7-10/14)</option>
-<option value="❌ Rejet">Rejet (&lt;7/14)</option>
+<option value="❌ Rejet">Rejet (<7/12)</option>
 </optgroup>
 <optgroup label="Postes scoring /100">
 <option value="Shortlist">Shortlist - Prioritaire</option>
@@ -1405,20 +1422,22 @@ return 'en_attente';
 }
 function getDisplayStatus(candidat) {
 var statut = candidat.statut || 'en_attente';
-if (statut === "rejete" || statut === "Rejete" || statut === "exclu" || statut === "Exclu" || statut === "rejete(eliminatoire)" || statut === "rejet_eliminatoire") { return "rejete"; }
+if (statut === "rejete" || statut === "Rejete" || statut === "exclu" || statut === "Exclu") { return "rejete"; }
 if (statut === "retenu" || statut === "Retenu") { return "retenu"; }
 if (statut === "entretien" || statut === "Entretien") { return "entretien"; }
+var flags = candidat.flags_eliminatoires_parsed || [];
+if (flags && flags.length > 0) { return "rejete"; }
 var decision = candidat.decision || '';
 if (decision) {
 if (decision.includes("🟢") || decision.includes("Shortlist")) { return "retenu"; }
 if (decision.includes("🟡")) { return "entretien"; }
-if (decision.includes("🔴") || decision.includes("Rejet")) { return "rejete"; }
+if (decision.includes("🔴") || decision.includes("Rejet") || decision.includes("eliminatoire")) { return "rejete"; }
 }
 if (candidat.score_breakdown_parsed && candidat.score_breakdown_parsed.decision) {
 var dec = candidat.score_breakdown_parsed.decision;
 if (dec.includes("🟢") || dec.includes("Shortlist")) { return "retenu"; }
 if (dec.includes("🟡")) { return "entretien"; }
-if (dec.includes("🔴")) { return "rejete"; }
+if (dec.includes("🔴") || dec.includes("eliminatoire")) { return "rejete"; }
 }
 if (candidat.score && candidat.poste) {
 var dec = getDecisionFromScore(candidat.score, candidat.poste);
@@ -1429,6 +1448,10 @@ if (dec.includes("🔴")) { return "rejete"; }
 }
 }
 return 'en_attente';
+}
+function hasEliminatoireFlags(candidat) {
+var flags = candidat.flags_eliminatoires_parsed || [];
+return flags && flags.length > 0;
 }
 function badgePill(s) {
 var cls = { en_attente:'badge-pending', retenu:'badge-retained', rejete:'badge-rejected', entretien:'badge-interview' };
@@ -1547,7 +1570,7 @@ fetchStats();
 } catch (e) {
 console.error('fetchCandidats:', e);
 showToast('❌ Erreur de connexion au serveur', 'error');
-document.getElementById('candidats-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--danger)">⚠️ Impossible de charger les données. Vérifiez votre connexion.</td></tr>';
+document.getElementById('candidats-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--danger)">⚠️ Impossible de charger les données. Vérifiez votre connexion.</td></tr>';
 }
 }
 function populatePosteFilter(data) {
@@ -1604,7 +1627,7 @@ filterTimeout = setTimeout(applyFilters, 300);
 }
 function renderTable(data) {
 var tbody = document.getElementById('candidats-tbody');
-if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Aucun candidat trouvé</td></tr>'; return; }
+if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted)">Aucun candidat trouvé</td></tr>'; return; }
 var sortedData = data.slice(0);
 sortedData.sort(function(a, b) { var scoreA = parseInt(a.score) || 0; var scoreB = parseInt(b.score) || 0; return scoreB - scoreA; });
 var html = '';
@@ -1621,7 +1644,10 @@ var cvLink = c.cv_filename ? '<a href="' + API + '/recruteur/uploads/' + c.cv_fi
 var lmLink = c.lettre_filename ? '<a href="' + API + '/recruteur/uploads/' + c.lettre_filename + '" target="_blank" class="btn btn-outline btn-sm">LM</a>' : '';
 var attLink = (c.attestation_filenames_parsed && c.attestation_filenames_parsed.length) ? '<a href="' + API + '/recruteur/uploads/' + c.attestation_filenames_parsed[0] + '" target="_blank" class="btn btn-outline btn-sm">📎</a>' : '';
 var statut = getDisplayStatus(c);
-html += '<tr>' + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><span class="td-small">' + escHtml(c.email) + '</span></td>' + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>' + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>' + '<td>' + badgePill(statut) + '</td>' + '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace" title="Score: ' + score + '/' + scoreMax + '">' + stars + ' <span style="color:var(--text-secondary);font-family:inherit">(' + score + '/' + scoreMax + ')</span></td>' + '<td style="display:flex;gap:0.25rem;flex-wrap:wrap">' + cvLink + lmLink + attLink + '</td>' + '<td class="td-actions">' + '<button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">📂 Dossier</button>' + '<button class="btn btn-info btn-sm" onclick="quickEmail(\'' + c.id + '\')">✉️</button>' + '<button class="btn btn-outline btn-sm" onclick="quickReanalyze(\'' + c.id + '\')" title="Réanalyser">🔄</button>' + '</td></tr>';
+var flags = c.flags_eliminatoires_parsed || [];
+var hasElim = flags && flags.length > 0;
+var elimBadge = hasElim ? '<span class="badge badge-eliminatoire" title="' + escHtml(flags.join(' | ')) + '">🚫 Élim.</span>' : '<span style="color:var(--text-muted);font-size:.7rem">✓</span>';
+html += '<tr>' + '<td><strong>' + escHtml(c.prenom) + ' ' + escHtml(c.nom) + '</strong><br><span class="td-small">' + escHtml(c.email) + '</span></td>' + '<td style="font-size:.82rem">' + escHtml(c.poste) + '</td>' + '<td style="font-size:.8rem;color:var(--text-muted)">' + fmtDate(c.date_candidature) + '</td>' + '<td>' + badgePill(statut) + '</td>' + '<td style="font-size:.85rem;letter-spacing:-1px;font-family:monospace" title="Score: ' + score + '/' + scoreMax + '">' + stars + ' <span style="color:var(--text-secondary);font-family:inherit">(' + score + '/' + scoreMax + ')</span></td>' + '<td>' + elimBadge + '</td>' + '<td style="display:flex;gap:0.25rem;flex-wrap:wrap">' + cvLink + lmLink + attLink + '</td>' + '<td class="td-actions">' + '<button class="btn btn-primary btn-sm" onclick="openModal(\'' + c.id + '\')">📂 Dossier</button>' + '<button class="btn btn-info btn-sm" onclick="quickEmail(\'' + c.id + '\')">✉️</button>' + '<button class="btn btn-outline btn-sm" onclick="quickReanalyze(\'' + c.id + '\')" title="Réanalyser">🔄</button>' + '</td></tr>';
 }
 tbody.innerHTML = html;
 }
@@ -1751,33 +1777,37 @@ for (var i = 0; i < allCandidats.length; i++) { if (allCandidats[i].id === id) {
 if (!c) { showToast('Actualisez la liste d\'abord', 'error'); return; }
 currentC = c;
 var statut = getDisplayStatus(c);
+var flags = c.flags_eliminatoires_parsed || [];
+var hasElim = flags && flags.length > 0;
 var rejectAlert = document.getElementById('reject-alert');
 var rejectReasons = document.getElementById('reject-reasons');
-var isRejected = statut === 'rejete' || statut === 'Rejete' || statut === 'exclu' || statut === 'Exclu' || statut === 'rejete(eliminatoire)' || statut === 'rejet_eliminatoire';
-if (isRejected) {
+var isRejected = statut === 'rejete' || statut === 'Rejete' || statut === 'exclu' || statut === 'Exclu';
+if (isRejected || hasElim) {
 rejectAlert.classList.add('visible');
 var note = c.note || 'Décision du recruteur';
-var flags = c.flags_eliminatoires_parsed || [];
-var sb = c.score_breakdown_parsed || {};
+var score = parseInt(c.score) || 0;
+var scoreMax = getScoreMax(c.poste);
 var html = '<p><strong>Ce candidat a été rejeté :</strong></p><ul>';
-if (note && note.length > 10) {
-html += '<li><span class="reason">• ' + escHtml(note) + '</span></li>';
-}
-if (flags && flags.length > 0) {
+if (hasElim && flags.length > 0) {
 for (var f = 0; f < flags.length; f++) {
-var clean_f = flags[f].replace('❌', '').replace('⚠️', '').trim();
+var clean_f = flags[f].replace('❌', '').replace('⚠️', '').replace('★', '').trim();
 if (clean_f && clean_f.length > 5) {
 html += '<li><span class="reason">• ' + escHtml(clean_f) + '</span></li>';
 }
 }
 }
+if (note && note.length > 10 && !note.includes('Critere')) {
+html += '<li><span class="reason">• ' + escHtml(note) + '</span></li>';
+}
 if (flags.length === 0 && (!note || note.length <= 10)) {
 html += '<li><span class="reason">• Rejeté manuellement par le recruteur</span></li>';
 }
 html += '</ul>';
-var scoreMax = getScoreMax(c.poste);
-var score = parseInt(c.score) || 0;
+if (hasElim) {
+html += '<div class="score-conserve">📊 Score conservé : <strong>' + score + '/' + scoreMax + '</strong> (les critères éliminatoires non satisfaits ont entraîné le rejet)</div>';
+} else {
 html += '<p style="margin-top:0.5rem;"><strong>Score final :</strong> ' + score + '/' + scoreMax + '</p>';
+}
 rejectReasons.innerHTML = html;
 } else { rejectAlert.classList.remove('visible'); }
 document.getElementById('modal-title').innerHTML = escHtml(c.prenom) + ' ' + escHtml(c.nom) + ' <span class="readonly-badge">Analyse automatique</span>';
@@ -1811,16 +1841,38 @@ container.style.display = 'block';
 var sb = c.score_breakdown_parsed;
 var details = c.analyse_details_parsed || {};
 var scoreMax = getScoreMax(c.poste);
+var flags = c.flags_eliminatoires_parsed || [];
 var html = '';
 if (sb && typeof sb === 'object' && sb.sous_scores && Object.keys(sb.sous_scores).length > 0) {
 html += '<div class="score-breakdown">';
 var keys = Object.keys(sb.sous_scores);
 for (var i = 0; i < keys.length; i++) {
 var key = keys[i];
-html += '<div class="sb-row"><span class="sb-label">' + escHtml(key) + '</span><span class="sb-val ok">' + sb.sous_scores[key] + '</span></div>';
+var labelMap = {
+'experience_bancaire': 'Experience bancaire',
+'diplome': 'Diplome',
+'management': 'Management',
+'risque_credit': 'Risque de credit / NPL',
+'experience_corporate': 'Experience Local Corporate / SME',
+'coherence_parcours': 'Coherence du parcours',
+'qualite_cv': 'Qualite du CV',
+'certification': 'Certification / Connaissance du marche'
+};
+var label = labelMap[key] || key;
+var maxVal = key === 'risque_credit' ? 2 : (key === 'coherence_parcours' || key === 'qualite_cv' || key === 'certification' ? 1 : 3);
+html += '<div class="sb-row"><span class="sb-label">' + label + '</span><span class="sb-val ok">' + sb.sous_scores[key] + '/' + maxVal + '</span></div>';
 }
-html += '<div class="sb-row"><span class="sb-label">Score total</span><span class="sb-val ok">' + (sb.score_final || 0) + ' / ' + scoreMax + '</span></div>';
+var finalScore = sb.score_final || 0;
+if (finalScore > scoreMax) finalScore = scoreMax;
+html += '<div class="sb-row"><span class="sb-label">Score total</span><span class="sb-val ok">' + finalScore + ' / ' + scoreMax + '</span></div>';
 html += '</div>';
+}
+if (flags && flags.length > 0) {
+html += '<div class="bloc-alert elim"><strong>🚫 CRITERES ELIMINATOIRES NON SATISFAITS</strong><div style="margin-top:.4rem">';
+for (var i = 0; i < flags.length; i++) {
+html += '• ' + escHtml(flags[i]) + '<br>';
+}
+html += '</div></div>';
 }
 if (sb && typeof sb === 'object' && sb.decision) {
 var color = sb.decision.indexOf('prioritaire') !== -1 ? '#166534' : (sb.decision.indexOf('Rejet') !== -1 ? '#991b1b' : '#3B6D11');
@@ -1916,6 +1968,29 @@ var d = await res.json().catch(function() { return {}; });
 showToast(d.error || 'Erreur', 'error');
 }
 } catch (e) { showToast('Erreur de connexion', 'error'); }
+}
+async function deleteCandidat() {
+if (!currentC) { showToast('Aucun candidat sélectionné', 'error'); return; }
+var nom = currentC.prenom + ' ' + currentC.nom;
+if (!confirm('⚠️ Êtes-vous sûr de vouloir supprimer définitivement le candidat ' + nom + ' ?\n\nCette action supprimera également tous ses fichiers (CV, lettre, attestations) et est irréversible.')) return;
+try {
+var res = await fetch(API + '/recruteur/candidats/' + currentC.id, {
+method: 'DELETE',
+headers: authH()
+});
+if (res.ok) {
+var data = await res.json();
+showToast('🗑️ Candidat supprimé : ' + nom, 'success');
+closeModal();
+fetchCandidats();
+fetchStats();
+} else {
+var err = await res.json().catch(function() { return {}; });
+showToast('❌ Erreur: ' + (err.error || 'Erreur inconnue'), 'error');
+}
+} catch (e) {
+showToast('❌ Erreur de connexion', 'error');
+}
 }
 function getExportParams() {
 var poste = document.getElementById('export-poste-select').value;
