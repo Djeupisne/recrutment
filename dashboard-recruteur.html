@@ -1847,11 +1847,11 @@ if (sb && typeof sb === 'object' && sb.sous_scores && Object.keys(sb.sous_scores
 html += '<div class="score-breakdown">';
 var keys = Object.keys(sb.sous_scores);
 var maxMap = {
-'experience_bancaire': 3,
-'diplome': 3,
+'experience_bancaire': 0,
+'diplome': 0,
 'management': 3,
 'risque_credit': 2,
-'experience_corporate': 2,
+'experience_corporate': 3,
 'coherence_parcours': 2,
 'qualite_cv': 1,
 'certification': 1
@@ -1859,24 +1859,30 @@ var maxMap = {
 var labelMap = {
 'experience_bancaire': 'Experience bancaire',
 'diplome': 'Diplome',
-'management': 'Management',
-'risque_credit': 'Risque de credit / NPL',
-'experience_corporate': 'Experience Local Corporate / SME',
-'coherence_parcours': 'Coherence du parcours',
-'qualite_cv': 'Qualite du CV',
-'certification': 'Certification / Connaissance du marche'
+'management': 'Capacité managériale',
+'risque_credit': 'Risque de crédit',
+'experience_corporate': 'Experience SME/Local Corporate',
+'coherence_parcours': 'Cohérence du parcours',
+'qualite_cv': 'Qualité du CV',
+'certification': 'Certification'
 };
-for (var i = 0; i < keys.length; i++) {
-var key = keys[i];
+var displayKeys = keys.filter(function(key) {
+return maxMap[key] !== undefined && maxMap[key] > 0;
+});
+for (var i = 0; i < displayKeys.length; i++) {
+var key = displayKeys[i];
 var label = labelMap[key] || key;
-var maxVal = maxMap[key] !== undefined ? maxMap[key] : 1;
+var maxVal = maxMap[key] || 0;
 var val = sb.sous_scores[key] !== undefined ? sb.sous_scores[key] : 0;
 if (val > maxVal) val = maxVal;
 html += '<div class="sb-row"><span class="sb-label">' + label + '</span><span class="sb-val ok">' + val + '/' + maxVal + '</span></div>';
 }
 var finalScore = sb.score_final || 0;
-if (finalScore > scoreMax) finalScore = scoreMax;
-html += '<div class="sb-row"><span class="sb-label">Score total</span><span class="sb-val ok">' + finalScore + ' / ' + scoreMax + '</span></div>';
+if (finalScore > 14) finalScore = 14;
+html += '<div class="sb-row" style="border-top:2px solid var(--primary);margin-top:0.5rem;padding-top:0.5rem;">';
+html += '<span class="sb-label">Score total</span>';
+html += '<span class="sb-val ok">' + finalScore + ' / 14</span>';
+html += '</div>';
 html += '</div>';
 }
 if (flags && flags.length > 0) {
