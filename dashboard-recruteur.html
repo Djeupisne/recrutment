@@ -1840,42 +1840,35 @@ if (!c.score_breakdown_parsed) { container.style.display = 'none'; return; }
 container.style.display = 'block';
 var sb = c.score_breakdown_parsed;
 var details = c.analyse_details_parsed || {};
-var scoreMax = getScoreMax(c.poste);
 var flags = c.flags_eliminatoires_parsed || [];
 var html = '';
-if (sb && typeof sb === 'object' && sb.sous_scores && Object.keys(sb.sous_scores).length > 0) {
-html += '<div class="score-breakdown">';
-var keys = Object.keys(sb.sous_scores);
 var maxMap = {
-'experience_bancaire': 0,
-'diplome': 0,
+'experience_corporate': 3,
 'management': 3,
 'risque_credit': 2,
-'experience_corporate': 3,
+'cross_selling': 2,
 'coherence_parcours': 2,
 'qualite_cv': 1,
-'certification': 1,
-'cross_selling': 2
+'certification': 1
 };
 var labelMap = {
-'experience_bancaire': 'Experience bancaire',
-'diplome': 'Diplome',
+'experience_corporate': 'Experience SME/Local Corporate',
 'management': 'Capacité managériale',
 'risque_credit': 'Risque de crédit',
-'experience_corporate': 'Experience SME/Local Corporate',
+'cross_selling': 'Cross-selling / Cash Management / TSG',
 'coherence_parcours': 'Cohérence du parcours',
 'qualite_cv': 'Qualité du CV',
-'certification': 'Certification',
-'cross_selling': 'Cross-selling / Cash Management / TSG'
+'certification': 'Certification'
 };
-var displayKeys = keys.filter(function(key) {
-return maxMap[key] !== undefined && maxMap[key] > 0;
-});
+var sousScores = sb.sous_scores || {};
+if (sousScores && Object.keys(sousScores).length > 0) {
+html += '<div class="score-breakdown">';
+var displayKeys = Object.keys(maxMap);
 for (var i = 0; i < displayKeys.length; i++) {
 var key = displayKeys[i];
 var label = labelMap[key] || key;
 var maxVal = maxMap[key] || 0;
-var val = sb.sous_scores[key] !== undefined ? sb.sous_scores[key] : 0;
+var val = sousScores[key] !== undefined ? sousScores[key] : 0;
 if (val > maxVal) val = maxVal;
 html += '<div class="sb-row"><span class="sb-label">' + label + '</span><span class="sb-val ok">' + val + '/' + maxVal + '</span></div>';
 }
