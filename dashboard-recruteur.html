@@ -1864,21 +1864,16 @@ var sousScores = sb.sous_scores || {};
 if (sousScores && Object.keys(sousScores).length > 0) {
 html += '<div class="score-breakdown">';
 var displayKeys = Object.keys(maxMap);
-var totalScores = 0;
 for (var i = 0; i < displayKeys.length; i++) {
 var key = displayKeys[i];
 var label = labelMap[key] || key;
 var maxVal = maxMap[key] || 0;
 var val = sousScores[key] !== undefined ? sousScores[key] : 0;
 if (val > maxVal) val = maxVal;
-totalScores += val;
 html += '<div class="sb-row"><span class="sb-label">' + label + '</span><span class="sb-val ok">' + val + '/' + maxVal + '</span></div>';
 }
 var finalScore = sb.score_final || 0;
 if (finalScore > 14) finalScore = 14;
-if (finalScore !== totalScores && totalScores <= 14) {
-finalScore = totalScores;
-}
 html += '<div class="sb-row" style="border-top:2px solid var(--primary);margin-top:0.5rem;padding-top:0.5rem;">';
 html += '<span class="sb-label">Score total</span>';
 html += '<span class="sb-val ok">' + finalScore + ' / 14</span>';
