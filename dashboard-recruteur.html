@@ -177,6 +177,7 @@ tbody tr:last-child td{border-bottom:none}
 .bloc-alert.elim{background:var(--danger-light);border-color:var(--danger);color:#991b1b}
 .bloc-alert.attn{background:var(--warning-light);border-color:var(--warning);color:#92400e}
 .bloc-alert.signal{background:var(--success-light);border-color:var(--success);color:#166534}
+.bloc-alert.ia-info{background:var(--info-light);border-color:var(--info);color:#1e40af}
 .bloc-alert strong{display:block;margin-bottom:0.2rem;font-size:0.85rem}
 .star-btn{background:none;border:none;font-size:1.3rem;cursor:default;padding:0 2px;line-height:1}
 .star-btn:disabled{opacity:0.7}
@@ -229,6 +230,19 @@ tbody tr:last-child td{border-bottom:none}
 .elim-flags-list{margin:0.3rem 0 0 0;padding-left:1.2rem}
 .elim-flags-list li{font-size:0.78rem;color:#991b1b;margin-bottom:0.15rem}
 .poste-score-max{display:inline-block;padding:0.1rem 0.4rem;background:var(--bg-light);border-radius:4px;font-size:0.65rem;color:var(--text-muted);font-weight:600;margin-left:0.3rem}
+.ia-decision-box{background:linear-gradient(135deg,#f0f4ff 0%,#e8eef5 100%);border:1px solid #c4b5fd;border-radius:8px;padding:1rem;margin-bottom:1rem}
+.ia-decision-box .title{font-size:0.75rem;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem}
+.ia-decision-box .title::before{content:"🧠"}
+.ia-decision-box .decision-text{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:0.3rem}
+.ia-decision-box .decision-motif{font-size:0.85rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap}
+.ia-decision-box .decision-motif .highlight{color:var(--primary);font-weight:600}
+.ia-decision-box .decision-motif .danger{color:var(--danger);font-weight:600}
+.ia-decision-box .decision-motif .success{color:var(--success);font-weight:600}
+.ia-decision-box .decision-motif .warning{color:var(--warning);font-weight:600}
+.motif-section{margin-top:0.5rem}
+.motif-section .motif-item{display:flex;align-items:flex-start;gap:0.5rem;padding:0.3rem 0;font-size:0.82rem;border-bottom:1px dashed var(--border);color:var(--text-secondary)}
+.motif-section .motif-item:last-child{border-bottom:none}
+.motif-section .motif-icon{font-size:1rem;flex-shrink:0;margin-top:0.1rem}
 @media (max-width:768px){.modal-body-grid{grid-template-columns:1fr}}
 @media (max-width:992px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-main{padding:1rem}.export-section,.dossier-section,.reanalyze-section{flex-direction:column;align-items:stretch}.export-controls,.dossier-controls,.reanalyze-controls{justify-content:flex-start;width:100%}.export-buttons{width:100%}.export-btn{flex:1}.floating-progress{width:calc(100% - 2rem);left:1rem;right:1rem;bottom:1rem}}
 @media (max-width:576px){.export-buttons{flex-direction:column}.export-btn{width:100%}.td-actions{flex-direction:column}.td-actions .btn{width:100%}.stats-grid{grid-template-columns:repeat(2,1fr)}.filter-bar .form-control{min-width:100%}}
@@ -269,26 +283,49 @@ tbody tr:last-child td{border-bottom:none}
 </div>
 </main>
 </div>
-<div class="modal-overlay" id="modal-candidat"><div class="modal"><div class="modal-header"><h3 id="modal-title">Dossier <span class="readonly-badge">Analyse IA</span></h3><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body"><div id="reject-alert" class="reject-alert"><div class="alert-title"><span class="icon">🚫</span> CANDIDAT REJETÉ</div><div class="alert-body" id="reject-reasons"></div></div>
+<div class="modal-overlay" id="modal-candidat"><div class="modal"><div class="modal-header"><h3 id="modal-title">Dossier <span class="readonly-badge">Analyse IA</span></h3><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body">
 <div id="modal-infos" style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem 1.4rem;margin-bottom:1.1rem;font-size:.87rem"></div>
 <div id="modal-fichiers" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.3rem"></div>
+
+<!-- SECTION DECISION IA AMELIOREE -->
 <div id="modal-decision-summary" style="margin-bottom:1rem;padding:0.75rem 1rem;background:var(--bg-light);border-radius:6px;border-left:4px solid var(--primary)">
-<div style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px">Décision IA</div>
-<div id="modal-decision-text" style="font-weight:600;font-size:1rem"></div>
-<div id="modal-decision-motif" style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem"></div>
+<div style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;display:flex;align-items:center;gap:0.5rem">
+    <span>🧠 Décision IA</span>
+    <span class="ia-badge" style="font-size:0.55rem;">100% IA</span>
 </div>
-<div class="tabs"><button class="tab-btn active" onclick="switchTab('eval',this)">📝 Évaluation</button><button class="tab-btn" onclick="switchTab('grille',this)">📋 Grille</button></div>
-<div id="tab-eval" class="tab-content active">
+<div id="modal-decision-text" style="font-weight:600;font-size:1rem"></div>
+<div id="modal-decision-motif" style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem;white-space:pre-wrap;line-height:1.6"></div>
+</div>
+
+<!-- SECTION EVALUATION UNIQUE (suppression de l'onglet Grille) -->
+<div id="tab-eval">
 <div class="form-group" style="margin-bottom:1rem"><label>Score IA <span class="readonly-badge" style="font-size:.65rem">calculé</span></label><div id="stars-row" style="display:flex;gap:0;margin-top:.3rem"></div></div>
-<div id="analyse-resume" style="margin:1rem 0;padding:1rem;background:var(--bg-light);border-radius:8px;border:1px solid var(--border)"><h4 style="margin:0 0 .5rem 0;font-size:.95rem;display:flex;align-items:center;gap:.4rem">🧠 Analyse IA <span class="readonly-badge" style="font-size:.65rem;padding:.1rem .4rem">100% IA - non modifiable</span></h4><div id="analyse-content"></div></div>
+
+<!-- Détail des sous-scores -->
+<div id="analyse-resume" style="margin:1rem 0;padding:1rem;background:var(--bg-light);border-radius:8px;border:1px solid var(--border)">
+    <h4 style="margin:0 0 .5rem 0;font-size:.95rem;display:flex;align-items:center;gap:.4rem">📊 Détail de l'analyse IA <span class="readonly-badge" style="font-size:.65rem;padding:.1rem .4rem">100% IA</span></h4>
+    <div id="analyse-content"></div>
+</div>
+
+<!-- Motifs détaillés de la décision -->
+<div id="decision-motifs-detail" style="margin:1rem 0;padding:1rem;background:var(--bg-white);border:1px solid var(--border);border-radius:8px;">
+    <h4 style="margin:0 0 .5rem 0;font-size:.95rem;display:flex;align-items:center;gap:.4rem">📋 Motifs détaillés de la décision</h4>
+    <div id="motifs-content" style="font-size:0.85rem;color:var(--text-secondary);line-height:1.7;"></div>
+</div>
+
 <div class="form-group"><label>Notes internes</label><textarea class="form-control" id="modal-note" style="min-height:90px" placeholder="Observations, points forts, réserves..."></textarea></div>
 </div>
-<div id="tab-grille" class="tab-content"><div id="grille-content" style="padding-top:.4rem"></div></div>
+
+<!-- Rejet alert -->
+<div id="reject-alert" class="reject-alert"><div class="alert-title"><span class="icon">🚫</span> CANDIDAT REJETÉ</div><div class="alert-body" id="reject-reasons"></div></div>
 </div>
 <div class="modal-footer"><button class="btn btn-success btn-sm" onclick="updateStatut('retenu')">✅ Retenir</button><button class="btn btn-warning btn-sm" onclick="updateStatut('entretien')">📅 Entretien</button><button class="btn btn-danger btn-sm" onclick="updateStatut('rejete')">❌ Rejeter</button><button class="btn btn-info btn-sm" onclick="openEmailModal()">✉️ Email</button><button class="btn btn-info btn-sm" onclick="reanalyzeOne()">🔄 Réanalyser (IA)</button><button class="btn btn-danger btn-sm" onclick="deleteCandidat()">🗑️ Supprimer</button><button class="btn btn-ghost btn-sm" onclick="closeModal()">Fermer</button></div></div></div>
+
 <div class="modal-overlay" id="modal-email"><div class="modal" style="max-width:600px"><div class="modal-header"><h3>✉️ Préparer l'Email</h3><button class="modal-close" onclick="document.getElementById('modal-email').classList.remove('open')">×</button></div><div class="modal-body"><div class="alert-info">Copiez cet email ou ouvrez-le dans votre client de messagerie.</div><div class="form-group"><label>Type de message</label><select class="form-control" id="email-type" onchange="buildEmail()" style="width:100%"><optgroup label="Postes scoring /14 (Chef Division & Data Analyst)"><option value="🥇 Entretien prioritaire">Entretien prioritaire (11-14/14)</option><option value="🥈 Potentiel">Potentiel à évaluer (7-10/14)</option><option value="❌ Rejet">Rejet (<7/14)</option></optgroup><optgroup label="Postes scoring /12 (Compensation & Admin Crédit)"><option value="🥇 Entretien prioritaire">Entretien prioritaire (10-12/12)</option><option value="🥈 Entretien si besoin (vivier)">Vivier de réserve (7-9/12)</option><option value="❌ Rejet">Rejet (<7/12)</option></optgroup><optgroup label="Postes scoring /100"><option value="Shortlist">Shortlist - Prioritaire</option><option value="À considérer">À considérer</option><option value="Faible">Faible</option><option value="Rejet">Rejet</option></optgroup><optgroup label="Postes classiques (/10)"><option value="retenu">Candidature retenue</option><option value="entretien">Convocation entretien</option><option value="rejete">Email de refus</option></optgroup></select></div><div class="email-preview"><div class="ep-field"><span class="ep-label">À :</span><span id="ep-to">–</span></div><div class="ep-field"><span class="ep-label">Objet :</span><span id="ep-subject">–</span></div><textarea class="ep-body-area" id="ep-body"></textarea></div></div><div class="modal-footer"><button class="btn btn-primary btn-sm" onclick="copyEmail()">📋 Copier</button><button class="btn btn-info btn-sm" onclick="openMailClient()">📧 Ouvrir dans Mail</button><button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-email').classList.remove('open')">Fermer</button></div></div></div>
+
 <div id="floating-progress" class="floating-progress"><div class="floating-progress-header"><span><span class="icon">🔄</span> <span id="floating-progress-title">Réanalyse en cours...</span></span><span id="floating-progress-count">0/0</span></div><div class="progress-bar-bg"><div id="floating-progress-bar" class="progress-bar-fill"></div></div><div id="floating-progress-detail" class="progress-detail">Préparation...</div></div>
 <div class="toast-container" id="toast-container"></div>
+
 <script>
 var API=window.location.hostname==="localhost"?"http://localhost:5000/api":"https://backend1-fiq5.onrender.com/api";
 var jwtToken=localStorage.getItem('rh_token');
@@ -390,50 +427,94 @@ function getDisplayStatus(candidat){
     }
 }
 
-function getDecisionMotif(candidat){
+function getDecisionMotifDetailed(candidat){
     var flags = candidat.flags_eliminatoires_parsed || [];
     var details = candidat.analyse_details_parsed || {};
     var sb = candidat.score_breakdown_parsed || {};
-    var motifs = [];
-    if(flags && flags.length > 0){
-        motifs.push("❌ Critères éliminatoires non satisfaits:");
-        for(var i=0;i<Math.min(flags.length,4);i++){
-            motifs.push("  • "+flags[i]);
-        }
-        if(flags.length > 4){
-            motifs.push("  • +"+(flags.length-4)+" autre(s)");
-        }
-        return motifs.join("\n");
-    }
     var score = parseInt(candidat.score) || 0;
     var scoreMax = getScoreMax(candidat.poste);
+    
+    var motifs = [];
+    var pointsForts = details.points_forts || sb.points_forts || [];
+    var pointsVigilance = details.points_vigilance || sb.points_vigilance || [];
+    var synthese = details.synthese_recruteur || '';
+    
+    // 1. Si des critères éliminatoires sont non satisfaits
+    if(flags && flags.length > 0){
+        motifs.push({icon:"🚫", text:"CRITÈRES ÉLIMINATOIRES NON SATISFAITS", type:"danger"});
+        for(var i=0;i<flags.length;i++){
+            motifs.push({icon:"•", text:flags[i], type:"danger"});
+        }
+        motifs.push({icon:"ℹ️", text:"Le score de "+score+"/"+scoreMax+" est conservé mais le candidat est rejeté automatiquement.", type:"info"});
+        return motifs;
+    }
+    
+    // 2. Synthèse IA si disponible
+    if(synthese){
+        motifs.push({icon:"📝", text:synthese, type:"info"});
+    }
+    
+    // 3. Seuils de score
     var seuilPrioritaire = scoreMax >= 14 ? 11 : (scoreMax >= 12 ? 10 : 8);
     var seuilPotentiel = scoreMax >= 14 ? 7 : (scoreMax >= 12 ? 7 : 5);
+    
     if(score >= seuilPrioritaire){
-        motifs.push("✅ Profil exceptionnel, correspond parfaitement aux critères de la grille.");
-        var pointsForts = details.points_forts || sb.points_forts || [];
+        motifs.push({icon:"✅", text:"Score de "+score+"/"+scoreMax+" - Entretien prioritaire recommandé", type:"success"});
         if(pointsForts && pointsForts.length > 0){
-            motifs.push("Points forts: "+pointsForts.slice(0,3).join(", "));
-            if(pointsForts.length > 3) motifs.push("  • +"+(pointsForts.length-3)+" autre(s)");
+            motifs.push({icon:"⭐", text:"Points forts identifiés:", type:"success"});
+            for(var i=0;i<Math.min(pointsForts.length,4);i++){
+                motifs.push({icon:"  •", text:pointsForts[i], type:"success"});
+            }
+            if(pointsForts.length > 4){
+                motifs.push({icon:"  •", text:"+"+(pointsForts.length-4)+" autre(s) point(s) fort(s)", type:"info"});
+            }
         }
-        return motifs.join("\n");
-    } else if(score >= seuilPotentiel){
-        motifs.push("🔄 Profil intéressant avec un bon potentiel à évaluer en entretien.");
-        var pointsVigilance = details.points_vigilance || sb.points_vigilance || [];
         if(pointsVigilance && pointsVigilance.length > 0){
-            motifs.push("Points à vérifier: "+pointsVigilance.slice(0,2).join(", "));
-            if(pointsVigilance.length > 2) motifs.push("  • +"+(pointsVigilance.length-2)+" autre(s)");
+            motifs.push({icon:"⚠️", text:"Points à vérifier en entretien:", type:"warning"});
+            for(var i=0;i<Math.min(pointsVigilance.length,2);i++){
+                motifs.push({icon:"  •", text:pointsVigilance[i], type:"warning"});
+            }
+            if(pointsVigilance.length > 2){
+                motifs.push({icon:"  •", text:"+"+(pointsVigilance.length-2)+" autre(s) point(s) de vigilance", type:"info"});
+            }
         }
-        return motifs.join("\n");
+    } else if(score >= seuilPotentiel){
+        motifs.push({icon:"🔄", text:"Score de "+score+"/"+scoreMax+" - Potentiel à évaluer en entretien", type:"warning"});
+        if(pointsVigilance && pointsVigilance.length > 0){
+            motifs.push({icon:"⚠️", text:"Points à approfondir en entretien:", type:"warning"});
+            for(var i=0;i<Math.min(pointsVigilance.length,3);i++){
+                motifs.push({icon:"  •", text:pointsVigilance[i], type:"warning"});
+            }
+            if(pointsVigilance.length > 3){
+                motifs.push({icon:"  •", text:"+"+(pointsVigilance.length-3)+" autre(s) point(s)", type:"info"});
+            }
+        }
+        if(pointsForts && pointsForts.length > 0){
+            motifs.push({icon:"✅", text:"Atouts à valoriser:", type:"success"});
+            for(var i=0;i<Math.min(pointsForts.length,2);i++){
+                motifs.push({icon:"  •", text:pointsForts[i], type:"success"});
+            }
+        }
     } else {
-        motifs.push("❌ Profil ne correspond pas aux exigences du poste.");
-        var pointsFaibles = details.points_vigilance || sb.points_vigilance || [];
-        if(pointsFaibles && pointsFaibles.length > 0){
-            motifs.push("Points de vigilance: "+pointsFaibles.slice(0,2).join(", "));
-            if(pointsFaibles.length > 2) motifs.push("  • +"+(pointsFaibles.length-2)+" autre(s)");
+        motifs.push({icon:"❌", text:"Score de "+score+"/"+scoreMax+" - Profil ne correspond pas aux exigences du poste", type:"danger"});
+        if(pointsVigilance && pointsVigilance.length > 0){
+            motifs.push({icon:"⚠️", text:"Principales lacunes identifiées:", type:"danger"});
+            for(var i=0;i<Math.min(pointsVigilance.length,4);i++){
+                motifs.push({icon:"  •", text:pointsVigilance[i], type:"danger"});
+            }
+            if(pointsVigilance.length > 4){
+                motifs.push({icon:"  •", text:"+"+(pointsVigilance.length-4)+" autre(s) point(s)", type:"info"});
+            }
         }
-        return motifs.join("\n");
+        if(pointsForts && pointsForts.length > 0){
+            motifs.push({icon:"💡", text:"Points positifs à noter:", type:"info"});
+            for(var i=0;i<Math.min(pointsForts.length,2);i++){
+                motifs.push({icon:"  •", text:pointsForts[i], type:"info"});
+            }
+        }
     }
+    
+    return motifs;
 }
 
 function getShortMotif(candidat){
@@ -739,15 +820,6 @@ function renderRecent(data){
 function refreshAll(){fetchStats();fetchCandidats();checkReanalyzeStatus();}
 function closeModal(){document.getElementById('modal-candidat').classList.remove('open');currentC=null;}
 
-function switchTab(name,btn){
-    var btns=document.querySelectorAll('.tab-btn');
-    for(var i=0;i<btns.length;i++)btns[i].classList.remove('active');
-    var contents=document.querySelectorAll('.tab-content');
-    for(var i=0;i<contents.length;i++)contents[i].classList.remove('active');
-    btn.classList.add('active');
-    document.getElementById('tab-'+name).classList.add('active');
-}
-
 function renderBusinessRulesBanner(reglesMetier){
     if(!reglesMetier||!reglesMetier.length)return'';
     var html='<div class="business-rules-banner">';
@@ -771,7 +843,6 @@ function renderAnalyseResume(c){
     var scoreMax=getScoreMax(c.poste);
     var officialScore=Math.max(0,Math.min(scoreMax,parseInt(c.score)||0));
 
-    // Récupérer les sous-scores depuis les différents emplacements possibles
     var sousScores={};
     if(sb.sous_scores&&Object.keys(sb.sous_scores).length>0){
         sousScores=sb.sous_scores;
@@ -779,7 +850,6 @@ function renderAnalyseResume(c){
         sousScores=details.sous_scores;
     }
 
-    // Labels pour les sous-scores selon le poste
     var labelMap={};
     if(c.poste === "Chef de Division Local Corporate"){
         labelMap={'experience_corporate':'Expérience SME/Local Corporate','management':'Capacité managériale','risque_credit':'Risque de crédit','cross_selling':'Cross-selling / Cash Management','coherence_parcours':'Cohérence du parcours','qualite_cv':'Qualité du CV','certification':'Certification / Marché'};
@@ -793,19 +863,18 @@ function renderAnalyseResume(c){
         html+='<div class="score-breakdown">';
         var displayKeys=Object.keys(sousScores);
         var displayedSum=0;
+        var maxMap = {};
+        if(c.poste === "Chef de Division Local Corporate"){
+            maxMap={'experience_corporate':3,'management':3,'risque_credit':2,'cross_selling':2,'coherence_parcours':2,'qualite_cv':1,'certification':1};
+        }else if(c.poste === "Data Analyst Finance"){
+            maxMap={'experience_finance_data':3,'outils_bi':3,'sql':2,'exposition_bancaire':2,'coherence_parcours':2,'qualite_cv':1,'competences_avancees':1};
+        }else{
+            maxMap={'experience_credit':3,'management':3,'risque_credit':2,'cross_selling':2,'coherence_parcours':2,'qualite_cv':1,'certification':1};
+        }
         for(var i=0;i<displayKeys.length;i++){
             var key=displayKeys[i];
             var label=labelMap[key]||key;
-            var maxVal=0;
-            if(c.poste === "Chef de Division Local Corporate"){
-                var maxMap={'experience_corporate':3,'management':3,'risque_credit':2,'cross_selling':2,'coherence_parcours':2,'qualite_cv':1,'certification':1};
-                maxVal=maxMap[key]||0;
-            }else if(c.poste === "Data Analyst Finance"){
-                var maxMap2={'experience_finance_data':3,'outils_bi':3,'sql':2,'exposition_bancaire':2,'coherence_parcours':2,'qualite_cv':1,'competences_avancees':1};
-                maxVal=maxMap2[key]||0;
-            }else{
-                maxVal=3;
-            }
+            var maxVal=maxMap[key]||3;
             var val=parseInt(sousScores[key])||0;
             if(val>maxVal)val=maxVal;
             if(val<0)val=0;
@@ -853,7 +922,7 @@ function renderAnalyseResume(c){
             html+='</div></div>';
         }
         if(details.synthese_recruteur){
-            html+='<div class="bloc-alert signal"><strong>📝 Synthèse IA</strong><div style="margin-top:.4rem;font-style:italic">'+escHtml(details.synthese_recruteur)+'</div></div>';
+            html+='<div class="bloc-alert ia-info"><strong>📝 Synthèse IA</strong><div style="margin-top:.4rem;font-style:italic">'+escHtml(details.synthese_recruteur)+'</div></div>';
         }
     }
 
@@ -868,6 +937,42 @@ function renderAnalyseResume(c){
     }
 
     container.innerHTML=html||'<p style="color:var(--text-muted);font-style:italic">Aucun détail d\'analyse disponible.</p>';
+}
+
+function renderMotifsDetailed(candidat){
+    var container=document.getElementById('motifs-content');
+    var motifs = getDecisionMotifDetailed(candidat);
+    
+    if(!motifs || motifs.length===0){
+        container.innerHTML='<p style="color:var(--text-muted);font-style:italic">Aucun motif détaillé disponible.</p>';
+        return;
+    }
+    
+    var html='';
+    for(var i=0;i<motifs.length;i++){
+        var m=motifs[i];
+        var icon=m.icon || '•';
+        var text=escHtml(m.text);
+        var type=m.type || 'info';
+        var colorClass='';
+        if(type==='danger') colorClass='danger';
+        else if(type==='success') colorClass='success';
+        else if(type==='warning') colorClass='warning';
+        else colorClass='info';
+        
+        if(icon === '•' || icon === '  •'){
+            html+='<div class="motif-item" style="padding-left:'+(icon==='  •'?'1.5rem':'0')+';">';
+            html+='<span style="color:var(--text-muted);">'+icon+'</span>';
+            html+='<span class="'+colorClass+'" style="color:'+(type==='danger'?'var(--danger)':type==='success'?'var(--success)':type==='warning'?'var(--warning)':'var(--text-secondary)')+';">'+text+'</span>';
+            html+='</div>';
+        }else{
+            html+='<div class="motif-item" style="font-weight:'+(type==='danger'||type==='success'?'600':'normal')+';color:'+(type==='danger'?'var(--danger)':type==='success'?'var(--success)':type==='warning'?'var(--warning)':'var(--text)')+';">';
+            html+='<span class="motif-icon">'+icon+'</span>';
+            html+='<span>'+text+'</span>';
+            html+='</div>';
+        }
+    }
+    container.innerHTML=html;
 }
 
 function renderStars(score,scoreMax){
@@ -888,56 +993,6 @@ function renderStars(score,scoreMax){
     row.appendChild(scoreText);
 }
 
-function renderGrille(poste,checklistJson,scoreBreakdown){
-    var el=document.getElementById('grille-content');
-    var checked={};
-    try{checked=JSON.parse(checklistJson||'{}');}catch(e){}
-    var html='';
-    
-    // Récupérer la grille du poste depuis l'API
-    fetch(API+'/grille/'+encodeURIComponent(poste),{headers:authH()})
-    .then(function(res){return res.json();})
-    .then(function(g){
-        if(g.error){
-            el.innerHTML='<p style="color:var(--text-muted)">Grille non disponible pour ce poste.</p>';
-            return;
-        }
-        if(g.regles_metier&&g.regles_metier.length){
-            html+=renderBusinessRulesBanner(g.regles_metier);
-        }
-        function mkSection(title,color,items,pfx,isAttention){
-            if(!items||!items.length)return'';
-            var sectHtml='<div class="grille-section">'+
-                '<div class="grille-header" style="color:'+color+';background:'+color+'18;border-left-color:'+color+'">'+
-                title+' ('+items.length+' critères)'+
-                '</div>';
-            for(var i=0;i<items.length;i++){
-                var key=pfx+'_'+i;
-                var isValidated=checked[key]===true;
-                var isOk=isAttention?!isValidated:isValidated;
-                var icon=isOk?'✅':'❌';
-                var statusClass=isOk?'checked':'not-checked';
-                var label=isAttention?(isOk?'⚠️ Non détecté':'⚠️ Détecté'):'';
-                sectHtml+='<label class="grille-item '+statusClass+'" title="'+escHtml(items[i])+'">'+
-                    '<input type="checkbox" '+(isOk?'checked':'')+' disabled>'+
-                    '<span>'+escHtml(items[i])+'</span>'+
-                    '<span class="status-icon" style="'+(isOk?'color:#16a34a':'color:#dc2626')+'">'+icon+'</span>'+
-                    '<span style="font-size:0.7rem;color:var(--text-muted);margin-left:0.5rem;">'+label+'</span>'+
-                    '</label>';
-            }
-            sectHtml+='</div>';
-            return sectHtml;
-        }
-        html+=mkSection('🔴 Critères éliminatoires','#dc2626',g.eliminatoire,'elim',false);
-        html+=mkSection('🟠 Points à vérifier','#d97706',g.a_verifier,'verif',false);
-        html+=mkSection('🟡 Signaux forts','#16a34a',g.signaux_forts,'signal',false);
-        html+=mkSection('⚠️ Points d\'attention','#64748b',g.points_attention,'attn',true);
-        el.innerHTML=html;
-    }).catch(function(e){
-        el.innerHTML='<p style="color:var(--text-muted)">Erreur chargement de la grille.</p>';
-    });
-}
-
 function openModal(id){
     var c=null;
     for(var i=0;i<allCandidats.length;i++){if(allCandidats[i].id===id){c=allCandidats[i];break;}}
@@ -951,7 +1006,7 @@ function openModal(id){
     var isRejected=statut==='rejete'||statut==='Rejete'||statut==='exclu'||statut==='Exclu';
     if(isRejected||hasElim){
         rejectAlert.classList.add('visible');
-        var note=c.note||'Décision du recruteur';
+        var note=c.note||'';
         var score=parseInt(c.score)||0;
         var scoreMax=getScoreMax(c.poste);
         var html='<p><strong>Ce candidat a été rejeté :</strong></p><ul>';
@@ -963,11 +1018,11 @@ function openModal(id){
                 }
             }
         }
-        if(note&&note.length>10&&!note.includes('Critere')){
+        if(note&&note.length>10 && !note.includes('Critere')){
             html+='<li><span class="reason">• '+escHtml(note)+'</span></li>';
         }
-        if(flags.length===0&&(!note||note.length<=10)){
-            html+='<li><span class="reason">• Rejeté manuellement par le recruteur</span></li>';
+        if(flags.length===0 && (!note||note.length<=10)){
+            html+='<li><span class="reason">• Rejeté par décision du recruteur</span></li>';
         }
         html+='</ul>';
         if(hasElim){
@@ -983,8 +1038,8 @@ function openModal(id){
     document.getElementById('modal-title').innerHTML=escHtml(c.prenom)+' '+escHtml(c.nom)+' <span class="readonly-badge">Analyse IA</span>';
     document.getElementById('modal-infos').innerHTML=
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Email</div><div>'+escHtml(c.email)+'</div></div>'+
-        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Téléphone</div><div>'+(c.telefono||c.telephone||'–')+'</div></div>'+
-        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Poste</div><div><strong style="color:var(--primary)">'+escHtml(c.poste)+'</strong></div></div>'+
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Téléphone</div><div>'+(c.telephone||'–')+'</div></div>'+
+        '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Poste</div><div><strong style="color:var(--primary)">'+escHtml(c.poste)+'</strong> <span class="poste-score-max">score max: '+getScoreMax(c.poste)+'</span></div></div>'+
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Statut</div><div>'+badgePill(statut)+'</div></div>'+
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">N° Dossier</div><div>'+(c.numero_dossier||'–')+'</div></div>'+
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Date candidature</div><div>'+fmtDate(c.date_candidature)+'</div></div>';
@@ -1000,13 +1055,28 @@ function openModal(id){
     }
     document.getElementById('modal-fichiers').innerHTML=files.join(' ');
 
+    // Décision IA
     var decisionText=document.getElementById('modal-decision-text');
     var decisionMotif=document.getElementById('modal-decision-motif');
     var dec=getDecisionFromScoreAndFlags(c.score, flags);
     decisionText.textContent=dec;
-    var motif=getDecisionMotif(c);
-    decisionMotif.textContent=motif;
+    
+    // Motif détaillé
+    var motifs = getDecisionMotifDetailed(c);
+    var motifHtml='';
+    for(var i=0;i<motifs.length;i++){
+        var m=motifs[i];
+        var colorClass='';
+        if(m.type==='danger') colorClass='danger';
+        else if(m.type==='success') colorClass='success';
+        else if(m.type==='warning') colorClass='warning';
+        else colorClass='';
+        var prefix = m.icon === '  •' ? '    ' : m.icon + ' ';
+        motifHtml += prefix + '<span class="' + colorClass + '">' + escHtml(m.text) + '</span>\n';
+    }
+    decisionMotif.innerHTML = motifHtml;
 
+    // Couleur de la décision
     if(flags&&flags.length>0){
         decisionText.style.color='#dc2626';
         document.getElementById('modal-decision-summary').style.borderLeftColor='#dc2626';
@@ -1025,15 +1095,9 @@ function openModal(id){
     var score=Math.max(0,Math.min(scoreMax,parseInt(c.score)||0));
     renderStars(score,scoreMax);
     renderAnalyseResume(c);
+    renderMotifsDetailed(c);
     document.getElementById('modal-note').value=c.note||'';
-    renderGrille(c.poste,c.checklist||'',c.score_breakdown_parsed);
 
-    var btns=document.querySelectorAll('.tab-btn');
-    for(var i=0;i<btns.length;i++)btns[i].classList.remove('active');
-    var contents=document.querySelectorAll('.tab-content');
-    for(var i=0;i<contents.length;i++)contents[i].classList.remove('active');
-    document.querySelector('.tab-btn').classList.add('active');
-    document.getElementById('tab-eval').classList.add('active');
     document.getElementById('modal-candidat').classList.add('open');
 }
 
@@ -1290,7 +1354,7 @@ async function reanalyzeOne(){
                 fetchCandidats();
                 var updated=null;
                 for(var i=0;i<allCandidats.length;i++){if(allCandidats[i].id===currentC.id){updated=allCandidats[i];break;}}
-                if(updated){currentC=updated;renderAnalyseResume(updated);renderGrille(updated.poste,updated.checklist||'',updated.score_breakdown_parsed);}
+                if(updated){currentC=updated;renderAnalyseResume(updated);renderMotifsDetailed(updated);}
             },3000);
         }else{var data=await res.json().catch(function(){return{};});showToast(data.error||'Erreur','error');}
     }catch(e){showToast('❌ Erreur: '+e.message,'error');}
