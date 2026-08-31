@@ -131,7 +131,7 @@ tbody tr:last-child td{border-bottom:none}
 .badge-rejected{background:var(--danger-light);color:#991b1b}
 .badge-interview{background:var(--info-light);color:#1e40af}
 .badge-eliminatoire{background:#7f1d1d;color:white}
-.ia-badge{display:inline-block;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.6rem;font-weight:700;background:#7c3aed;color:white;letter-spacing:0.3px;text-transform:uppercase;margin-left:0.3rem}
+.analysed-badge{display:inline-block;padding:0.1rem 0.5rem;border-radius:10px;font-size:0.6rem;font-weight:700;background:#7c3aed;color:white;letter-spacing:0.3px;text-transform:uppercase;margin-left:0.3rem}
 .decision-badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.68rem;font-weight:600;max-width:200px;white-space:normal;word-break:break-word;line-height:1.2}
 .decision-badge.green{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .decision-badge.yellow{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
@@ -157,15 +157,15 @@ tbody tr:last-child td{border-bottom:none}
 .tab-content.active{display:block}
 .readonly-badge{display:inline-flex;align-items:center;gap:0.25rem;background:var(--bg-light);color:var(--text-muted);font-size:0.7rem;font-weight:600;padding:0.15rem 0.5rem;border-radius:4px;margin-left:0.5rem;border:1px solid var(--border);text-transform:uppercase;letter-spacing:0.3px}
 .readonly-badge::before{content:"🔒";font-size:0.7rem}
-.grille-section{margin-bottom:1rem}
-.grille-header{display:flex;align-items:center;gap:0.5rem;font-weight:600;font-size:0.82rem;padding:0.4rem 0.75rem;border-radius:6px;margin-bottom:0.4rem;border-left:3px solid}
-.grille-item{display:flex;align-items:center;gap:0.55rem;padding:0.5rem 0.75rem;font-size:0.83rem;border-radius:4px;background:var(--bg-white);border:1px solid transparent;transition:all 0.12s;margin-bottom:0.25rem}
-.grille-item.checked{background:var(--success-light);border-color:#bbf7d0}
-.grille-item.not-checked{background:var(--danger-light);border-color:#fecaca}
-.grille-item input{margin:0;cursor:not-allowed;opacity:0.5;width:16px;height:16px}
-.grille-item .status-icon{margin-left:auto;font-weight:700;font-size:1.1rem}
-.grille-item.checked .status-icon{color:var(--success)}
-.grille-item.not-checked .status-icon{color:var(--danger)}
+.analyse-section{margin-bottom:1rem}
+.analyse-header{display:flex;align-items:center;gap:0.5rem;font-weight:600;font-size:0.82rem;padding:0.4rem 0.75rem;border-radius:6px;margin-bottom:0.4rem;border-left:3px solid}
+.analyse-item{display:flex;align-items:center;gap:0.55rem;padding:0.5rem 0.75rem;font-size:0.83rem;border-radius:4px;background:var(--bg-white);border:1px solid transparent;transition:all 0.12s;margin-bottom:0.25rem}
+.analyse-item.checked{background:var(--success-light);border-color:#bbf7d0}
+.analyse-item.not-checked{background:var(--danger-light);border-color:#fecaca}
+.analyse-item input{margin:0;cursor:not-allowed;opacity:0.5;width:16px;height:16px}
+.analyse-item .status-icon{margin-left:auto;font-weight:700;font-size:1.1rem}
+.analyse-item.checked .status-icon{color:var(--success)}
+.analyse-item.not-checked .status-icon{color:var(--danger)}
 .score-breakdown{background:var(--bg-light);border:1px solid var(--border);border-radius:8px;padding:1rem;margin:0.8rem 0;font-size:0.82rem}
 .sb-row{display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px dashed var(--border)}
 .sb-row:last-child{border-bottom:none;font-weight:700;color:var(--primary);font-size:0.9rem;padding-top:0.5rem}
@@ -177,7 +177,7 @@ tbody tr:last-child td{border-bottom:none}
 .bloc-alert.elim{background:var(--danger-light);border-color:var(--danger);color:#991b1b}
 .bloc-alert.attn{background:var(--warning-light);border-color:var(--warning);color:#92400e}
 .bloc-alert.signal{background:var(--success-light);border-color:var(--success);color:#166534}
-.bloc-alert.ia-info{background:var(--info-light);border-color:var(--info);color:#1e40af}
+.bloc-alert.analyse-info{background:var(--info-light);border-color:var(--info);color:#1e40af}
 .bloc-alert strong{display:block;margin-bottom:0.2rem;font-size:0.85rem}
 .star-btn{background:none;border:none;font-size:1.3rem;cursor:default;padding:0 2px;line-height:1}
 .star-btn:disabled{opacity:0.7}
@@ -225,20 +225,20 @@ tbody tr:last-child td{border-bottom:none}
 .modal-body-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .decision-detail{font-size:0.78rem;color:var(--text-secondary);margin-top:0.2rem;line-height:1.4}
 .decision-detail .label{font-weight:600;color:var(--text-muted);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.3px}
-.ia-analysed-tag{display:inline-flex;align-items:center;gap:0.3rem;background:#ede9fe;color:#5b21b6;padding:0.15rem 0.5rem;border-radius:10px;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;border:1px solid #c4b5fd}
-.ia-analysed-tag::before{content:"🧠"}
+.analysed-tag{display:inline-flex;align-items:center;gap:0.3rem;background:#ede9fe;color:#5b21b6;padding:0.15rem 0.5rem;border-radius:10px;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;border:1px solid #c4b5fd}
+.analysed-tag::before{content:"🧠"}
 .elim-flags-list{margin:0.3rem 0 0 0;padding-left:1.2rem}
 .elim-flags-list li{font-size:0.78rem;color:#991b1b;margin-bottom:0.15rem}
 .poste-score-max{display:inline-block;padding:0.1rem 0.4rem;background:var(--bg-light);border-radius:4px;font-size:0.65rem;color:var(--text-muted);font-weight:600;margin-left:0.3rem}
-.ia-decision-box{background:linear-gradient(135deg,#f0f4ff 0%,#e8eef5 100%);border:1px solid #c4b5fd;border-radius:8px;padding:1rem;margin-bottom:1rem}
-.ia-decision-box .title{font-size:0.75rem;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem}
-.ia-decision-box .title::before{content:"🧠"}
-.ia-decision-box .decision-text{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:0.3rem}
-.ia-decision-box .decision-motif{font-size:0.85rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap}
-.ia-decision-box .decision-motif .highlight{color:var(--primary);font-weight:600}
-.ia-decision-box .decision-motif .danger{color:var(--danger);font-weight:600}
-.ia-decision-box .decision-motif .success{color:var(--success);font-weight:600}
-.ia-decision-box .decision-motif .warning{color:var(--warning);font-weight:600}
+.decision-box{background:linear-gradient(135deg,#f0f4ff 0%,#e8eef5 100%);border:1px solid #c4b5fd;border-radius:8px;padding:1rem;margin-bottom:1rem}
+.decision-box .title{font-size:0.75rem;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem}
+.decision-box .title::before{content:"🧠"}
+.decision-box .decision-text{font-size:1.05rem;font-weight:700;color:var(--text);margin-bottom:0.3rem}
+.decision-box .decision-motif{font-size:0.85rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap}
+.decision-box .decision-motif .highlight{color:var(--primary);font-weight:600}
+.decision-box .decision-motif .danger{color:var(--danger);font-weight:600}
+.decision-box .decision-motif .success{color:var(--success);font-weight:600}
+.decision-box .decision-motif .warning{color:var(--warning);font-weight:600}
 .motif-section{margin-top:0.5rem}
 .motif-section .motif-item{display:flex;align-items:flex-start;gap:0.5rem;padding:0.3rem 0;font-size:0.82rem;border-bottom:1px dashed var(--border);color:var(--text-secondary)}
 .motif-section .motif-item:last-child{border-bottom:none}
@@ -260,7 +260,7 @@ tbody tr:last-child td{border-bottom:none}
 </aside>
 <main class="dash-main">
 <div id="section-overview">
-<div class="page-header"><div><h1 class="dash-title">Vue d'ensemble</h1><p class="dash-subtitle">Synthèse des candidatures et indicateurs clés — <span class="ia-analysed-tag">100% IA</span></p></div><button class="btn btn-primary btn-sm" onclick="refreshAll()">🔄 Actualiser</button></div>
+<div class="page-header"><div><h1 class="dash-title">Vue d'ensemble</h1><p class="dash-subtitle">Synthèse des candidatures et indicateurs clés — <span class="analysed-tag">Analyse automatique</span></p></div><button class="btn btn-primary btn-sm" onclick="refreshAll()">🔄 Actualiser</button></div>
 <div class="stats-grid">
 <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value" id="s-total">–</div><div class="stat-label">Candidatures</div></div>
 <div class="stat-card amber"><div class="stat-icon">⏳</div><div class="stat-value" id="s-attente">–</div><div class="stat-label">En attente</div></div>
@@ -275,35 +275,35 @@ tbody tr:last-child td{border-bottom:none}
 <div class="export-section"><div><h3>📊 Exporter les rapports</h3><p class="export-subtitle">Téléchargez les données au format de votre choix avec filtres</p></div><div class="export-controls"><select id="export-poste-select" class="form-control" style="background:white;max-width:200px;"><option value="">Tous les postes</option></select><select id="export-statut-select" class="form-control" style="background:white;max-width:160px;"><option value="">Tous statuts</option><option value="en_attente">En attente</option><option value="retenu">Retenu</option><option value="entretien">Entretien</option><option value="rejete">Rejeté</option></select><input type="date" id="export-date-start" class="form-control" style="background:white;max-width:150px;" title="Date de début"><input type="date" id="export-date-end" class="form-control" style="background:white;max-width:150px;" title="Date de fin"><input type="number" id="export-min-score" class="form-control" style="background:white;max-width:80px;" placeholder="Score min" title="Score minimum"><div class="export-buttons"><button class="export-btn solid" onclick="exportReport('excel')">📊 Excel</button><button class="export-btn solid" onclick="exportReport('csv')">📄 CSV</button><button class="export-btn solid" onclick="exportReport('pdf')">📕 PDF</button><button class="export-btn solid" onclick="exportReport('word')">📝 Word</button></div></div></div>
 <div class="dossier-section"><div><h3>📁 Dossiers candidats</h3><p class="dossier-subtitle">Téléchargez les pièces jointes (CV, lettres, certificats) par poste et période</p></div><div class="dossier-controls"><select id="dossier-poste-select" class="form-control" style="background:white;max-width:200px;"><option value="">Tous les postes</option></select><input type="date" id="dossier-date-start" class="form-control" style="background:white;max-width:150px;" title="Date de début"><input type="date" id="dossier-date-end" class="form-control" style="background:white;max-width:150px;" title="Date de fin"><button class="export-btn solid" onclick="downloadAllDossiers()" style="background:white;color:#059669;">📦 Télécharger ZIP</button></div></div>
 <div class="reanalyze-section"><div style="flex:1;min-width:200px"><h3>🔄 Réanalyse des postes actifs</h3><p id="reanalyze-info-text">Relance l'analyse automatique uniquement pour les postes ouverts au recrutement</p></div><div class="reanalyze-controls"><select id="reanalyze-poste-select" class="form-control" style="background:rgba(255,255,255,0.95);max-width:220px;"><option value="">Tous les postes actifs</option></select><button class="export-btn solid" style="color:#d97706;" onclick="triggerManualReanalyze()">🚀 Lancer la réanalyse</button><span id="reanalyze-status" class="reanalyze-status" style="display:none;"></span></div><div id="reanalyze-progress-inline" class="reanalyze-progress-inline" style="display:none;"><div class="progress-header"><span id="reanalyze-progress-text">Analyse en cours...</span><span id="reanalyze-progress-count">0/0</span></div><div class="progress-bar-bg"><div id="reanalyze-progress-bar" class="progress-bar-fill"></div></div><div id="reanalyze-status-detail" class="progress-detail"></div></div></div>
-<div class="card" style="margin-top:1.5rem"><div class="card-header"><h3 class="card-title">📋 Dernières candidatures <span class="ia-analysed-tag">Analyse IA</span></h3><button class="btn btn-ghost btn-sm" onclick="showSection('candidats', document.getElementById('nav-candidats'))">Voir tout →</button></div><div id="recent-table"><div class="empty-state"><div class="empty-icon">⏳</div><p>Chargement...</p></div></div></div>
+<div class="card" style="margin-top:1.5rem"><div class="card-header"><h3 class="card-title">📋 Dernières candidatures <span class="analysed-tag">Analyse automatique</span></h3><button class="btn btn-ghost btn-sm" onclick="showSection('candidats', document.getElementById('nav-candidats'))">Voir tout →</button></div><div id="recent-table"><div class="empty-state"><div class="empty-icon">⏳</div><p>Chargement...</p></div></div></div>
 </div>
 <div id="section-candidats" style="display:none">
-<div class="page-header"><div><h1 class="dash-title">Gestion des Candidats</h1><p class="dash-subtitle">Consultez, évaluez et gérez les dossiers de candidature — <span class="ia-analysed-tag">100% IA</span></p></div></div>
+<div class="page-header"><div><h1 class="dash-title">Gestion des Candidats</h1><p class="dash-subtitle">Consultez, évaluez et gérez les dossiers de candidature — <span class="analysed-tag">Analyse automatique</span></p></div></div>
 <div class="card"><div class="filter-bar"><input class="form-control" id="f-search" placeholder="🔍 Rechercher..." oninput="applyFiltersDebounced()" style="min-width:180px;"><select class="form-control" id="f-poste" onchange="applyFilters()"><option value="">Tous les postes</option></select><select class="form-control" id="f-statut" onchange="applyFilters()"><option value="">Tous statuts</option><option value="en_attente">En attente</option><option value="retenu">Retenu</option><option value="entretien">Entretien</option><option value="rejete">Rejeté</option></select><input class="form-control" id="f-date-start" type="date" onchange="applyFilters()" style="max-width:150px;" title="Date début"><input class="form-control" id="f-date-end" type="date" onchange="applyFilters()" style="max-width:150px;" title="Date fin"><input class="form-control" id="f-min-score" type="number" placeholder="Score min" onchange="applyFilters()" style="max-width:100px;"><button class="btn btn-primary btn-sm" onclick="fetchCandidats()">🔄 Actualiser</button></div><div class="table-wrap"><table><thead><tr><th>Candidat</th><th>Poste</th><th>Date</th><th>Statut / Motif</th><th>Score</th><th>Fichiers</th><th>Actions</th></tr></thead><tbody id="candidats-tbody"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">Chargement...</td></tr></tbody></table></div></div>
 </div>
 </main>
 </div>
-<div class="modal-overlay" id="modal-candidat"><div class="modal"><div class="modal-header"><h3 id="modal-title">Dossier <span class="readonly-badge">Analyse IA</span></h3><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body">
+<div class="modal-overlay" id="modal-candidat"><div class="modal"><div class="modal-header"><h3 id="modal-title">Dossier <span class="readonly-badge">Analyse</span></h3><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-body">
 <div id="modal-infos" style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem 1.4rem;margin-bottom:1.1rem;font-size:.87rem"></div>
 <div id="modal-fichiers" style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.3rem"></div>
 
-<!-- SECTION DECISION IA AMELIOREE -->
+<!-- SECTION DECISION -->
 <div id="modal-decision-summary" style="margin-bottom:1rem;padding:0.75rem 1rem;background:var(--bg-light);border-radius:6px;border-left:4px solid var(--primary)">
 <div style="font-size:0.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;display:flex;align-items:center;gap:0.5rem">
-    <span>🧠 Décision IA</span>
-    <span class="ia-badge" style="font-size:0.55rem;">100% IA</span>
+    <span>🧠 Décision</span>
+    <span class="analysed-badge" style="font-size:0.55rem;">Automatique</span>
 </div>
 <div id="modal-decision-text" style="font-weight:600;font-size:1rem"></div>
 <div id="modal-decision-motif" style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem;white-space:pre-wrap;line-height:1.6"></div>
 </div>
 
-<!-- SECTION EVALUATION UNIQUE (suppression de l'onglet Grille) -->
+<!-- SECTION EVALUATION -->
 <div id="tab-eval">
-<div class="form-group" style="margin-bottom:1rem"><label>Score IA <span class="readonly-badge" style="font-size:.65rem">calculé</span></label><div id="stars-row" style="display:flex;gap:0;margin-top:.3rem"></div></div>
+<div class="form-group" style="margin-bottom:1rem"><label>Score <span class="readonly-badge" style="font-size:.65rem">calculé</span></label><div id="stars-row" style="display:flex;gap:0;margin-top:.3rem"></div></div>
 
 <!-- Détail des sous-scores -->
 <div id="analyse-resume" style="margin:1rem 0;padding:1rem;background:var(--bg-light);border-radius:8px;border:1px solid var(--border)">
-    <h4 style="margin:0 0 .5rem 0;font-size:.95rem;display:flex;align-items:center;gap:.4rem">📊 Détail de l'analyse IA <span class="readonly-badge" style="font-size:.65rem;padding:.1rem .4rem">100% IA</span></h4>
+    <h4 style="margin:0 0 .5rem 0;font-size:.95rem;display:flex;align-items:center;gap:.4rem">📊 Détail de l'analyse <span class="readonly-badge" style="font-size:.65rem;padding:.1rem .4rem">Automatique</span></h4>
     <div id="analyse-content"></div>
 </div>
 
@@ -319,7 +319,7 @@ tbody tr:last-child td{border-bottom:none}
 <!-- Rejet alert -->
 <div id="reject-alert" class="reject-alert"><div class="alert-title"><span class="icon">🚫</span> CANDIDAT REJETÉ</div><div class="alert-body" id="reject-reasons"></div></div>
 </div>
-<div class="modal-footer"><button class="btn btn-success btn-sm" onclick="updateStatut('retenu')">✅ Retenir</button><button class="btn btn-warning btn-sm" onclick="updateStatut('entretien')">📅 Entretien</button><button class="btn btn-danger btn-sm" onclick="updateStatut('rejete')">❌ Rejeter</button><button class="btn btn-info btn-sm" onclick="openEmailModal()">✉️ Email</button><button class="btn btn-info btn-sm" onclick="reanalyzeOne()">🔄 Réanalyser (IA)</button><button class="btn btn-danger btn-sm" onclick="deleteCandidat()">🗑️ Supprimer</button><button class="btn btn-ghost btn-sm" onclick="closeModal()">Fermer</button></div></div></div>
+<div class="modal-footer"><button class="btn btn-success btn-sm" onclick="updateStatut('retenu')">✅ Retenir</button><button class="btn btn-warning btn-sm" onclick="updateStatut('entretien')">📅 Entretien</button><button class="btn btn-danger btn-sm" onclick="updateStatut('rejete')">❌ Rejeter</button><button class="btn btn-info btn-sm" onclick="openEmailModal()">✉️ Email</button><button class="btn btn-info btn-sm" onclick="reanalyzeOne()">🔄 Réanalyser</button><button class="btn btn-danger btn-sm" onclick="deleteCandidat()">🗑️ Supprimer</button><button class="btn btn-ghost btn-sm" onclick="closeModal()">Fermer</button></div></div></div>
 
 <div class="modal-overlay" id="modal-email"><div class="modal" style="max-width:600px"><div class="modal-header"><h3>✉️ Préparer l'Email</h3><button class="modal-close" onclick="document.getElementById('modal-email').classList.remove('open')">×</button></div><div class="modal-body"><div class="alert-info">Copiez cet email ou ouvrez-le dans votre client de messagerie.</div><div class="form-group"><label>Type de message</label><select class="form-control" id="email-type" onchange="buildEmail()" style="width:100%"><optgroup label="Postes scoring /14 (Chef Division & Data Analyst)"><option value="🥇 Entretien prioritaire">Entretien prioritaire (11-14/14)</option><option value="🥈 Potentiel">Potentiel à évaluer (7-10/14)</option><option value="❌ Rejet">Rejet (<7/14)</option></optgroup><optgroup label="Postes scoring /12 (Compensation & Admin Crédit)"><option value="🥇 Entretien prioritaire">Entretien prioritaire (10-12/12)</option><option value="🥈 Entretien si besoin (vivier)">Vivier de réserve (7-9/12)</option><option value="❌ Rejet">Rejet (<7/12)</option></optgroup><optgroup label="Postes scoring /100"><option value="Shortlist">Shortlist - Prioritaire</option><option value="À considérer">À considérer</option><option value="Faible">Faible</option><option value="Rejet">Rejet</option></optgroup><optgroup label="Postes classiques (/10)"><option value="retenu">Candidature retenue</option><option value="entretien">Convocation entretien</option><option value="rejete">Email de refus</option></optgroup></select></div><div class="email-preview"><div class="ep-field"><span class="ep-label">À :</span><span id="ep-to">–</span></div><div class="ep-field"><span class="ep-label">Objet :</span><span id="ep-subject">–</span></div><textarea class="ep-body-area" id="ep-body"></textarea></div></div><div class="modal-footer"><button class="btn btn-primary btn-sm" onclick="copyEmail()">📋 Copier</button><button class="btn btn-info btn-sm" onclick="openMailClient()">📧 Ouvrir dans Mail</button><button class="btn btn-ghost btn-sm" onclick="document.getElementById('modal-email').classList.remove('open')">Fermer</button></div></div></div>
 
@@ -449,7 +449,7 @@ function getDecisionMotifDetailed(candidat){
         return motifs;
     }
     
-    // 2. Synthèse IA si disponible
+    // 2. Synthèse si disponible
     if(synthese){
         motifs.push({icon:"📝", text:synthese, type:"info"});
     }
@@ -772,9 +772,9 @@ function renderTable(data){
         if(shortMotif){statutDisplay+='<br><span class="decision-detail" style="font-size:0.7rem;display:block;max-width:200px;">'+escHtml(shortMotif)+'</span>';}
         var flags=c.flags_eliminatoires_parsed||[];
         var hasElim=flags&&flags.length>0;
-        var iaTag='<span class="ia-badge">IA</span>';
+        var analysedTag='<span class="analysed-badge">Auto</span>';
         html+='<tr>'+
-            '<td><strong>'+escHtml(c.prenom)+' '+escHtml(c.nom)+'</strong><br><span class="td-small">'+escHtml(c.email)+'</span>'+iaTag+'</td>'+
+            '<td><strong>'+escHtml(c.prenom)+' '+escHtml(c.nom)+'</strong><br><span class="td-small">'+escHtml(c.email)+'</span>'+analysedTag+'</td>'+
             '<td style="font-size:.82rem">'+escHtml(c.poste)+'</td>'+
             '<td style="font-size:.8rem;color:var(--text-muted)">'+fmtDate(c.date_candidature)+'</td>'+
             '<td>'+statutDisplay+'</td>'+
@@ -783,7 +783,7 @@ function renderTable(data){
             '<td class="td-actions">'+
             '<button class="btn btn-primary btn-sm" onclick="openModal(\''+c.id+'\')">📂 Dossier</button>'+
             '<button class="btn btn-info btn-sm" onclick="quickEmail(\''+c.id+'\')">✉️</button>'+
-            '<button class="btn btn-outline btn-sm" onclick="quickReanalyze(\''+c.id+'\')" title="Réanalyser (IA)">🔄</button>'+
+            '<button class="btn btn-outline btn-sm" onclick="quickReanalyze(\''+c.id+'\')" title="Réanalyser">🔄</button>'+
             '</td></tr>';
     }
     tbody.innerHTML=html;
@@ -833,7 +833,7 @@ function renderBusinessRulesBanner(reglesMetier){
 function renderAnalyseResume(c){
     var container=document.getElementById('analyse-content');
     if(!c.score_breakdown_parsed&&!c.analyse_details_parsed){
-        container.innerHTML='<p style="color:var(--text-muted);font-style:italic">Aucun détail d\'analyse IA disponible.</p>';
+        container.innerHTML='<p style="color:var(--text-muted);font-style:italic">Aucun détail d\'analyse disponible.</p>';
         return;
     }
     var sb=c.score_breakdown_parsed||{};
@@ -908,21 +908,21 @@ function renderAnalyseResume(c){
 
     if(details&&typeof details==='object'){
         if(details.points_forts && details.points_forts.length){
-            html+='<div class="bloc-alert signal"><strong>✅ Points forts (IA)</strong><div style="margin-top:.4rem">';
+            html+='<div class="bloc-alert signal"><strong>✅ Points forts</strong><div style="margin-top:.4rem">';
             for(var i=0;i<details.points_forts.length;i++){
                 html+='• '+escHtml(details.points_forts[i])+'<br>';
             }
             html+='</div></div>';
         }
         if(details.points_vigilance && details.points_vigilance.length){
-            html+='<div class="bloc-alert attn"><strong>⚠️ Points de vigilance (IA)</strong><div style="margin-top:.4rem">';
+            html+='<div class="bloc-alert attn"><strong>⚠️ Points de vigilance</strong><div style="margin-top:.4rem">';
             for(var i=0;i<details.points_vigilance.length;i++){
                 html+='• '+escHtml(details.points_vigilance[i])+'<br>';
             }
             html+='</div></div>';
         }
         if(details.synthese_recruteur){
-            html+='<div class="bloc-alert ia-info"><strong>📝 Synthèse IA</strong><div style="margin-top:.4rem;font-style:italic">'+escHtml(details.synthese_recruteur)+'</div></div>';
+            html+='<div class="bloc-alert analyse-info"><strong>📝 Synthèse</strong><div style="margin-top:.4rem;font-style:italic">'+escHtml(details.synthese_recruteur)+'</div></div>';
         }
     }
 
@@ -1026,16 +1026,16 @@ function openModal(id){
         }
         html+='</ul>';
         if(hasElim){
-            html+='<div class="score-conserve">📊 Score IA conservé : <strong>'+score+'/'+scoreMax+'</strong> (les critères éliminatoires non satisfaits ont entraîné le rejet)</div>';
+            html+='<div class="score-conserve">📊 Score conservé : <strong>'+score+'/'+scoreMax+'</strong> (les critères éliminatoires non satisfaits ont entraîné le rejet)</div>';
         }else{
-            html+='<p style="margin-top:0.5rem;"><strong>Score IA final :</strong> '+score+'/'+scoreMax+'</p>';
+            html+='<p style="margin-top:0.5rem;"><strong>Score final :</strong> '+score+'/'+scoreMax+'</p>';
         }
         rejectReasons.innerHTML=html;
     }else{
         rejectAlert.classList.remove('visible');
     }
 
-    document.getElementById('modal-title').innerHTML=escHtml(c.prenom)+' '+escHtml(c.nom)+' <span class="readonly-badge">Analyse IA</span>';
+    document.getElementById('modal-title').innerHTML=escHtml(c.prenom)+' '+escHtml(c.nom)+' <span class="readonly-badge">Analyse</span>';
     document.getElementById('modal-infos').innerHTML=
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Email</div><div>'+escHtml(c.email)+'</div></div>'+
         '<div><div style="font-size:.73rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px">Téléphone</div><div>'+(c.telephone||'–')+'</div></div>'+
@@ -1055,7 +1055,7 @@ function openModal(id){
     }
     document.getElementById('modal-fichiers').innerHTML=files.join(' ');
 
-    // Décision IA
+    // Décision
     var decisionText=document.getElementById('modal-decision-text');
     var decisionMotif=document.getElementById('modal-decision-motif');
     var dec=getDecisionFromScoreAndFlags(c.score, flags);
@@ -1252,10 +1252,10 @@ function triggerManualReanalyze(){
     if(!confirm(message))return;
     var url;
     if(poste){url=API+'/recruteur/reanalyze-poste/'+encodeURIComponent(poste);}else{url=API+'/recruteur/reanalyze-all';}
-    showToast('🔄 Lancement de la réanalyse IA...','info');
+    showToast('🔄 Lancement de la réanalyse...','info');
     fetch(url,{method:'POST',headers:authH()}).then(function(r){return r.json();}).then(function(data){
         if(data.reanalyzed_count!==undefined&&data.reanalyzed_count>0){
-            showToast('🔄 Réanalyse IA lancée : '+data.reanalyzed_count+' candidats','success');
+            showToast('🔄 Réanalyse lancée : '+data.reanalyzed_count+' candidats','success');
             startReanalyzePolling();
         }else if(data.message&&data.message.indexOf('Aucun')!==-1){
             showToast('📭 '+data.message,'info');
@@ -1280,7 +1280,7 @@ async function checkReanalyzeStatus(){
         updateReanalyzeBadge(data);
         if(!data.in_progress&&data.total>0&&data.processed>=data.total){
             if(reanalyzePollingInterval){clearInterval(reanalyzePollingInterval);reanalyzePollingInterval=null;}
-            showToast('✅ Réanalyse IA terminée: '+data.processed+'/'+data.total+' dossiers mis à jour','success');
+            showToast('✅ Réanalyse terminée: '+data.processed+'/'+data.total+' dossiers mis à jour','success');
             fetchCandidats();fetchStats();
         }
         var statusEl=document.getElementById('reanalyze-status');
@@ -1300,7 +1300,7 @@ function updateProgressWidget(processed,total,errors,statusText){
         var progress=total>0?Math.round((processed/total)*100):0;
         var bar=document.getElementById('floating-progress-bar');
         bar.style.width=progress+'%';
-        document.getElementById('floating-progress-title').textContent='🔄 Réanalyse IA...';
+        document.getElementById('floating-progress-title').textContent='🔄 Réanalyse...';
         document.getElementById('floating-progress-count').textContent=processed+'/'+total+' ('+progress+'%)';
         var detailText='Traitement: '+processed+'/'+total;
         if(errors>0)detailText+=' · ❌ '+errors+' erreur(s)';
@@ -1308,7 +1308,7 @@ function updateProgressWidget(processed,total,errors,statusText){
         document.getElementById('floating-progress-detail').textContent=detailText;
     }else if(total>0&&processed>=total){
         widget.classList.add('completed');
-        document.getElementById('floating-progress-title').textContent='✅ Réanalyse IA terminée';
+        document.getElementById('floating-progress-title').textContent='✅ Réanalyse terminée';
         document.getElementById('floating-progress-count').textContent=processed+'/'+total;
         document.getElementById('floating-progress-detail').textContent='Tous les dossiers des postes actifs sont à jour.';
         setTimeout(function(){widget.classList.remove('active');},8000);
@@ -1325,7 +1325,7 @@ function updateReanalyzeBadge(data){
         badge.style.background='#fef3cd';badge.style.color='#856404';
     }else if(data.total>0&&data.processed>=data.total){
         badge.style.display='inline-block';
-        badge.textContent='✅ À jour (IA)';
+        badge.textContent='✅ À jour';
         badge.style.background='#d4edda';badge.style.color='#155724';
         setTimeout(function(){badge.style.display='none';},10000);
     }else{badge.style.display='none';}
@@ -1335,21 +1335,21 @@ async function quickReanalyze(id){
     var c=null;
     for(var i=0;i<allCandidats.length;i++){if(allCandidats[i].id===id){c=allCandidats[i];break;}}
     if(!c)return;
-    if(!confirm('Relancer l\'analyse IA de '+c.prenom+' '+c.nom+' ?'))return;
+    if(!confirm('Relancer l\'analyse de '+c.prenom+' '+c.nom+' ?'))return;
     try{
         var res=await fetch(API+'/recruteur/reanalyze-one/'+id,{method:'POST',headers:authH()});
-        if(res.ok){showToast('🔄 Analyse IA relancée','success');setTimeout(fetchCandidats,3000);}
+        if(res.ok){showToast('🔄 Analyse relancée','success');setTimeout(fetchCandidats,3000);}
         else{var data=await res.json().catch(function(){return{};});showToast(data.error||'Erreur','error');}
     }catch(e){showToast('❌ Erreur: '+e.message,'error');}
 }
 
 async function reanalyzeOne(){
     if(!currentC)return;
-    if(!confirm('Relancer l\'analyse IA de cette candidature ?'))return;
+    if(!confirm('Relancer l\'analyse de cette candidature ?'))return;
     try{
         var res=await fetch(API+'/recruteur/reanalyze-one/'+currentC.id,{method:'POST',headers:authH()});
         if(res.ok){
-            showToast('🔄 Analyse IA relancée','success');
+            showToast('🔄 Analyse relancée','success');
             setTimeout(function(){
                 fetchCandidats();
                 var updated=null;
@@ -1384,13 +1384,13 @@ function emailSubject(type,poste){
 function emailBody(type,nom,poste){
     var sign='\n\nCordialement,\nL\'équipe Ressources Humaines\nRecrutBank';
     if(type==='🥇 Entretien prioritaire'||type==='retenu'||type==='Shortlist'){
-        return'Madame, Monsieur '+nom+',\n\nFélicitations ! Votre candidature pour le poste de '+poste+' a été retenue en prioritaire.\n\nVotre profil correspond parfaitement aux exigences du poste selon notre analyse IA.\n\nNous vous contacterons dans les plus brefs délais pour convenir d\'un entretien.\n\nCordialement,'+sign;
+        return'Madame, Monsieur '+nom+',\n\nFélicitations ! Votre candidature pour le poste de '+poste+' a été retenue en prioritaire.\n\nVotre profil correspond parfaitement aux exigences du poste selon notre analyse.\n\nNous vous contacterons dans les plus brefs délais pour convenir d\'un entretien.\n\nCordialement,'+sign;
     }
     if(type==='🥈 Entretien si besoin (vivier)'||type==='🥈 Potentiel'||type==='entretien'||type==='À considérer'){
         return'Madame, Monsieur '+nom+',\n\nVotre candidature pour le poste de '+poste+' a retenu notre attention.\n\nVotre profil présente des atouts intéressants et nous souhaitons vous rencontrer.\n\nNous prendrons contact avec vous prochainement pour convenir d\'un entretien.\n\nCordialement,'+sign;
     }
     if(type==='❌ Rejet'||type==='rejete'||type==='Rejet'||type==='Faible'){
-        return'Madame, Monsieur '+nom+',\n\nNous vous remercions de l\'intérêt que vous portez à notre institution pour le poste de '+poste+'.\n\nAprès examen attentif de votre dossier par notre système d\'analyse IA, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour cette sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil.\n\nCordialement,'+sign;
+        return'Madame, Monsieur '+nom+',\n\nNous vous remercions de l\'intérêt que vous portez à notre institution pour le poste de '+poste+'.\n\nAprès examen attentif de votre dossier, nous avons le regret de vous informer que votre candidature n\'a pas été retenue pour cette sélection.\n\nNous vous encourageons à postuler à nouveau pour toute opportunité future correspondant à votre profil.\n\nCordialement,'+sign;
     }
     return'Madame, Monsieur '+nom+',\n\nNous vous remercions de votre candidature pour le poste de '+poste+'.\n\nNous reviendrons vers vous prochainement.\n\nCordialement,'+sign;
 }
